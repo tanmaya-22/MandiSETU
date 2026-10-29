@@ -1,0 +1,74 @@
+version: '3.9'
+
+services:
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: mandisetu_postgres
+    environment:
+      POSTGRES_USER: mandisetu
+      POSTGRES_PASSWORD: mandisetu
+      POSTGRES_DB: mandisetu_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mandisetu"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ───────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: mandisetu_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Backend ─────────────────────────────────────────────────────────────────
+  backend:
+    build: ./backend
+    container_name: mandisetu_backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://mandisetu:mandisetu@postgres:5432/mandisetu_db
+      DATABASE_URL_SYNC: postgresql://mandisetu:mandisetu@postgres:5432/mandisetu_db
+      REDIS_URL: redis://redis:6379/0
+      DEBUG: "true"
+      SECRET_KEY: local_dev_secret_mandisetu_2024
+    volumes:
+      - ./backend:/app
+      - uploads_data:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ── Frontend ────────────────────────────────────────────────────────────────
+  frontend:
+    image: node:20-alpine
+    container_name: mandisetu_frontend
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8000/api/v1
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  uploads_data:
