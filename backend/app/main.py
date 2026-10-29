@@ -32,14 +32,16 @@ from app.routers.misc_modules import (
 async def lifespan(app: FastAPI):
     """Startup / shutdown lifecycle."""
     # Create tables on startup (dev mode)
-    await create_all_tables()
-    # Optionally seed DB from CSV
-    from app.core.database import AsyncSessionLocal
-    from app.services.price_service import seed_database_from_csv
-    async with AsyncSessionLocal() as db:
-        seeded = await seed_database_from_csv(db)
-        if seeded:
-            print(f"[MandiSetu] Seeded {seeded} price records from CSV")
+    try:
+        await create_all_tables()
+        from app.core.database import AsyncSessionLocal
+        from app.services.price_service import seed_database_from_csv
+        async with AsyncSessionLocal() as db:
+            seeded = await seed_database_from_csv(db)
+            if seeded:
+                print(f"[MandiSetu] Seeded {seeded} price records from CSV")
+    except Exception as e:
+        print(f"[MandiSetu] Notice: Database connection skipped on startup ({e}). Ready in lightweight mode.")
 
     # Create uploads directory
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
