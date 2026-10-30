@@ -44,10 +44,18 @@ async def _find_user_by_id_or_email(db: AsyncSession, identifier: str) -> Option
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 async def register(payload: UserRegisterRequest, db: AsyncSession = Depends(get_db)):
-    # Check duplicate
-    existing = await db.execute(select(User).where(User.email == payload.email))
+    clean_email = payload.email.strip().lower()
+    # Check duplicate email
+    existing = await db.execute(select(User).where(func.lower(User.email) == clean_email))
     if existing.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="This email address is already registered. Please login instead.")
+
+    # Check duplicate phone if provided
+    if payload.phone and payload.phone.strip():
+        clean_phone = payload.phone.strip()
+        existing_phone = await db.execute(select(User).where(User.phone == clean_phone))
+        if existing_phone.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="This phone number is already registered with another account.")
 
     try:
         role_enum = UserRole(payload.role)
@@ -55,9 +63,9 @@ async def register(payload: UserRegisterRequest, db: AsyncSession = Depends(get_
         raise HTTPException(status_code=400, detail=f"Invalid role: {payload.role}")
 
     user = User(
-        full_name=payload.full_name,
-        email=payload.email,
-        phone=payload.phone,
+        full_name=payload.full_name.strip(),
+        email=clean_email,
+        phone=payload.phone.strip() if payload.phone else None,
         hashed_password=hash_password(payload.password),
         role=role_enum,
         state=payload.state,

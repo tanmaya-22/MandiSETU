@@ -24,6 +24,23 @@ class UserRegisterRequest(BaseModel):
     business_name: Optional[str] = None
     gst_number: Optional[str] = None
 
+    @field_validator("land_area_acres", mode="before")
+    @classmethod
+    def parse_land_area(cls, v):
+        if v == "" or v is None:
+            return None
+        try:
+            return float(v)
+        except (ValueError, TypeError):
+            return None
+
+    @field_validator("phone", "business_name", "fpo_name", "gst_number", "village", "pincode", mode="before")
+    @classmethod
+    def empty_str_to_none(cls, v):
+        if v == "":
+            return None
+        return v
+
 
 class UserLoginRequest(BaseModel):
     email: str = Field(..., description="Username or Email address")

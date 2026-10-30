@@ -300,18 +300,26 @@ export const authAPI = {
   register: async (data) => {
     try {
       const res = await api.post('/auth/register', data)
-      saveLocalUser({ ...data, id: res.data?.id || 'usr_' + Date.now() })
+      if (res?.data) {
+        saveLocalUser({ ...data, ...res.data, id: res.data?.id || 'usr_' + Date.now(), source: 'database' })
+        return res
+      }
       return res
     } catch (err) {
-      console.warn('[MandiSetu] Backend registration endpoint unavailable or returned error. Saving account to resilient local storage.', err)
-      const newUser = {
-        ...data,
-        id: 'usr_' + Date.now(),
-        access_token: 'jwt-token-local-' + Math.random().toString(36).substring(2),
-        is_verified: true,
+      console.error('[MandiSetu] Backend registration failed:', err?.response?.data || err?.message)
+      const errorMsg =
+        err?.response?.data?.detail ||
+        (Array.isArray(err?.response?.data) ? err.response.data.map(d => d.msg).join(', ') : null) ||
+        err?.message ||
+        'Server registration failed'
+
+      // If server explicitly returned validation or duplicate error:
+      if (err?.response?.status === 400 || err?.response?.status === 422) {
+        throw new Error(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg))
       }
-      saveLocalUser(newUser)
-      return { data: newUser }
+
+      // If backend network is unreachable, throw actionable error
+      throw new Error(`Cannot reach cloud database at ${getApiBaseUrl()}: ${errorMsg}. Please ensure the backend is connected.`)
     }
   },
 

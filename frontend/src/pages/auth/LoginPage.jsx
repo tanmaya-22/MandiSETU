@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Leaf, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, UserCheck, Sparkles } from 'lucide-react'
-import { authAPI } from '../../api/modules'
+import { authAPI, getApiBaseUrl } from '../../api/modules'
 import { useAuthStore } from '../../store/authStore'
 
 const QUICK_DEMO_USERS = [
@@ -225,9 +225,14 @@ export default function LoginPage() {
         </div>
 
         {/* Security badge note */}
-        <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-4">
-          <ShieldCheck size={14} className="text-emerald-600" />
-          <span>Role-Based JWT Encrypted Access · Public Agmarknet Verified</span>
+        <div className="flex flex-col items-center justify-center gap-1 text-xs text-gray-500 mt-4">
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={14} className="text-emerald-600" />
+            <span>Role-Based JWT Encrypted Access · Public Agmarknet Verified</span>
+          </div>
+          <span className="text-[10px] text-gray-400 font-mono">
+            Database Server: {getApiBaseUrl()}
+          </span>
         </div>
       </div>
     </div>

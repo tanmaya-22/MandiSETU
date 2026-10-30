@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Leaf, Loader2, ArrowRight, CheckCircle2, ShieldCheck, Sparkles, Building2, Tractor, Users } from 'lucide-react'
-import { authAPI } from '../../api/modules'
+import { authAPI, getApiBaseUrl } from '../../api/modules'
 import { useAuthStore } from '../../store/authStore'
 
 const ROLES = [
@@ -83,7 +83,22 @@ export default function RegisterPage() {
 
     setLoading(true)
     try {
-      const { confirm, ...payload } = form
+      const { confirm, ...raw } = form
+      const payload = {
+        full_name: raw.full_name.trim(),
+        email: raw.email.trim().toLowerCase(),
+        phone: raw.phone.trim() || undefined,
+        password: raw.password,
+        role: raw.role || 'farmer',
+        state: raw.state || undefined,
+        district: raw.district || undefined,
+      }
+      if (raw.land_area_acres && !isNaN(parseFloat(raw.land_area_acres))) {
+        payload.land_area_acres = parseFloat(raw.land_area_acres)
+      }
+      if (raw.business_name?.trim()) payload.business_name = raw.business_name.trim()
+      if (raw.fpo_name?.trim()) payload.fpo_name = raw.fpo_name.trim()
+
       const res = await authAPI.register(payload)
       const data = res?.data
 
@@ -341,9 +356,14 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-4">
-          <ShieldCheck size={14} className="text-emerald-600" />
-          <span>No credit card required · Free for Indian farmers & FPOs</span>
+        <div className="flex flex-col items-center justify-center gap-1 text-xs text-gray-500 mt-4">
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={14} className="text-emerald-600" />
+            <span>No credit card required · Free for Indian farmers & FPOs</span>
+          </div>
+          <span className="text-[10px] text-gray-400 font-mono">
+            Database Server: {getApiBaseUrl()}
+          </span>
         </div>
       </div>
     </div>
