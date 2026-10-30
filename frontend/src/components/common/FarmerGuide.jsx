@@ -199,7 +199,10 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pa
   const [tourStep, setTourStep] = useState(0)
 
   // Drag and drop state: always resets to original default on page reload
-  const getInitialPos = () => ({ x: 24, y: window.innerHeight - 110 })
+  const getInitialPos = () => ({
+    x: 24,
+    y: typeof window !== 'undefined' ? Math.max(100, window.innerHeight - 110) : 550,
+  })
   const [position, setPosition] = useState(getInitialPos)
   const [isDragging, setIsDragging] = useState(false)
   const dragStartRef = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 })
@@ -284,7 +287,10 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pa
   const boxWidth = typeof window !== 'undefined' ? Math.min(420, window.innerWidth - 24) : 420
   const boxHeight = 440
 
-  let boxLeft = position.x
+  const curX = position?.x ?? 24
+  const curY = position?.y ?? 550
+
+  let boxLeft = curX
   if (typeof window !== 'undefined') {
     if (boxLeft + boxWidth > window.innerWidth - 16) {
       boxLeft = Math.max(12, window.innerWidth - boxWidth - 16)
@@ -292,10 +298,10 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pa
     if (boxLeft < 12) boxLeft = 12
   }
 
-  let boxTop = position.y - boxHeight - 12
+  let boxTop = curY - boxHeight - 12
   if (typeof window !== 'undefined') {
     if (boxTop < 20) {
-      boxTop = Math.min(window.innerHeight - boxHeight - 20, position.y + 72)
+      boxTop = Math.min(window.innerHeight - boxHeight - 20, curY + 72)
     }
   }
 

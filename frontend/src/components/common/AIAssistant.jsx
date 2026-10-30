@@ -238,7 +238,10 @@ export default function AIAssistant() {
   const chatWidth = typeof window !== 'undefined' ? Math.min(380, window.innerWidth - 24) : 380
   const chatHeight = 520
 
-  let chatLeft = position.x + 56 - chatWidth
+  const curX = position?.x ?? (typeof window !== 'undefined' ? window.innerWidth - 85 : 800)
+  const curY = position?.y ?? (typeof window !== 'undefined' ? window.innerHeight - 95 : 600)
+
+  let chatLeft = curX + 56 - chatWidth
   if (typeof window !== 'undefined') {
     if (chatLeft < 12) chatLeft = 12
     if (chatLeft + chatWidth > window.innerWidth - 12) {
@@ -246,10 +249,10 @@ export default function AIAssistant() {
     }
   }
 
-  let chatTop = position.y - chatHeight - 12
+  let chatTop = curY - chatHeight - 12
   if (typeof window !== 'undefined') {
     if (chatTop < 20) {
-      chatTop = Math.min(window.innerHeight - chatHeight - 20, position.y + 68)
+      chatTop = Math.min(window.innerHeight - chatHeight - 20, curY + 68)
     }
   }
 

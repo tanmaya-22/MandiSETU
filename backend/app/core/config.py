@@ -29,7 +29,11 @@ class Settings(BaseSettings):
         "http://localhost:5173",   # Vite dev server
         "http://localhost:3000",
         "https://mandisetu.vercel.app",
+        "https://mandisetu-frontend.vercel.app",
+        "https://mandisetu-tanmaya.vercel.app",
     ]
+    # Set ALLOW_ALL_ORIGINS=True in Render env for wildcard Vercel preview URLs
+    ALLOW_ALL_ORIGINS: bool = False
 
     # ── External APIs ────────────────────────────────────────────────────────
     OPENWEATHER_API_KEY: str = "YOUR_OPENWEATHER_API_KEY"
