@@ -117,10 +117,10 @@ export default function LandingPage() {
     Tomato: { localMandi: 1600, distantMandi: 2200, distance: 95 },
     Potato: { localMandi: 1350, distantMandi: 1750, distance: 140 },
   }
-  const currentCalc = commodityPrices[sampleCommodity]
-  const transportCostPerQtl = Math.round(currentCalc.distance * 1.8)
-  const netLocal = currentCalc.localMandi * sampleQty
-  const netDistant = (currentCalc.distantMandi - transportCostPerQtl) * sampleQty
+  const currentCalc = commodityPrices[sampleCommodity] || commodityPrices.Onion || { localMandi: 2800, distantMandi: 3650, distance: 180 }
+  const transportCostPerQtl = Math.round((currentCalc.distance || 150) * 1.8)
+  const netLocal = (currentCalc.localMandi || 2500) * sampleQty
+  const netDistant = ((currentCalc.distantMandi || 3200) - transportCostPerQtl) * sampleQty
   const extraProfit = Math.max(0, netDistant - netLocal)
 
   const handleOpenTour = () => {

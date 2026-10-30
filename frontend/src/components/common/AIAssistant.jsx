@@ -260,7 +260,7 @@ export default function AIAssistant() {
     <>
       {/* ── Draggable Floating Action Button & Mascot (Positioned dynamically) ── */}
       <div
-        style={{ left: `${position.x}px`, top: `${position.y}px` }}
+        style={{ left: `${position?.x ?? 800}px`, top: `${position?.y ?? 600}px` }}
         className="fixed z-50 select-none touch-none"
       >
         <div className="relative group">

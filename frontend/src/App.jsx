@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Component, useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { useAuthStore } from './store/authStore'
@@ -34,6 +34,45 @@ import Layout from './components/common/Layout'
 import LandingPage from './pages/LandingPage'
 import FarmerGuide from './components/common/FarmerGuide'
 import AIAssistant from './components/common/AIAssistant'
+
+// ─── Per-page isolated error boundary so one page never kills the whole app ──
+class PageErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false }
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+  componentDidCatch(error) {
+    console.error('[MandiSetu Page Error]', error)
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center">
+          <span className="text-4xl mb-3">🌾</span>
+          <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Page Temporarily Unavailable</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-sm">
+            This page encountered a temporary issue (often a network timeout). Your other pages are working fine.
+          </p>
+          <button
+            onClick={() => this.setState({ hasError: false })}
+            className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold rounded-xl transition"
+          >
+            Retry this page
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
+// Wrap any page component with page-level error boundary
+function SafePage({ children }) {
+  return <PageErrorBoundary>{children}</PageErrorBoundary>
+}
 
 // Smart role-based dashboard router
 function DashboardRedirect() {
@@ -91,41 +130,41 @@ export default function App() {
 
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/" element={<SafePage><LandingPage /></SafePage>} />
+        <Route path="/login" element={<SafePage><LoginPage /></SafePage>} />
+        <Route path="/register" element={<SafePage><RegisterPage /></SafePage>} />
 
         {/* Authenticated Layout with all 12 modules */}
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<DashboardRedirect />} />
 
-          <Route path="/farmer-dashboard" element={<FarmerDashboard />} />
-          <Route path="/buyer-dashboard" element={<BuyerDashboard />} />
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/farmer-dashboard" element={<SafePage><FarmerDashboard /></SafePage>} />
+          <Route path="/buyer-dashboard" element={<SafePage><BuyerDashboard /></SafePage>} />
+          <Route path="/admin" element={<SafePage><AdminDashboard /></SafePage>} />
 
-          <Route path="/listings" element={<ListingsPage />} />
-          <Route path="/listings/new" element={<CreateLotPage />} />
-          <Route path="/listings/:id" element={<LotDetailPage />} />
+          <Route path="/listings" element={<SafePage><ListingsPage /></SafePage>} />
+          <Route path="/listings/new" element={<SafePage><CreateLotPage /></SafePage>} />
+          <Route path="/listings/:id" element={<SafePage><LotDetailPage /></SafePage>} />
 
-          <Route path="/grading" element={<GradingPage />} />
-          <Route path="/sale-window" element={<SaleWindowPage />} />
+          <Route path="/grading" element={<SafePage><GradingPage /></SafePage>} />
+          <Route path="/sale-window" element={<SafePage><SaleWindowPage /></SafePage>} />
 
-          <Route path="/matching" element={<MatchingPage />} />
-          <Route path="/buyers" element={<BuyersPage />} />
+          <Route path="/matching" element={<SafePage><MatchingPage /></SafePage>} />
+          <Route path="/buyers" element={<SafePage><BuyersPage /></SafePage>} />
 
-          <Route path="/prices" element={<PricesPage />} />
-          <Route path="/calculator" element={<CalculatorPage />} />
+          <Route path="/prices" element={<SafePage><PricesPage /></SafePage>} />
+          <Route path="/calculator" element={<SafePage><CalculatorPage /></SafePage>} />
 
-          <Route path="/transactions" element={<TransactionsPage />} />
-          <Route path="/transactions/:id" element={<TransactionDetailPage />} />
+          <Route path="/transactions" element={<SafePage><TransactionsPage /></SafePage>} />
+          <Route path="/transactions/:id" element={<SafePage><TransactionDetailPage /></SafePage>} />
 
-          <Route path="/logistics" element={<LogisticsPage />} />
-          <Route path="/disputes" element={<DisputesPage />} />
-          <Route path="/weather" element={<WeatherPage />} />
-          <Route path="/mandi-map" element={<MandiMapPage />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
-          <Route path="/feedback" element={<FeedbackPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/logistics" element={<SafePage><LogisticsPage /></SafePage>} />
+          <Route path="/disputes" element={<SafePage><DisputesPage /></SafePage>} />
+          <Route path="/weather" element={<SafePage><WeatherPage /></SafePage>} />
+          <Route path="/mandi-map" element={<SafePage><MandiMapPage /></SafePage>} />
+          <Route path="/analytics" element={<SafePage><AnalyticsPage /></SafePage>} />
+          <Route path="/feedback" element={<SafePage><FeedbackPage /></SafePage>} />
+          <Route path="/profile" element={<SafePage><ProfilePage /></SafePage>} />
         </Route>
 
         {/* Fallback */}

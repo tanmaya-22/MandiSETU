@@ -65,14 +65,15 @@ export default function PricesPage() {
   }, [commodity, stateFilter])
 
   // Filter live data by search
-  const filteredRows = liveData.filter((r) => {
+  const filteredRows = (liveData || []).filter((r) => {
+    if (!r) return false
     if (!searchQuery) return true
     const q = searchQuery.toLowerCase()
     return (
-      r.mandi_name.toLowerCase().includes(q) ||
-      r.state.toLowerCase().includes(q) ||
-      (r.district && r.district.toLowerCase().includes(q)) ||
-      (r.variety && r.variety.toLowerCase().includes(q))
+      (r.mandi_name && String(r.mandi_name).toLowerCase().includes(q)) ||
+      (r.state && String(r.state).toLowerCase().includes(q)) ||
+      (r.district && String(r.district).toLowerCase().includes(q)) ||
+      (r.variety && String(r.variety).toLowerCase().includes(q))
     )
   })
 

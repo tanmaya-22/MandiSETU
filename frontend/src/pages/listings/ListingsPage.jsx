@@ -100,9 +100,12 @@ export default function ListingsPage() {
     fetchLots()
   }, [])
 
-  const filteredLots = lots.filter((lot) => {
-    const matchComm = !searchCommodity || lot.commodity.toLowerCase().includes(searchCommodity.toLowerCase())
-    const matchState = !selectedState || lot.state?.toLowerCase().includes(selectedState.toLowerCase())
+  const filteredLots = (lots || []).filter((lot) => {
+    if (!lot) return false
+    const commStr = String(lot.commodity || '')
+    const matchComm = !searchCommodity || commStr.toLowerCase().includes(searchCommodity.toLowerCase())
+    const stateStr = String(lot.state || '')
+    const matchState = !selectedState || stateStr.toLowerCase().includes(selectedState.toLowerCase())
     return matchComm && matchState
   })
 

@@ -215,10 +215,10 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pa
     } catch {}
   }, [])
 
-  // Get tour for current module
-  const currentTour = MODULE_TOURS[location.pathname] || MODULE_TOURS['/dashboard']
-  const steps = currentTour.steps
-  const activeStep = steps[tourStep] || steps[0]
+  // Get tour for current module — defensive fallback prevents render crash on unknown routes
+  const currentTour = MODULE_TOURS[location.pathname] || MODULE_TOURS['/dashboard'] || { steps: [] }
+  const steps = currentTour?.steps || []
+  const activeStep = steps[tourStep] || steps[0] || null
 
   useEffect(() => {
     if (forceOpen) {
@@ -322,7 +322,7 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pa
     <>
       {/* ── Draggable Floating Chacha Avatar (Resets on reload, moveable anywhere) ── */}
       <div
-        style={{ left: `${position.x}px`, top: `${position.y}px` }}
+        style={{ left: `${position?.x ?? 24}px`, top: `${position?.y ?? 550}px` }}
         className="fixed z-50 select-none touch-none"
       >
         <div className="relative group">
@@ -376,7 +376,7 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pa
       </div>
 
       {/* ── Interactive Compiler-Style Walkthrough Box (Directly follows dragged avatar) ── */}
-      {isOpen && (
+      {isOpen && activeStep && (
         <div
           style={{ left: `${boxLeft}px`, top: `${boxTop}px` }}
           className="fixed z-50 w-[420px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border-2 border-amber-400 dark:border-amber-500 rounded-3xl shadow-2xl overflow-hidden animate-fade-in-up"
@@ -390,7 +390,7 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pa
                   <span>{l.name}</span>
                 </h3>
                 <span className="text-[10px] text-amber-100 font-medium">
-                  {currentTour.moduleName[language] || currentTour.moduleName.en} · {tourStep + 1} / {steps.length}
+                  {currentTour?.moduleName?.[language] || currentTour?.moduleName?.en || 'MandiSetu Tour'} · {tourStep + 1} / {steps.length}
                 </span>
               </div>
             </div>
@@ -411,27 +411,27 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pa
             {/* Step Badge */}
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
               <Target size={12} className="text-amber-600" />
-              <span>{activeStep.badge}</span>
+              <span>{activeStep?.badge || 'Step'}</span>
             </div>
 
             <div>
               <h4 className="text-sm font-extrabold text-gray-900 dark:text-white mb-1">
-                {activeStep.title[language] || activeStep.title.en}
+                {activeStep?.title?.[language] || activeStep?.title?.en || ''}
               </h4>
               <p className="text-xs sm:text-sm leading-relaxed text-gray-700 dark:text-gray-200">
-                {activeStep.desc[language] || activeStep.desc.en}
+                {activeStep?.desc?.[language] || activeStep?.desc?.en || ''}
               </p>
             </div>
 
             {/* Placement Drive Style Action Hint */}
-            {activeStep.action && (
+            {activeStep?.action && (
               <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-950 dark:text-amber-200 space-y-1">
                 <div className="font-bold flex items-center gap-1.5 text-amber-700 dark:text-amber-300">
                   <Lightbulb size={14} />
                   <span>How to Test & Execute:</span>
                 </div>
                 <p className="leading-snug pl-5 font-medium">
-                  {activeStep.action[language] || activeStep.action.en}
+                  {activeStep?.action?.[language] || activeStep?.action?.en || ''}
                 </p>
               </div>
             )}
@@ -446,7 +446,7 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pa
               }}
               className="text-xs font-semibold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
             >
-              {l.close}
+              {l?.close || 'Close'}
             </button>
 
             <div className="flex items-center gap-2">
@@ -455,7 +455,7 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pa
                   onClick={() => setTourStep(tourStep - 1)}
                   className="px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-700 text-xs font-semibold hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
-                  {l.prev}
+                  {l?.prev || 'Previous'}
                 </button>
               )}
 
@@ -464,7 +464,7 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pa
                   onClick={() => setTourStep(tourStep + 1)}
                   className="px-4 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow flex items-center gap-1 hover:scale-105 transition-transform"
                 >
-                  <span>{l.next}</span>
+                  <span>{l?.next || 'Next'}</span>
                   <ChevronRight size={14} />
                 </button>
               ) : (
@@ -476,7 +476,7 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pa
                   className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow flex items-center gap-1 hover:scale-105 transition-transform"
                 >
                   <CheckCircle2 size={14} />
-                  <span>{l.finish}</span>
+                  <span>{l?.finish || 'Done'}</span>
                 </button>
               )}
             </div>

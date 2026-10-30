@@ -6,7 +6,7 @@ import './index.css'
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props)
-    this.state = { hasError: false, error: null }
+    this.state = { hasError: false, error: null, errorInfo: null }
   }
 
   static getDerivedStateFromError(error) {
@@ -15,6 +15,17 @@ class ErrorBoundary extends Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('MandiSetu Application Error:', error, errorInfo)
+    this.setState({ errorInfo })
+  }
+
+  handleReload() {
+    // Clear any stale state that might re-trigger the error
+    try {
+      localStorage.clear()
+      sessionStorage.clear()
+    } catch {}
+    this.setState({ hasError: false, error: null, errorInfo: null })
+    window.location.href = '/'
   }
 
   render() {
@@ -24,20 +35,22 @@ class ErrorBoundary extends Component {
           <div className="max-w-md bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
             <span className="text-5xl mb-3 block">🌾</span>
             <h2 className="text-xl font-extrabold text-gray-900 mb-1.5">MandiSetu Platform Active</h2>
-            <p className="text-xs text-gray-500 mb-5 leading-relaxed">
-              We recovered from a temporary layout state. Click below to continue using MandiSetu smoothly.
+            <p className="text-xs text-gray-500 mb-3 leading-relaxed">
+              Click below to launch MandiSetu fresh with clean state.
             </p>
+            {this.state.error && (
+              <details className="mb-4 text-left">
+                <summary className="text-xs text-red-500 cursor-pointer hover:underline">Technical details</summary>
+                <pre className="text-[10px] text-red-400 mt-1 overflow-auto max-h-24 bg-red-50 p-2 rounded-lg">
+                  {this.state.error?.message}
+                </pre>
+              </details>
+            )}
             <button
-              onClick={() => {
-                try {
-                  localStorage.removeItem('mandisetu_ai_pos')
-                  localStorage.removeItem('mandisetu_chacha_pos')
-                } catch {}
-                window.location.reload()
-              }}
-              className="px-6 py-2.5 bg-brand-700 hover:bg-brand-800 text-white font-bold rounded-2xl text-xs shadow-md transition"
+              onClick={() => this.handleReload()}
+              className="px-6 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-2xl text-xs shadow-md transition"
             >
-              Refresh Application
+              Reset &amp; Open MandiSetu
             </button>
           </div>
         </div>
@@ -48,9 +61,7 @@ class ErrorBoundary extends Component {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </React.StrictMode>
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
 )
