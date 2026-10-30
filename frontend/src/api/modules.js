@@ -203,20 +203,27 @@ export function updateLocalUser(email, updates) {
 export function updateUserPowers(email, powers, reason = 'Administrative authority update by Admin(TanmayA)') {
   try {
     const existing = getLocalUsers()
+    const targetKey = (email || '').trim().toLowerCase()
     const updated = existing.map((u) => {
-      if (u.email.toLowerCase() === email.toLowerCase()) {
+      if (
+        u.email?.toLowerCase() === targetKey ||
+        u.username?.toLowerCase() === targetKey ||
+        u.full_name?.toLowerCase() === targetKey
+      ) {
         return { ...u, powers }
       }
       return u
     })
     localStorage.setItem('mandisetu_registered_users', JSON.stringify(updated))
 
-    // Update active auth session if current user
+    // Update active auth session in localStorage if matching user
     try {
       const authRaw = localStorage.getItem('mandisetu-auth')
       if (authRaw) {
         const parsed = JSON.parse(authRaw)
-        if (parsed?.state?.user?.email?.toLowerCase() === email.toLowerCase()) {
+        const currentEmail = parsed?.state?.user?.email?.toLowerCase()
+        const currentUsername = parsed?.state?.user?.username?.toLowerCase()
+        if (currentEmail === targetKey || currentUsername === targetKey) {
           parsed.state.user.powers = powers
           localStorage.setItem('mandisetu-auth', JSON.stringify(parsed))
         }
@@ -238,6 +245,11 @@ export function updateUserPowers(email, powers, reason = 'Administrative authori
       localStorage.setItem('mandisetu_admin_audits', JSON.stringify([newAudit, ...audits]))
     } catch {}
 
+    // Notify any listening components across windows/tabs
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('mandisetu_powers_updated', { detail: { email, powers } }))
+    }
+
     return true
   } catch (err) {
     console.error('Failed to update user powers', err)
@@ -256,7 +268,30 @@ export function hasUserPower(user, powerId) {
     return true
   }
   if (user.powers?.includes('all')) return true
-  return Boolean(user.powers?.includes(powerId))
+
+  // Direct check on user object
+  if (Array.isArray(user.powers) && user.powers.includes(powerId)) {
+    return true
+  }
+
+  // Live lookup from persistent storage directory (ensures instant fulfillment without re-login)
+  try {
+    const liveUsers = getLocalUsers()
+    const liveMatch = liveUsers.find(
+      (u) =>
+        (user.email && u.email?.toLowerCase() === user.email?.toLowerCase()) ||
+        (user.username && u.username?.toLowerCase() === user.username?.toLowerCase()) ||
+        (user.user_id && (u.id === user.user_id || u.user_id === user.user_id)) ||
+        (user.id && (u.id === user.id || u.user_id === user.id))
+    )
+    if (liveMatch && Array.isArray(liveMatch.powers)) {
+      if (liveMatch.powers.includes('all') || liveMatch.powers.includes(powerId)) {
+        return true
+      }
+    }
+  } catch {}
+
+  return false
 }
 
 // ─── Module 1: Auth (with 100% resilient fallback) ───────────────────────────
@@ -316,13 +351,26 @@ export const authAPI = {
     try {
       const res = await api.post('/auth/login', data)
       const users = getLocalUsers()
-      const match = users.find((u) => u.email?.toLowerCase() === enteredId)
+      const match = users.find(
+        (u) =>
+          u.email?.toLowerCase() === enteredId ||
+          u.username?.toLowerCase() === enteredId ||
+          u.full_name?.toLowerCase() === enteredId ||
+          u.email?.split('@')[0]?.toLowerCase() === enteredId
+      )
       if (res?.data) {
         return {
           ...res,
           data: {
+            ...match,
             ...res.data,
-            powers: res.data.powers || match?.powers || [],
+            email: res.data.email || match?.email || (enteredId.includes('@') ? enteredId : `${enteredId}@mandisetu.in`),
+            username: res.data.username || match?.username || match?.email?.split('@')[0] || enteredId,
+            full_name: res.data.full_name || match?.full_name || 'Authorized User',
+            role: res.data.role || match?.role || 'farmer',
+            isDemo: match?.isDemo ?? (res.data.role === 'admin' && !isTanmayaId),
+            isAdminTanmaya: false,
+            powers: match?.powers || res.data.powers || [],
           },
         }
       }

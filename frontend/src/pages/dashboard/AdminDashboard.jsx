@@ -11,6 +11,7 @@ import {
   analyticsAPI,
   authAPI,
   getLocalUsers,
+  saveLocalUser,
   ROLE_AVAILABLE_POWERS,
   updateUserPowers,
   hasUserPower
@@ -79,14 +80,6 @@ export default function AdminDashboard() {
   const [auditLog, setAuditLog] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // Operational powers granted to the current user session (dynamic RBAC)
-  const canExportCSV = isOwner || hasUserPower(user, 'csv_export')
-  const canDecryptPII = isOwner || hasUserPower(user, 'decrypt_pii')
-  const canArbitrateDisputes = isOwner || hasUserPower(user, 'dispute_resolution')
-  const canOverrideQuality = isOwner || hasUserPower(user, 'quality_override')
-  const canOverridePrices = isOwner || hasUserPower(user, 'price_override')
-  const canManageUsers = isOwner || hasUserPower(user, 'user_management')
-
   // Selected User for Granting / Revoking Powers
   const [selectedUserForPowers, setSelectedUserForPowers] = useState(null)
   const [customPowers, setCustomPowers] = useState([])
@@ -109,13 +102,17 @@ export default function AdminDashboard() {
       // 1. Users
       const usersList = getLocalUsers()
       setRegisteredUsers(usersList)
-      
+
       // Keep selected user in sync with updated list
       if (!selectedUserForPowers && usersList.length > 0) {
         setSelectedUserForPowers(usersList[0])
         setCustomPowers(usersList[0].powers || [])
       } else if (selectedUserForPowers) {
-        const found = usersList.find((u) => u.email?.toLowerCase() === selectedUserForPowers.email?.toLowerCase())
+        const found = usersList.find(
+          (u) =>
+            u.email?.toLowerCase() === selectedUserForPowers.email?.toLowerCase() ||
+            u.username?.toLowerCase() === selectedUserForPowers.username?.toLowerCase()
+        )
         if (found) {
           setSelectedUserForPowers(found)
           setCustomPowers(found.powers || [])
@@ -138,15 +135,46 @@ export default function AdminDashboard() {
     }
   }
 
+  // Real-time synchronization across events
   useEffect(() => {
     loadAllData()
+    const handlePowersUpdated = () => {
+      loadAllData()
+    }
+    window.addEventListener('mandisetu_powers_updated', handlePowersUpdated)
+    return () => window.removeEventListener('mandisetu_powers_updated', handlePowersUpdated)
   }, [])
+
+  // Derive live user record directly from persistent directory so powers are immediately fulfilled
+  const liveUsers = getLocalUsers()
+  const liveCurrentUser = liveUsers.find(
+    (u) =>
+      (user?.email && u.email?.toLowerCase() === user.email?.toLowerCase()) ||
+      (user?.username && u.username?.toLowerCase() === user.username?.toLowerCase()) ||
+      (user?.user_id && (u.id === user.user_id || u.user_id === user.user_id)) ||
+      (user?.full_name && u.full_name?.toLowerCase() === user.full_name?.toLowerCase())
+  )
+
+  const effectivePowers = isOwner ? ['all'] : (liveCurrentUser?.powers || user?.powers || [])
+  const effectiveUser = {
+    ...user,
+    ...liveCurrentUser,
+    powers: effectivePowers,
+  }
+
+  // Operational powers granted to the current user session (dynamic RBAC)
+  const canExportCSV = isOwner || hasUserPower(effectiveUser, 'csv_export')
+  const canDecryptPII = isOwner || hasUserPower(effectiveUser, 'decrypt_pii')
+  const canArbitrateDisputes = isOwner || hasUserPower(effectiveUser, 'dispute_resolution')
+  const canOverrideQuality = isOwner || hasUserPower(effectiveUser, 'quality_override')
+  const canOverridePrices = isOwner || hasUserPower(effectiveUser, 'price_override')
+  const canManageUsers = isOwner || hasUserPower(effectiveUser, 'user_management')
 
   const logAuditAction = (action, target, details) => {
     const newEntry = {
       id: 'AUD-' + Date.now().toString().slice(-6),
       timestamp: new Date().toISOString(),
-      admin: isOwner ? 'TanmayA (Owner)' : (user?.full_name || 'Demo Admin'),
+      admin: isOwner ? 'TanmayA (Owner)' : (effectiveUser?.full_name || 'Demo Admin'),
       action,
       target,
       reason: details,
@@ -166,19 +194,30 @@ export default function AdminDashboard() {
     callback()
   }
 
-  // Handle toggling an individual power for selected user
+  // Handle toggling an individual power for selected user with INSTANT AUTO-SAVE
   const handleTogglePower = (powerId) => {
     if (!isOwner) {
       setDeniedActionName('Modify User Authority & Powers')
       setPermissionDeniedModal(true)
       return
     }
-    setCustomPowers((prev) =>
-      prev.includes(powerId) ? prev.filter((p) => p !== powerId) : [...prev, powerId]
-    )
+    const newPowers = customPowers.includes(powerId)
+      ? customPowers.filter((p) => p !== powerId)
+      : [...customPowers, powerId]
+
+    setCustomPowers(newPowers)
+
+    if (selectedUserForPowers) {
+      updateUserPowers(selectedUserForPowers.email, newPowers, powerAuditReason)
+      loadAllData()
+      toast.success(
+        `${newPowers.includes(powerId) ? 'Granted' : 'Revoked'} "${powerId.replace(/_/g, ' ')}" for ${selectedUserForPowers.full_name || selectedUserForPowers.email}`,
+        { icon: '⚡' }
+      )
+    }
   }
 
-  // Handle 1-click authority preset tiers
+  // Handle 1-click authority preset tiers with INSTANT AUTO-SAVE
   const handleApplyPreset = (presetType) => {
     if (!isOwner) {
       setDeniedActionName('Apply Platform Authority Preset Tier')
@@ -187,12 +226,27 @@ export default function AdminDashboard() {
     }
     const role = selectedUserForPowers?.role || 'farmer'
     const available = ROLE_AVAILABLE_POWERS[role] || []
+    let newPowers = []
     if (presetType === 'standard') {
-      setCustomPowers([])
+      newPowers = []
     } else if (presetType === 'pro') {
-      setCustomPowers(available.slice(0, 2).map((p) => p.id))
+      newPowers = available.slice(0, 2).map((p) => p.id)
     } else if (presetType === 'vip') {
-      setCustomPowers(available.map((p) => p.id))
+      newPowers = available.map((p) => p.id)
+    }
+    setCustomPowers(newPowers)
+
+    if (selectedUserForPowers) {
+      updateUserPowers(
+        selectedUserForPowers.email,
+        newPowers,
+        `${presetType.toUpperCase()} Tier Preset applied by Admin(TanmayA)`
+      )
+      loadAllData()
+      toast.success(
+        `Applied ${presetType.toUpperCase()} Tier to ${selectedUserForPowers.full_name || selectedUserForPowers.email}`,
+        { icon: '👑' }
+      )
     }
   }
 
@@ -224,6 +278,29 @@ export default function AdminDashboard() {
     } finally {
       setSavingPowers(false)
     }
+  }
+
+  // Toggle user suspension / verification (user_management power)
+  const handleToggleUserStatus = (targetUser) => {
+    if (!canManageUsers) {
+      setDeniedActionName('Verify or Suspend User Account')
+      setPermissionDeniedModal(true)
+      return
+    }
+    const isCurrentlySuspended = targetUser.is_suspended === true
+    const newSuspended = !isCurrentlySuspended
+    const updatedUser = { ...targetUser, is_suspended: newSuspended, is_verified: !newSuspended }
+    saveLocalUser(updatedUser)
+    logAuditAction(
+      newSuspended ? 'Suspend User Access' : 'Activate User Access',
+      targetUser.email,
+      `Access status modified by ${isOwner ? 'Admin(TanmayA)' : 'Authorized Demo Admin (Power: user_management)'}`
+    )
+    toast.success(
+      `User ${targetUser.full_name || targetUser.email} is now ${newSuspended ? 'Suspended' : 'Active & Verified'}`,
+      { icon: newSuspended ? '🚫' : '✅' }
+    )
+    loadAllData()
   }
 
   // CSV Export (with dynamic RBAC check)
