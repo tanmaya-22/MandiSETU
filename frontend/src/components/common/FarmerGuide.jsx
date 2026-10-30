@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { X, Sparkles, Volume2, ArrowRight, ArrowLeft, Check, HelpCircle, Info } from 'lucide-react'
+import { X, Sparkles, ArrowRight, ArrowLeft, Check, HelpCircle, Info, MessageCircle } from 'lucide-react'
 import { useLangStore } from '../../store/langStore'
 import { PAGE_EXPLANATIONS } from '../../i18n/translations'
 
 // Stylized Indian Farmer Mascot (Kisan Chacha / Balaram Kaka)
-function FarmerAvatar({ animated = true, size = 64 }) {
+export function FarmerAvatar({ animated = true, size = 64 }) {
   return (
     <div
       style={{ width: size, height: size }}
-      className={`relative rounded-full bg-gradient-to-tr from-amber-500 via-orange-400 to-emerald-600 p-1 shadow-xl flex-shrink-0 ${
+      className={`relative rounded-full bg-gradient-to-tr from-amber-500 via-orange-400 to-emerald-600 p-1 shadow-2xl flex-shrink-0 cursor-pointer ${
         animated ? 'animate-float' : ''
       }`}
     >
-      <div className="w-full h-full rounded-full bg-amber-50 overflow-hidden flex items-center justify-center border-2 border-white">
+      <div className="w-full h-full rounded-full bg-amber-50 dark:bg-amber-950/80 overflow-hidden flex items-center justify-center border-2 border-white dark:border-amber-400">
         <svg
           viewBox="0 0 100 100"
           className="w-full h-full transform translate-y-1"
@@ -36,7 +36,7 @@ function FarmerAvatar({ animated = true, size = 64 }) {
           <ellipse cx="56" cy="44" rx="2" ry="2.5" fill="#1F2937" />
           <path d="M41 40 Q44 38 47 40" stroke="#78350F" strokeWidth="1.5" strokeLinecap="round" />
           <path d="M53 40 Q56 38 59 40" stroke="#78350F" strokeWidth="1.5" strokeLinecap="round" />
-          {/* Traditional Tilak */}
+          {/* Traditional Red Tilak */}
           <path d="M49 33 L51 33 L50 38 Z" fill="#DC2626" />
           {/* Big White Mustache (Elder Indian Farmer Look) */}
           <path
@@ -47,7 +47,7 @@ function FarmerAvatar({ animated = true, size = 64 }) {
           />
           {/* Smile */}
           <path d="M46 59 Q50 62 54 59" stroke="#78350F" strokeWidth="1.5" strokeLinecap="round" />
-          {/* Saffron & Red Pagdi (Indian Turban) */}
+          {/* Saffron & Orange Pagdi (Indian Turban) */}
           <path
             d="M30 35 C28 20, 42 12, 50 12 C58 12, 72 20, 70 35 C64 28, 36 28, 30 35 Z"
             fill="#EA580C"
@@ -59,8 +59,8 @@ function FarmerAvatar({ animated = true, size = 64 }) {
           <circle cx="50" cy="22" r="5" fill="#FBBF24" />
         </svg>
       </div>
-      {/* Small live badge */}
-      <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white animate-pulse" />
+      {/* Live active beacon */}
+      <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-gray-900 animate-pulse" />
     </div>
   )
 }
@@ -70,7 +70,7 @@ export default function FarmerGuide({ isOpen, onClose, pageMode = false }) {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const [visible, setVisible] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(false)
   const [isFirstVisitPrompt, setIsFirstVisitPrompt] = useState(false)
   const [tourStep, setTourStep] = useState(0)
 
@@ -153,34 +153,35 @@ export default function FarmerGuide({ isOpen, onClose, pageMode = false }) {
     },
   ]
 
-  // Check first visit on mount
+  // Prompt on first visit
   useEffect(() => {
     const visited = localStorage.getItem('mandisetu_tour_seen')
     if (!visited) {
       const timer = setTimeout(() => {
         setIsFirstVisitPrompt(true)
-        setVisible(true)
-      }, 1200)
+        setDialogOpen(true)
+      }, 1000)
       return () => clearTimeout(timer)
     }
   }, [])
 
-  // Sync with external trigger (e.g., (i) button)
+  // Sync with external trigger (e.g. Header (i) or tour button)
   useEffect(() => {
     if (isOpen) {
       setIsFirstVisitPrompt(false)
-      setVisible(true)
+      setDialogOpen(true)
     }
   }, [isOpen])
 
   const handleStartTour = () => {
     setIsFirstVisitPrompt(false)
     setTourStep(0)
+    setDialogOpen(true)
     localStorage.setItem('mandisetu_tour_seen', 'true')
   }
 
-  const handleSkip = () => {
-    setVisible(false)
+  const handleCloseDialog = () => {
+    setDialogOpen(false)
     setIsFirstVisitPrompt(false)
     localStorage.setItem('mandisetu_tour_seen', 'true')
     if (onClose) onClose()
@@ -195,7 +196,7 @@ export default function FarmerGuide({ isOpen, onClose, pageMode = false }) {
         navigate(targetRoute)
       }
     } else {
-      handleSkip()
+      handleCloseDialog()
     }
   }
 
@@ -210,143 +211,166 @@ export default function FarmerGuide({ isOpen, onClose, pageMode = false }) {
     }
   }
 
-  if (!visible) return null
-
-  // Check if we are showing a single-page tour or the full multi-step tour
   const currentPath = location.pathname
   const pageExplanation = PAGE_EXPLANATIONS[currentPath]?.[lang] || PAGE_EXPLANATIONS[currentPath]?.en
 
   return (
-    <div className="fixed bottom-5 left-5 z-[9999] max-w-md w-[calc(100vw-2.5rem)] animate-fade-in-up">
-      <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-3xl p-5 shadow-2xl border-2 border-brand-500/80 dark:border-brand-600 text-gray-900 dark:text-white relative">
-        {/* Close Button */}
-        <button
-          onClick={handleSkip}
-          className="absolute top-3.5 right-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+    <>
+      {/* 1. PERMANENT FLOATING MASCOT BUTTON (Bottom Left) — ALWAYS VISIBLE! */}
+      <div className="fixed bottom-5 left-5 z-[9990] flex items-center gap-2">
+        <div
+          onClick={() => {
+            setIsFirstVisitPrompt(false)
+            setDialogOpen(true)
+          }}
+          className="group relative flex items-center gap-2 cursor-pointer transition transform hover:scale-110 active:scale-95"
         >
-          <X size={18} />
-        </button>
-
-        {/* First Visit Prompt */}
-        {isFirstVisitPrompt ? (
-          <div className="flex items-start gap-4">
-            <FarmerAvatar size={68} />
-            <div className="flex-1 pr-4">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="font-extrabold text-sm text-brand-700 dark:text-emerald-400">
-                  {t('chacha_name')}
-                </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 font-semibold">
-                  Guide
-                </span>
-              </div>
-              <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
-                {t('tour_welcome_prompt')}
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={handleStartTour}
-                  className="btn-primary text-xs py-2 px-3.5 flex items-center gap-1.5 font-bold shadow-md"
-                >
-                  <Sparkles size={14} />
-                  <span>{t('tour_start_btn')}</span>
-                </button>
-                <button
-                  onClick={handleSkip}
-                  className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white transition"
-                >
-                  {t('tour_skip_btn')}
-                </button>
-              </div>
+          <FarmerAvatar size={58} />
+          {/* Animated floating prompt bubble next to mascot */}
+          {!dialogOpen && (
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-2xl shadow-xl border border-amber-300 dark:border-amber-500/40 text-xs font-bold text-gray-800 dark:text-gray-100 animate-bounce">
+              <span className="text-amber-500">✨</span>
+              <span>{t('chacha_name')}</span>
+              <span className="text-[10px] text-brand-600 dark:text-emerald-400">({t('nav_tour')})</span>
             </div>
-          </div>
-        ) : pageMode && pageExplanation ? (
-          /* Single Page Explanation Mode (Triggered by (i) button) */
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 pb-2 border-b border-gray-100 dark:border-gray-800">
-              <FarmerAvatar size={50} />
-              <div>
-                <h4 className="font-extrabold text-sm text-brand-700 dark:text-emerald-400">
-                  {pageExplanation.title}
-                </h4>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                  {t('chacha_name')} · {t('page_tour_title')}
-                </p>
-              </div>
-            </div>
-            <div className="space-y-2 text-xs text-gray-700 dark:text-gray-300">
-              {pageExplanation.steps.map((st, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <span className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
-                    {i + 1}
-                  </span>
-                  <p className="leading-relaxed">{st}</p>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={handleSkip}
-              className="btn-primary w-full text-xs py-2 mt-2 font-bold flex items-center justify-center gap-1"
-            >
-              <Check size={14} />
-              <span>{t('tour_finish_btn')}</span>
-            </button>
-          </div>
-        ) : (
-          /* Full Multi-Step Tour Mode */
-          <div className="space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-800">
-              <div className="flex items-center gap-2.5">
-                <FarmerAvatar size={48} />
-                <div>
-                  <h4 className="font-extrabold text-sm text-brand-700 dark:text-emerald-400">
-                    {FULL_TOUR_STEPS[tourStep].title[lang] || FULL_TOUR_STEPS[tourStep].title.en}
-                  </h4>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                    Step {tourStep + 1} of {FULL_TOUR_STEPS.length}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed min-h-[50px]">
-              {FULL_TOUR_STEPS[tourStep].content[lang] || FULL_TOUR_STEPS[tourStep].content.en}
-            </p>
-
-            {/* Stepper Progress dots */}
-            <div className="flex items-center justify-center gap-1.5 py-1">
-              {FULL_TOUR_STEPS.map((_, idx) => (
-                <span
-                  key={idx}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    idx === tourStep ? 'w-6 bg-brand-600 dark:bg-emerald-400' : 'w-2 bg-gray-200 dark:bg-gray-700'
-                  }`}
-                />
-              ))}
-            </div>
-
-            {/* Tour Controls */}
-            <div className="flex items-center justify-between pt-1">
-              <button
-                onClick={handlePrevStep}
-                disabled={tourStep === 0}
-                className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white disabled:opacity-30 transition flex items-center gap-1"
-              >
-                <ArrowLeft size={13} />
-                <span>{t('tour_prev_btn')}</span>
-              </button>
-
-              <button
-                onClick={handleNextStep}
-                className="btn-primary text-xs py-1.5 px-4 font-bold flex items-center gap-1 shadow-md"
-              >
-                <span>{tourStep === FULL_TOUR_STEPS.length - 1 ? t('tour_finish_btn') : t('tour_next_btn')}</span>
-                <ArrowRight size={13} />
-              </button>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* 2. INTERACTIVE DIALOG POPUP WHEN OPEN */}
+      {dialogOpen && (
+        <div className="fixed bottom-20 left-4 sm:left-6 z-[9999] max-w-md w-[calc(100vw-2rem)] animate-fade-in-up">
+          <div className="bg-white/98 dark:bg-gray-900/98 backdrop-blur-xl rounded-3xl p-5 shadow-2xl border-2 border-amber-400 dark:border-amber-500 text-gray-900 dark:text-white relative">
+            {/* Close Button */}
+            <button
+              onClick={handleCloseDialog}
+              className="absolute top-3.5 right-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            >
+              <X size={18} />
+            </button>
+
+            {/* First Visit Prompt */}
+            {isFirstVisitPrompt ? (
+              <div className="flex items-start gap-3.5">
+                <FarmerAvatar size={64} />
+                <div className="flex-1 pr-3">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="font-extrabold text-sm text-brand-700 dark:text-emerald-400">
+                      {t('chacha_name')}
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-semibold">
+                      Kisan Guide
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-700 dark:text-gray-200 leading-relaxed mb-3.5">
+                    {t('tour_welcome_prompt')}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleStartTour}
+                      className="btn-primary text-xs py-2 px-3.5 flex items-center gap-1.5 font-bold shadow-md"
+                    >
+                      <Sparkles size={14} />
+                      <span>{t('tour_start_btn')}</span>
+                    </button>
+                    <button
+                      onClick={handleCloseDialog}
+                      className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white transition"
+                    >
+                      {t('tour_skip_btn')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : pageMode && pageExplanation ? (
+              /* Single Page Explanation Mode (Triggered by (i) button) */
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 pb-2 border-b border-gray-100 dark:border-gray-800">
+                  <FarmerAvatar size={48} />
+                  <div>
+                    <h4 className="font-extrabold text-sm text-brand-700 dark:text-emerald-400">
+                      {pageExplanation.title}
+                    </h4>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                      {t('chacha_name')} · {t('page_tour_title')}
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-2 text-xs text-gray-700 dark:text-gray-200">
+                  {pageExplanation.steps.map((st, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <span className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                        {i + 1}
+                      </span>
+                      <p className="leading-relaxed">{st}</p>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={handleCloseDialog}
+                  className="btn-primary w-full text-xs py-2 mt-2 font-bold flex items-center justify-center gap-1"
+                >
+                  <Check size={14} />
+                  <span>{t('tour_finish_btn')}</span>
+                </button>
+              </div>
+            ) : (
+              /* Full Multi-Step Tour Mode */
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center gap-2.5">
+                    <FarmerAvatar size={44} />
+                    <div>
+                      <h4 className="font-extrabold text-sm text-brand-700 dark:text-emerald-400">
+                        {FULL_TOUR_STEPS[tourStep].title[lang] || FULL_TOUR_STEPS[tourStep].title.en}
+                      </h4>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                        Step {tourStep + 1} of {FULL_TOUR_STEPS.length}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-xs text-gray-700 dark:text-gray-200 leading-relaxed min-h-[50px]">
+                  {FULL_TOUR_STEPS[tourStep].content[lang] || FULL_TOUR_STEPS[tourStep].content.en}
+                </p>
+
+                {/* Stepper Progress dots */}
+                <div className="flex items-center justify-center gap-1.5 py-1">
+                  {FULL_TOUR_STEPS.map((_, idx) => (
+                    <span
+                      key={idx}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        idx === tourStep ? 'w-6 bg-brand-600 dark:bg-emerald-400' : 'w-2 bg-gray-200 dark:bg-gray-700'
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                {/* Tour Controls */}
+                <div className="flex items-center justify-between pt-1">
+                  <button
+                    onClick={handlePrevStep}
+                    disabled={tourStep === 0}
+                    className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white disabled:opacity-30 transition flex items-center gap-1"
+                  >
+                    <ArrowLeft size={13} />
+                    <span>{t('tour_prev_btn')}</span>
+                  </button>
+
+                  <button
+                    onClick={handleNextStep}
+                    className="btn-primary text-xs py-1.5 px-4 font-bold flex items-center gap-1 shadow-md"
+                  >
+                    <span>{tourStep === FULL_TOUR_STEPS.length - 1 ? t('tour_finish_btn') : t('tour_next_btn')}</span>
+                    <ArrowRight size={13} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   )
 }

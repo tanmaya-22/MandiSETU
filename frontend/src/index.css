@@ -18,6 +18,51 @@
   }
 }
 
+/* ─── Global Dark Theme Overrides for Text & Containers ───────────────────── */
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: #f8fafc !important;
+}
+.dark .text-gray-900 {
+  color: #f8fafc !important;
+}
+.dark .text-gray-800 {
+  color: #f1f5f9 !important;
+}
+.dark .text-gray-700 {
+  color: #e2e8f0 !important;
+}
+.dark .text-gray-600 {
+  color: #cbd5e1 !important;
+}
+.dark .text-gray-500 {
+  color: #94a3b8 !important;
+}
+.dark .bg-white {
+  background-color: #111827 !important;
+  color: #f8fafc;
+}
+.dark .bg-gray-50 {
+  background-color: #1f2937 !important;
+}
+.dark .bg-gray-100 {
+  background-color: #374151 !important;
+  color: #f8fafc;
+}
+.dark .border-gray-100 {
+  border-color: #374151 !important;
+}
+.dark .border-gray-200 {
+  border-color: #4b5563 !important;
+}
+.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #374151 !important;
+}
+.dark select, .dark input, .dark textarea {
+  background-color: #1f2937 !important;
+  color: #f8fafc !important;
+  border-color: #4b5563 !important;
+}
+
 @layer components {
   /* ── Buttons ─────────────────────────────────────────────────────────── */
   .btn-primary {
@@ -134,3 +179,5 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+.dark ::-webkit-scrollbar-thumb { background: #4b5563; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
