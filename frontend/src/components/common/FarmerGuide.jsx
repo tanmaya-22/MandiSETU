@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import {
   X, Sparkles, ChevronRight, ChevronLeft, Target,
-  Play, CheckCircle2, ArrowRight, Lightbulb, Compass
+  Play, CheckCircle2, ArrowRight, Lightbulb, Compass, RotateCcw
 } from 'lucide-react'
 import { useLangStore } from '../../store/langStore'
 
