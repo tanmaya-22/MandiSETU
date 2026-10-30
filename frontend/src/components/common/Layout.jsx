@@ -1,57 +1,68 @@
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
+import { useLangStore } from '../../store/langStore'
+import HeaderControls from './HeaderControls'
 import {
   LayoutDashboard, TrendingUp, Calculator, Package, Users,
   CreditCard, Lightbulb, ShieldCheck, Truck, AlertTriangle,
-  Camera, CloudRain, BarChart3, LogOut, Menu, X, Leaf, Bell,
-  ChevronRight, Sparkles, UserCheck
+  Camera, CloudRain, BarChart3, LogOut, Menu, X, Leaf
 } from 'lucide-react'
 import { useState } from 'react'
 
-const navItems = (role) => {
-  const dashboardLink =
-    role === 'buyer'
-      ? { to: '/buyer-dashboard', icon: LayoutDashboard, label: 'Dashboard', module: '1' }
-      : role === 'admin'
-      ? { to: '/admin', icon: LayoutDashboard, label: 'Admin Dashboard', module: '1' }
-      : { to: '/farmer-dashboard', icon: LayoutDashboard, label: 'Dashboard', module: '1' }
-
-  const base = [
-    dashboardLink,
-    { to: '/prices',       icon: TrendingUp,   label: 'Price Discovery & Map', module: '2' },
-    { to: '/calculator',   icon: Calculator,   label: 'Net Realization Calc',   module: '3' },
-    { to: '/listings',     icon: Package,      label: 'Produce Listings',       module: '4' },
-    { to: '/transactions', icon: CreditCard,   label: 'Transactions & Escrow', module: '6' },
-    { to: '/buyers',       icon: Users,        label: 'Buyer Reliability',      module: '8' },
-    { to: '/logistics',    icon: Truck,        label: 'Logistics Coordination', module: '8b' },
-    { to: '/disputes',     icon: AlertTriangle,label: 'Dispute Arbitration',    module: '9' },
-    { to: '/weather',      icon: CloudRain,    label: 'Weather Advisory',       module: '11' },
-  ]
-  const farmer = [
-    { to: '/grading',      icon: Camera,       label: 'AI Quality Grading',     module: '10' },
-    { to: '/sale-window',  icon: Lightbulb,    label: 'Optimal Sale Window',    module: '7' },
-  ]
-  const buyer = [
-    { to: '/matching',     icon: ShieldCheck,  label: 'Match & Source Lots',    module: '5' },
-  ]
-  const admin = [
-    { to: '/analytics',    icon: BarChart3,    label: 'Analytics Suite',        module: '12' },
-  ]
-
-  if (role === 'admin') return [...base, ...farmer, ...buyer, ...admin]
-  if (role === 'buyer') return [...base, ...buyer]
-  return [...base, ...farmer]
-}
-
 export default function Layout() {
   const { role, user, logout } = useAuthStore()
+  const { t } = useLangStore()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const navItems = (userRole) => {
+    const dashboardLink =
+      userRole === 'buyer'
+        ? { to: '/buyer-dashboard', icon: LayoutDashboard, label: t('nav_dashboard'), module: '1' }
+        : userRole === 'admin'
+        ? { to: '/admin', icon: LayoutDashboard, label: t('nav_dashboard'), module: '1' }
+        : { to: '/farmer-dashboard', icon: LayoutDashboard, label: t('nav_dashboard'), module: '1' }
+
+    const base = [
+      dashboardLink,
+      { to: '/prices',       icon: TrendingUp,   label: t('nav_prices'),       module: '2' },
+      { to: '/calculator',   icon: Calculator,   label: t('nav_calculator'),   module: '3' },
+      { to: '/listings',     icon: Package,      label: t('nav_listings'),     module: '4' },
+      { to: '/transactions', icon: CreditCard,   label: t('nav_transactions'), module: '6' },
+      { to: '/buyers',       icon: Users,        label: t('nav_buyers'),       module: '8' },
+      { to: '/logistics',    icon: Truck,        label: t('nav_logistics'),    module: '8b' },
+      { to: '/disputes',     icon: AlertTriangle,label: t('nav_disputes'),     module: '9' },
+      { to: '/weather',      icon: CloudRain,    label: t('nav_weather'),      module: '11' },
+    ]
+    const farmer = [
+      { to: '/grading',      icon: Camera,       label: t('nav_grading'),      module: '10' },
+      { to: '/sale-window',  icon: Lightbulb,    label: t('nav_salewindow'),   module: '7' },
+    ]
+    const buyer = [
+      { to: '/matching',     icon: ShieldCheck,  label: t('nav_matching'),     module: '5' },
+    ]
+    const admin = [
+      { to: '/analytics',    icon: BarChart3,    label: t('nav_analytics'),    module: '12' },
+    ]
+
+    if (userRole === 'admin') return [...base, ...farmer, ...buyer, ...admin]
+    if (userRole === 'buyer') return [...base, ...buyer]
+    return [...base, ...farmer]
+  }
+
   const items = navItems(role)
 
   const handleLogout = () => {
     logout()
     navigate('/login')
+  }
+
+  const handleOpenPageTour = () => {
+    window.dispatchEvent(new CustomEvent('mandisetu_open_guide', { detail: { pageMode: true } }))
+  }
+
+  const handleOpenFullTour = () => {
+    window.dispatchEvent(new CustomEvent('mandisetu_open_guide', { detail: { pageMode: false } }))
   }
 
   const roleStyles = {
@@ -71,7 +82,7 @@ export default function Layout() {
     : 'MS'
 
   return (
-    <div className="min-h-screen flex bg-gray-50/70 font-sans antialiased text-gray-900">
+    <div className="min-h-screen flex bg-gray-50/70 dark:bg-gray-950 font-sans antialiased text-gray-900 dark:text-gray-100 transition-colors duration-200">
       {/* Sidebar for Desktop & Drawer for Mobile */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-brand-950 via-brand-900 to-gray-950 text-white transform transition-transform duration-300 ease-in-out
@@ -84,7 +95,7 @@ export default function Layout() {
               <Leaf size={18} className="text-white" />
             </div>
             <div>
-              <p className="font-extrabold text-lg leading-tight tracking-tight text-white">MandiSetu</p>
+              <p className="font-extrabold text-lg leading-tight tracking-tight text-white">{t('brand_name')}</p>
               <p className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">Agri-Market Suite</p>
             </div>
           </Link>
@@ -149,7 +160,7 @@ export default function Layout() {
             className="flex items-center gap-2.5 w-full px-3 py-2 text-xs font-semibold text-gray-300 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition"
           >
             <LogOut size={16} />
-            <span>Sign Out Session</span>
+            <span>{t('nav_sign_out')}</span>
           </button>
         </div>
       </aside>
@@ -165,35 +176,33 @@ export default function Layout() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header Bar */}
-        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-200/80 px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+        <header className="sticky top-0 z-30 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200/80 dark:border-gray-800 px-4 sm:px-6 py-3 flex items-center justify-between gap-4 transition-colors">
           <div className="flex items-center gap-3">
             <button
-              className="lg:hidden p-1.5 rounded-xl text-gray-600 hover:bg-gray-100 transition"
+              className="lg:hidden p-1.5 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu size={20} />
             </button>
-            <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-gray-500">
+            <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Live Agmarknet Datafeed Active</span>
+              <span>{t('live_feed_active')}</span>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <Link
-              to="/prices"
-              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl transition border border-emerald-200/60"
-            >
-              <TrendingUp size={14} className="text-emerald-600" />
-              <span>Live Mandi Rates</span>
-            </Link>
+            {/* Multilingual Switcher + Dark Mode Toggle + (i) Page Tour Button */}
+            <HeaderControls
+              onOpenPageTour={handleOpenPageTour}
+              onOpenFullTour={handleOpenFullTour}
+            />
 
-            <div className="flex items-center gap-2 pl-2 border-l border-gray-200">
+            <div className="flex items-center gap-2 pl-2 border-l border-gray-200 dark:border-gray-800">
               <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-gray-900 leading-tight">{user?.full_name || 'Farmer'}</p>
-                <p className="text-[10px] text-gray-500 capitalize">{role || 'Farmer'}</p>
+                <p className="text-xs font-bold text-gray-900 dark:text-gray-100 leading-tight">{user?.full_name || 'Farmer'}</p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 capitalize">{role || 'Farmer'}</p>
               </div>
-              <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 font-bold text-xs flex items-center justify-center">
                 {initials}
               </div>
             </div>

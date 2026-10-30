@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { useAuthStore } from './store/authStore'
+import { useThemeStore } from './store/themeStore'
 
 import LoginPage from './pages/auth/LoginPage'
 import RegisterPage from './pages/auth/RegisterPage'
@@ -27,6 +29,8 @@ import AnalyticsPage from './pages/analytics/AnalyticsPage'
 
 import Layout from './components/common/Layout'
 import LandingPage from './pages/LandingPage'
+import FarmerGuide from './components/common/FarmerGuide'
+import AIAssistant from './components/common/AIAssistant'
 
 // Smart role-based dashboard router
 function DashboardRedirect() {
@@ -40,6 +44,22 @@ function DashboardRedirect() {
 }
 
 export default function App() {
+  const initTheme = useThemeStore((s) => s.initTheme)
+  const [guideOpen, setGuideOpen] = useState(false)
+  const [guidePageMode, setGuidePageMode] = useState(false)
+
+  useEffect(() => {
+    initTheme()
+
+    // Listen for custom guide trigger events from any page
+    const handleTriggerGuide = (e) => {
+      setGuidePageMode(!!e.detail?.pageMode)
+      setGuideOpen(true)
+    }
+    window.addEventListener('mandisetu_open_guide', handleTriggerGuide)
+    return () => window.removeEventListener('mandisetu_open_guide', handleTriggerGuide)
+  }, [initTheme])
+
   return (
     <BrowserRouter>
       <Toaster
@@ -55,6 +75,16 @@ export default function App() {
           },
         }}
       />
+
+      {/* Global Interactive Animated Indian Farmer Guide */}
+      <FarmerGuide
+        isOpen={guideOpen}
+        onClose={() => setGuideOpen(false)}
+        pageMode={guidePageMode}
+      />
+
+      {/* Global Floating AI Assistant */}
+      <AIAssistant />
 
       <Routes>
         {/* Public routes */}

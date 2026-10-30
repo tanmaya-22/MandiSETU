@@ -6,6 +6,8 @@ import {
   ChevronRight, Sparkles, Navigation, Layers, Tractor, Building2,
   BarChart3, Camera, Truck, AlertTriangle
 } from 'lucide-react'
+import { useLangStore } from '../store/langStore'
+import HeaderControls from '../components/common/HeaderControls'
 
 const TICKER_ITEMS = [
   { mandi: 'Lasalgaon APMC', commodity: 'Onion', price: '₹3,250/Qtl', change: '+₹150', up: true },
@@ -105,11 +107,10 @@ const MODULES = [
 ]
 
 export default function LandingPage() {
-  const [activeTab, setActiveTab] = useState('farmer')
+  const { t } = useLangStore()
   const [sampleQty, setSampleQty] = useState(50) // quintals
   const [sampleCommodity, setSampleCommodity] = useState('Onion')
 
-  // Quick interactive net-realization calculator preview
   const commodityPrices = {
     Onion: { localMandi: 2800, distantMandi: 3650, distance: 180 },
     Wheat: { localMandi: 2280, distantMandi: 2550, distance: 120 },
@@ -122,14 +123,18 @@ export default function LandingPage() {
   const netDistant = (currentCalc.distantMandi - transportCostPerQtl) * sampleQty
   const extraProfit = Math.max(0, netDistant - netLocal)
 
+  const handleOpenTour = () => {
+    window.dispatchEvent(new CustomEvent('mandisetu_open_guide', { detail: { pageMode: false } }))
+  }
+
   return (
-    <div className="min-h-screen bg-white text-gray-900 selection:bg-brand-200">
+    <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors selection:bg-brand-200">
       {/* 1. Real-time Live Mandi Ticker Bar */}
-      <div className="bg-brand-900 text-white text-xs py-2 px-4 overflow-hidden border-b border-brand-800">
+      <div className="bg-brand-950 text-white text-xs py-2 px-4 overflow-hidden border-b border-brand-800">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold tracking-wider uppercase text-[10px] text-emerald-300">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>Live APMC Ticker:</span>
+            <span>{t('live_feed_active')}:</span>
           </div>
           <div className="flex items-center gap-6 overflow-x-auto whitespace-nowrap scrollbar-none py-0.5">
             {TICKER_ITEMS.map((item, i) => (
@@ -147,32 +152,37 @@ export default function LandingPage() {
       </div>
 
       {/* 2. Sticky Glass Navigation */}
-      <nav className="bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 transition-all">
+      <nav className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group">
             <div className="w-10 h-10 bg-gradient-to-tr from-brand-600 to-emerald-500 rounded-xl flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
               <Leaf size={20} className="text-white" />
             </div>
             <div>
-              <span className="text-xl font-extrabold tracking-tight text-gray-900">MandiSetu</span>
-              <span className="hidden sm:inline-block ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+              <span className="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+                {t('brand_name')}
+              </span>
+              <span className="hidden sm:inline-block ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                 12 Integrated Modules
               </span>
             </div>
           </Link>
 
+          {/* Multilingual Selector + Dark Mode Toggle + Auth buttons */}
           <div className="flex items-center gap-3">
+            <HeaderControls onOpenFullTour={handleOpenTour} />
+
             <Link
               to="/login"
-              className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-brand-700 hover:bg-gray-50 rounded-xl transition"
+              className="px-3.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-brand-700 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition"
             >
-              Sign In
+              {t('nav_sign_in')}
             </Link>
             <Link
               to="/register"
-              className="btn-primary text-sm px-4 py-2 flex items-center gap-1.5 shadow-sm hover:shadow-md"
+              className="btn-primary text-xs px-4 py-2 flex items-center gap-1.5 shadow-sm hover:shadow-md"
             >
-              <span>Get Started</span>
+              <span>{t('nav_get_started')}</span>
               <ArrowRight size={14} />
             </Link>
           </div>
@@ -181,7 +191,6 @@ export default function LandingPage() {
 
       {/* 3. Hero Section with Interactive Gradient & Glow */}
       <section className="relative overflow-hidden bg-gradient-to-br from-brand-700 via-emerald-800 to-green-950 text-white pt-16 pb-24 lg:pt-24 lg:pb-32">
-        {/* Background ambient lighting */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-10 left-10 w-96 h-96 bg-emerald-400/20 rounded-full blur-3xl animate-blob" />
           <div className="absolute bottom-10 right-10 w-[500px] h-[500px] bg-teal-300/15 rounded-full blur-3xl animate-blob delay-500" />
@@ -216,13 +225,13 @@ export default function LandingPage() {
                   <ArrowRight size={18} />
                 </Link>
 
-                <Link
-                  to="/login"
+                <button
+                  onClick={handleOpenTour}
                   className="px-6 py-3.5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-semibold rounded-2xl transition-all duration-200 flex items-center justify-center gap-2"
                 >
-                  <span>Quick Demo Access</span>
-                  <ChevronRight size={18} />
-                </Link>
+                  <Sparkles size={18} className="text-amber-300" />
+                  <span>Interactive Farmer Tour</span>
+                </button>
               </div>
 
               {/* Feature Pill Highlights */}
@@ -237,25 +246,25 @@ export default function LandingPage() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <CheckCircle2 size={16} className="text-emerald-400" />
-                  <span>Zero Commission to Intermediaries</span>
+                  <span>4 Languages (EN / हिन्दी / मराठी / ଓଡ଼ିଆ)</span>
                 </div>
               </div>
             </div>
 
             {/* Right Column: Interactive Live Take-Home Profit Calculator Preview */}
             <div className="lg:col-span-5 animate-scale-in">
-              <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/80 text-gray-900">
-                <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
+              <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/80 dark:border-gray-800 text-gray-900 dark:text-gray-100">
+                <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
                   <div className="flex items-center gap-2">
-                    <div className="p-2 bg-emerald-100 text-emerald-700 rounded-xl">
+                    <div className="p-2 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 rounded-xl">
                       <Calculator size={18} />
                     </div>
                     <div>
-                      <h3 className="font-extrabold text-sm text-gray-900">Net Realization Estimator</h3>
-                      <p className="text-[11px] text-gray-500">Compare take-home profit across mandis</p>
+                      <h3 className="font-extrabold text-sm text-gray-900 dark:text-white">Net Realization Estimator</h3>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400">Compare take-home profit across mandis</p>
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-brand-100 text-brand-800 rounded-full">
+                  <span className="text-[10px] font-bold px-2 py-0.5 bg-brand-100 dark:bg-brand-950 text-brand-800 dark:text-brand-300 rounded-full">
                     Module 3
                   </span>
                 </div>
@@ -263,7 +272,7 @@ export default function LandingPage() {
                 {/* Crop & Quantity Selector */}
                 <div className="space-y-3.5">
                   <div>
-                    <label className="text-xs font-bold text-gray-600 block mb-1">Select Crop</label>
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-300 block mb-1">Select Crop</label>
                     <div className="grid grid-cols-4 gap-1.5">
                       {['Onion', 'Wheat', 'Tomato', 'Potato'].map((crop) => (
                         <button
@@ -272,7 +281,7 @@ export default function LandingPage() {
                           className={`py-1.5 text-xs font-bold rounded-xl transition ${
                             sampleCommodity === crop
                               ? 'bg-brand-600 text-white shadow-sm'
-                              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                              : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
                           }`}
                         >
                           {crop}
@@ -282,9 +291,9 @@ export default function LandingPage() {
                   </div>
 
                   <div>
-                    <div className="flex justify-between text-xs font-semibold text-gray-600 mb-1">
+                    <div className="flex justify-between text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">
                       <span>Harvest Quantity</span>
-                      <span className="text-brand-700 font-bold">{sampleQty} Quintals ({sampleQty * 100} kg)</span>
+                      <span className="text-brand-700 dark:text-emerald-400 font-bold">{sampleQty} Quintals ({sampleQty * 100} kg)</span>
                     </div>
                     <input
                       type="range"
@@ -298,18 +307,18 @@ export default function LandingPage() {
                   </div>
 
                   {/* Profit Comparison Card */}
-                  <div className="p-3.5 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100 space-y-2">
+                  <div className="p-3.5 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 rounded-2xl border border-emerald-100 dark:border-emerald-900/40 space-y-2">
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-600">Local Village Broker:</span>
-                      <span className="font-semibold text-gray-700">₹{netLocal.toLocaleString('en-IN')}</span>
+                      <span className="text-gray-600 dark:text-gray-400">Local Village Broker:</span>
+                      <span className="font-semibold text-gray-700 dark:text-gray-200">₹{netLocal.toLocaleString('en-IN')}</span>
                     </div>
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-600">MandiSetu Terminal APMC:</span>
-                      <span className="font-bold text-brand-700">₹{netDistant.toLocaleString('en-IN')}</span>
+                      <span className="text-gray-600 dark:text-gray-400">MandiSetu Terminal APMC:</span>
+                      <span className="font-bold text-brand-700 dark:text-emerald-400">₹{netDistant.toLocaleString('en-IN')}</span>
                     </div>
-                    <div className="pt-2 border-t border-emerald-200 flex justify-between items-center">
-                      <span className="text-xs font-extrabold text-emerald-900">Your Extra Take-Home:</span>
-                      <span className="text-base font-extrabold text-emerald-700">
+                    <div className="pt-2 border-t border-emerald-200 dark:border-emerald-800 flex justify-between items-center">
+                      <span className="text-xs font-extrabold text-emerald-900 dark:text-emerald-200">Your Extra Take-Home:</span>
+                      <span className="text-base font-extrabold text-emerald-700 dark:text-emerald-400">
                         +₹{extraProfit.toLocaleString('en-IN')}
                       </span>
                     </div>
@@ -329,40 +338,40 @@ export default function LandingPage() {
       </section>
 
       {/* 4. Platform Statistics */}
-      <section className="bg-emerald-50/60 py-12 border-b border-emerald-100">
+      <section className="bg-emerald-50/60 dark:bg-gray-900 py-12 border-b border-emerald-100 dark:border-gray-800 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div className="p-4">
-              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700">500+</div>
-              <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-1">APMC Mandis Connected</div>
+              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700 dark:text-emerald-400">500+</div>
+              <div className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">APMC Mandis Connected</div>
             </div>
             <div className="p-4">
-              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700">10,000+</div>
-              <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-1">Empowered Farmers</div>
+              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700 dark:text-emerald-400">10,000+</div>
+              <div className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">Empowered Farmers</div>
             </div>
             <div className="p-4">
-              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700">₹50 Cr+</div>
-              <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-1">Facilitated Trade Value</div>
+              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700 dark:text-emerald-400">₹50 Cr+</div>
+              <div className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">Facilitated Trade Value</div>
             </div>
             <div className="p-4">
-              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700">12 Modules</div>
-              <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-1">End-to-End Agri Suite</div>
+              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700 dark:text-emerald-400">12 Modules</div>
+              <div className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">End-to-End Agri Suite</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* 5. 12 Comprehensive Integrated Modules Grid */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white dark:bg-gray-950 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="text-xs font-bold uppercase tracking-wider text-brand-600 bg-brand-50 px-3 py-1 rounded-full">
+            <span className="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-emerald-400 bg-brand-50 dark:bg-gray-900 px-3 py-1 rounded-full border border-brand-200 dark:border-gray-800">
               Full Architecture
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mt-3 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white mt-3 mb-4">
               All 12 Modules Built Ground-Up for Indian Agriculture
             </h2>
-            <p className="text-gray-600 text-sm sm:text-base">
+            <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
               Every stage from harvest date planning, ML price discovery, quality assessment to dispute settlement is covered under a unified digital workflow.
             </p>
           </div>
@@ -373,20 +382,20 @@ export default function LandingPage() {
               return (
                 <div
                   key={m.num}
-                  className="card-interactive group p-6 rounded-3xl border border-gray-100 hover:border-brand-300 hover:shadow-xl transition-all duration-300 bg-white"
+                  className="card-interactive group p-6 rounded-3xl border border-gray-100 dark:border-gray-800 hover:border-brand-300 dark:hover:border-emerald-600 hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-900"
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${m.color} flex items-center justify-center transition-transform group-hover:scale-110`}>
                       <Icon size={22} />
                     </div>
-                    <span className="text-xs font-mono font-bold text-gray-400 group-hover:text-brand-600 transition">
+                    <span className="text-xs font-mono font-bold text-gray-400 group-hover:text-brand-600 dark:group-hover:text-emerald-400 transition">
                       M{m.num}
                     </span>
                   </div>
-                  <h3 className="text-base font-bold text-gray-900 mb-2 group-hover:text-brand-700 transition">
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2 group-hover:text-brand-700 dark:group-hover:text-emerald-400 transition">
                     {m.title}
                   </h3>
-                  <p className="text-xs text-gray-500 leading-relaxed">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
                     {m.desc}
                   </p>
                 </div>
@@ -427,7 +436,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Leaf size={18} className="text-brand-400" />
-            <span className="text-white font-extrabold text-sm">MandiSetu</span>
+            <span className="text-white font-extrabold text-sm">{t('brand_name')}</span>
             <span className="text-gray-500">· Digital Agricultural Marketplace</span>
           </div>
           <div className="flex gap-6 text-gray-500">
