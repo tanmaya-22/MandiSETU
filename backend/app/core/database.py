@@ -52,4 +52,10 @@ async def create_all_tables():
     """Create all tables on startup (dev only — use Alembic in prod)."""
     async with engine.begin() as conn:
         from app import models
+        from sqlalchemy import text
         await conn.run_sync(Base.metadata.create_all)
+        # Resilient schema patch for existing PostgreSQL installations
+        try:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS powers JSON DEFAULT '[]'::json;"))
+        except Exception as e:
+            print(f"[MandiSetu DB] Column powers check notice: {e}")

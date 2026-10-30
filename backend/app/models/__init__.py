@@ -55,6 +55,9 @@ class User(Base):
     gst_number = Column(String(20), nullable=True)
     buyer_reliability_score = Column(Float, default=0.0)  # Module 8
 
+    # Authority & Powers (managed by Admin(TanmayA))
+    powers = Column(JSON, default=list)   # list of power-id strings e.g. ["csv_export","decrypt_pii"]
+
     created_at = Column(DateTime(timezone=True), default=now_utc)
     updated_at = Column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
 

@@ -96,11 +96,19 @@ export default function AdminDashboard() {
   // Hover Tooltip for demo encrypted mode
   const [hoveredEncryptedId, setHoveredEncryptedId] = useState(null)
 
-  const loadAllData = () => {
+  const loadAllData = async () => {
     setLoading(true)
     try {
-      // 1. Users
-      const usersList = getLocalUsers()
+      // 1. Users — Fetch from PostgreSQL backend + merge with local demo users
+      let usersList = []
+      try {
+        usersList = await authAPI.fetchAllUsers()
+      } catch {
+        usersList = getLocalUsers()
+      }
+      if (!usersList || usersList.length === 0) {
+        usersList = getLocalUsers()
+      }
       setRegisteredUsers(usersList)
 
       // Keep selected user in sync with updated list
@@ -209,6 +217,11 @@ export default function AdminDashboard() {
 
     if (selectedUserForPowers) {
       updateUserPowers(selectedUserForPowers.email, newPowers, powerAuditReason)
+      // Sync to backend PostgreSQL
+      const userId = selectedUserForPowers.id || selectedUserForPowers.user_id
+      if (userId) {
+        authAPI.updateUserPowersOnServer(userId, newPowers, powerAuditReason)
+      }
       loadAllData()
       toast.success(
         `${newPowers.includes(powerId) ? 'Granted' : 'Revoked'} "${powerId.replace(/_/g, ' ')}" for ${selectedUserForPowers.full_name || selectedUserForPowers.email}`,
@@ -242,6 +255,15 @@ export default function AdminDashboard() {
         newPowers,
         `${presetType.toUpperCase()} Tier Preset applied by Admin(TanmayA)`
       )
+      // Sync to backend PostgreSQL
+      const userId = selectedUserForPowers.id || selectedUserForPowers.user_id
+      if (userId) {
+        authAPI.updateUserPowersOnServer(
+          userId,
+          newPowers,
+          `${presetType.toUpperCase()} Tier Preset applied by Admin(TanmayA)`
+        )
+      }
       loadAllData()
       toast.success(
         `Applied ${presetType.toUpperCase()} Tier to ${selectedUserForPowers.full_name || selectedUserForPowers.email}`,
@@ -250,7 +272,7 @@ export default function AdminDashboard() {
     }
   }
 
-  // Save powers to persistent local directory
+  // Save powers to persistent local directory AND backend PostgreSQL
   const handleSavePowers = () => {
     if (!isOwner) {
       setDeniedActionName('Commit Authority Configuration to Production')
@@ -262,6 +284,11 @@ export default function AdminDashboard() {
     try {
       const ok = updateUserPowers(selectedUserForPowers.email, customPowers, powerAuditReason)
       if (ok) {
+        // Sync to backend PostgreSQL
+        const userId = selectedUserForPowers.id || selectedUserForPowers.user_id
+        if (userId) {
+          authAPI.updateUserPowersOnServer(userId, customPowers, powerAuditReason)
+        }
         logAuditAction(
           'Authority Powers Configured',
           selectedUserForPowers.email,
@@ -287,10 +314,15 @@ export default function AdminDashboard() {
       setPermissionDeniedModal(true)
       return
     }
-    const isCurrentlySuspended = targetUser.is_suspended === true
+    const isCurrentlySuspended = targetUser.is_suspended === true || targetUser.is_active === false
     const newSuspended = !isCurrentlySuspended
-    const updatedUser = { ...targetUser, is_suspended: newSuspended, is_verified: !newSuspended }
+    const updatedUser = { ...targetUser, is_suspended: newSuspended, is_verified: !newSuspended, is_active: !newSuspended }
     saveLocalUser(updatedUser)
+    // Sync to backend PostgreSQL
+    const userId = targetUser.id || targetUser.user_id
+    if (userId) {
+      authAPI.updateUserStatusOnServer(userId, { is_active: !newSuspended, is_verified: !newSuspended })
+    }
     logAuditAction(
       newSuspended ? 'Suspend User Access' : 'Activate User Access',
       targetUser.email,
@@ -310,13 +342,14 @@ export default function AdminDashboard() {
       setPermissionDeniedModal(true)
       return
     }
-    const headers = ['User ID', 'Full Name', 'Email', 'Phone', 'Role', 'State', 'District', 'Active Powers']
+    const headers = ['User ID', 'Full Name', 'Email', 'Phone', 'Role', 'Source', 'State', 'District', 'Active Powers']
     const rows = registeredUsers.map((u) => [
       u.id || u.user_id || 'N/A',
       `"${u.full_name || ''}"`,
       u.email,
       u.phone || 'N/A',
       u.role || 'farmer',
+      u.source === 'database' ? 'PostgreSQL Database' : 'Local Demo',
       u.state || 'N/A',
       u.district || 'N/A',
       `"${(u.powers || []).join('; ')}"`,
@@ -632,6 +665,23 @@ export default function AdminDashboard() {
                   Click on any user card below to configure their role-specific operational permissions.
                 </p>
               </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300 font-semibold">
+                  🌐 {registeredUsers.filter((u) => u.source === 'database').length} Server DB
+                </span>
+                <button
+                  onClick={async () => {
+                    toast.loading('Fetching live accounts from server database...', { id: 'sync-db-p' })
+                    await loadAllData()
+                    toast.success('Live database accounts synchronized!', { id: 'sync-db-p' })
+                  }}
+                  className="px-2.5 py-1 rounded-xl bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/40 dark:hover:bg-brand-900/60 text-brand-700 dark:text-brand-300 text-xs font-bold flex items-center gap-1 transition"
+                  title="Synchronize user accounts registered from other computers"
+                >
+                  <RefreshCw size={11} className={loading ? 'animate-spin' : ''} />
+                  <span>Sync DB</span>
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -680,7 +730,14 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="flex items-center justify-between text-[11px] pt-1 border-t border-gray-200/50 dark:border-gray-700/50 w-full">
-                      <span className="text-gray-500">Active Powers:</span>
+                      <span className="text-gray-500 flex items-center gap-1">
+                        {u.source === 'database' ? (
+                          <span title="Registered via backend (PostgreSQL)" className="text-green-500">🌐</span>
+                        ) : (
+                          <span title="Local demo account" className="text-gray-400">💾</span>
+                        )}
+                        Powers:
+                      </span>
                       {isTanmayaUser ? (
                         <span className="font-extrabold text-amber-600 dark:text-amber-400">👑 Root (All)</span>
                       ) : (
@@ -912,17 +969,35 @@ export default function AdminDashboard() {
       {activeTab === 'users' && (
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-1">
+              <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-extrabold text-base text-gray-900 dark:text-white">
                   Live Enrolled Users Audit Directory
                 </h3>
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                  {registeredUsers.length} Users Enrolled
+                  {registeredUsers.length} Users Total
                 </span>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300">
+                  🌐 {registeredUsers.filter((u) => u.source === 'database').length} Server DB
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                  💾 {registeredUsers.filter((u) => u.source !== 'database').length} Local/Demo
+                </span>
+                <button
+                  onClick={async () => {
+                    toast.loading('Fetching live accounts from server database...', { id: 'sync-db-audit' })
+                    await loadAllData()
+                    toast.success('Live database accounts synchronized!', { id: 'sync-db-audit' })
+                  }}
+                  className="px-2.5 py-1 rounded-xl bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/40 dark:hover:bg-brand-900/60 text-brand-700 dark:text-brand-300 text-xs font-bold flex items-center gap-1.5 transition ml-1"
+                  title="Synchronize user accounts registered from other computers/browsers"
+                >
+                  <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+                  <span>Sync Database</span>
+                </button>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Every new user registration generates an instant audit entry with email and user ID.
+                Integrated directly with PostgreSQL server database. Accounts created on any device are synchronized in real-time.
               </p>
             </div>
 
@@ -942,6 +1017,7 @@ export default function AdminDashboard() {
                   <th className="py-3 px-3">Name & Role</th>
                   <th className="py-3 px-3">Email Address</th>
                   <th className="py-3 px-3">Phone</th>
+                  <th className="py-3 px-3">Source</th>
                   <th className="py-3 px-3">State / District</th>
                   <th className="py-3 px-3">⚡ Granted Powers</th>
                   <th className="py-3 px-3 text-center">Security Level</th>
@@ -1010,6 +1086,19 @@ export default function AdminDashboard() {
                         <span className="font-mono text-gray-600 dark:text-gray-400 text-[11px]">
                           {maskPhone(u.phone)}
                         </span>
+                      </td>
+
+                      {/* Source */}
+                      <td className="py-3 px-3">
+                        {u.source === 'database' ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300" title="Registered via backend PostgreSQL">
+                            🌐 Database
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400" title="Local demo account">
+                            💾 Local
+                          </span>
+                        )}
                       </td>
 
                       {/* State / District */}

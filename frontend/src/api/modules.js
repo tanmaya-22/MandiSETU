@@ -359,18 +359,37 @@ export const authAPI = {
           u.email?.split('@')[0]?.toLowerCase() === enteredId
       )
       if (res?.data) {
+        // Fetch full user profile from backend to get powers & status
+        let serverProfile = null
+        try {
+          const meRes = await api.get('/auth/me', {
+            headers: { Authorization: `Bearer ${res.data.access_token}` },
+          })
+          serverProfile = meRes?.data
+        } catch {}
+
+        const serverPowers = serverProfile?.powers || []
+        const localPowers = match?.powers || []
+        // Merge: backend powers take priority if set, else use local
+        const mergedPowers = serverPowers.length > 0 ? serverPowers : localPowers
+
         return {
           ...res,
           data: {
             ...match,
             ...res.data,
-            email: res.data.email || match?.email || (enteredId.includes('@') ? enteredId : `${enteredId}@mandisetu.in`),
+            email: res.data.email || serverProfile?.email || match?.email || (enteredId.includes('@') ? enteredId : `${enteredId}@mandisetu.in`),
             username: res.data.username || match?.username || match?.email?.split('@')[0] || enteredId,
-            full_name: res.data.full_name || match?.full_name || 'Authorized User',
-            role: res.data.role || match?.role || 'farmer',
+            full_name: res.data.full_name || serverProfile?.full_name || match?.full_name || 'Authorized User',
+            role: res.data.role || serverProfile?.role || match?.role || 'farmer',
+            state: serverProfile?.state || match?.state,
+            district: serverProfile?.district || match?.district,
+            phone: serverProfile?.phone || match?.phone,
+            is_verified: serverProfile?.is_verified ?? match?.is_verified,
+            is_active: serverProfile?.is_active ?? true,
             isDemo: match?.isDemo ?? (res.data.role === 'admin' && !isTanmayaId),
             isAdminTanmaya: false,
-            powers: match?.powers || res.data.powers || [],
+            powers: mergedPowers,
           },
         }
       }
@@ -411,6 +430,83 @@ export const authAPI = {
   getMe: () => api.get('/auth/me'),
   listUsers: () => api.get('/auth/users'),
   verifyUser: (id) => api.patch(`/auth/users/${id}/verify`),
+
+  // ── Server-Side User Management (PostgreSQL integration) ──────────────────
+  /**
+   * Fetch all registered users from PostgreSQL database.
+   * Falls back to local demo users if backend is unreachable.
+   * Merges server users with local demo users (no duplicates).
+   */
+  fetchAllUsers: async () => {
+    let serverUsers = []
+    try {
+      const res = await api.get('/auth/users/public')
+      if (Array.isArray(res?.data)) {
+        serverUsers = res.data.map((u) => ({
+          ...u,
+          source: 'database',
+          powers: u.powers || [],
+        }))
+      }
+    } catch (err) {
+      console.warn('[MandiSetu] Backend user list unavailable, using local registry.', err?.message)
+    }
+
+    // Merge: server users take priority, then add local-only users
+    const localUsers = getLocalUsers()
+    const serverEmails = new Set(serverUsers.map((u) => u.email?.toLowerCase()))
+    const localOnlyUsers = localUsers
+      .filter((u) => !serverEmails.has(u.email?.toLowerCase()))
+      .map((u) => ({ ...u, source: 'local' }))
+
+    const merged = [...serverUsers, ...localOnlyUsers]
+
+    // Cache the merged list locally for offline access
+    try {
+      localStorage.setItem('mandisetu_registered_users', JSON.stringify(merged))
+    } catch {}
+
+    return merged
+  },
+
+  /**
+   * Update powers for a user on the server (PostgreSQL).
+   * Also updates localStorage for instant local sync.
+   */
+  updateUserPowersOnServer: async (userId, powers, reason) => {
+    // Always update local registry first for instant UI feedback
+    try {
+      const localUsers = getLocalUsers()
+      const match = localUsers.find(
+        (u) => u.id === userId || u.user_id === userId
+      )
+      if (match) {
+        updateUserPowers(match.email, powers, reason)
+      }
+    } catch {}
+
+    // Then sync to backend
+    try {
+      const res = await api.patch(`/auth/users/${userId}/powers`, { powers, reason })
+      return res?.data
+    } catch (err) {
+      console.warn('[MandiSetu] Backend powers update unavailable, saved locally.', err?.message)
+      return null
+    }
+  },
+
+  /**
+   * Update user active/verified status on the server (PostgreSQL).
+   */
+  updateUserStatusOnServer: async (userId, updates) => {
+    try {
+      const res = await api.patch(`/auth/users/${userId}/status`, updates)
+      return res?.data
+    } catch (err) {
+      console.warn('[MandiSetu] Backend status update unavailable.', err?.message)
+      return null
+    }
+  },
 }
 
 // ─── Module 2: Prices (Real Agmarknet Verifiable Data) ─────────────────────────

@@ -36,6 +36,7 @@ class TokenResponse(BaseModel):
     role: str
     user_id: str
     full_name: str
+    powers: Optional[List[str]] = []
 
 
 class UserOut(BaseModel):
@@ -47,11 +48,18 @@ class UserOut(BaseModel):
     state: Optional[str]
     district: Optional[str]
     is_verified: bool
+    is_active: bool = True
     buyer_reliability_score: Optional[float]
+    powers: Optional[List[str]] = []
     created_at: datetime
 
     class Config:
         from_attributes = True
+
+
+class UserPowersUpdate(BaseModel):
+    powers: List[str] = Field(default_factory=list, description="List of power IDs to assign")
+    reason: str = Field(default="Administrative authority update by Admin(TanmayA)", description="Audit reason")
 
 
 # ─── Module 2 — Price Discovery ──────────────────────────────────────────────
