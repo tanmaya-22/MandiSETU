@@ -1,12 +1,26 @@
-// MandiSetu Multi-Language Translations Dictionary
-// English, Hindi (हिन्दी), Marathi (मराठी), and Odia (ଓଡ଼ିଆ)
+// MandiSetu Comprehensive Multi-Language Dictionary
+// Full page-level translations in English, Hindi (हिन्दी), Marathi (मराठी), and Odia (ଓଡ଼ିଆ)
 
 export const TRANSLATIONS = {
   en: {
-    // Brand
+    // Brand & General
     brand_name: 'MandiSetu',
     brand_tagline: 'Bridging Farmers to Fair Markets',
     verified_badge: 'Agmarknet (Govt. of India) Verified',
+    live_feed_active: 'Live Agmarknet Datafeed Active',
+    quick_demo: '1-Click Demo Accounts',
+    search_placeholder: 'Search mandi, commodity, variety...',
+    refresh: 'Refresh',
+    all_states: 'All States',
+    actions: 'Actions',
+    status: 'Status',
+    grade: 'Grade',
+    quantity: 'Quantity',
+    price: 'Price',
+    commodity: 'Commodity',
+    district: 'District',
+    state: 'State',
+    date: 'Date',
 
     // Nav
     nav_dashboard: 'Dashboard',
@@ -27,13 +41,68 @@ export const TRANSLATIONS = {
     nav_sign_out: 'Sign Out Session',
     nav_tour: 'Website Tour',
 
-    // Header & Actions
-    live_feed_active: 'Live Agmarknet Datafeed Active',
-    quick_demo: '1-Click Demo Accounts',
-    search_placeholder: 'Search mandi, commodity, variety...',
-    refresh: 'Refresh',
-    all_states: 'All States',
-    calculate_now: 'Calculate Net Realization',
+    // Farmer Dashboard Page
+    fd_welcome: 'Namaste',
+    fd_subtitle: 'Empowering you with real-time Agmarknet rates and instant buyer matching.',
+    fd_list_new: 'List New Produce',
+    fd_total_lots: 'Total Listed Lots',
+    fd_active_lots: 'Active in Mandis',
+    fd_matched_offers: 'Buyer Offers Matched',
+    fd_weather_status: 'Weather Advisory',
+    fd_low_risk: 'Low Risk',
+    fd_quick_actions: 'Quick Actions & Platform Modules',
+    fd_active_listings: 'Your Active Produce Listings',
+    fd_active_desc: 'Real-time status of your crops listed for sale',
+    fd_view_all: 'View All Lots',
+    fd_floor_price: 'Floor Price',
+    fd_target_mandi: 'Target Mandi',
+
+    // Prices Page
+    pp_title: 'Mandi Price Discovery & Forecasting',
+    pp_subtitle: 'Real APMC benchmark rates with 14-day Prophet ML price forecast curves',
+    pp_tab_table: 'Live Mandi Table',
+    pp_tab_map: 'Interactive Mandi Map',
+    pp_tab_trend: 'ML 14-Day Price Forecast',
+    pp_search_ph: 'Search by mandi name, district, state or variety...',
+    pp_col_mandi: 'Mandi & District',
+    pp_col_state: 'State',
+    pp_col_variety: 'Variety',
+    pp_col_modal: 'Modal Price (₹/Qtl)',
+    pp_col_kg: 'Per Kg Equivalent',
+    pp_col_range: 'Min - Max',
+    pp_col_arrival: 'Arrival Date',
+    pp_btn_map: 'Locate on Map',
+    pp_map_banner_title: 'Pan-India Mandi Geospatial Explorer',
+    pp_map_banner_desc: 'Click any pin to view real Agmarknet prices, daily arrivals volume, and Google Maps routing.',
+
+    // Calculator Page
+    cp_title: 'Net Realization & Transport Cost Calculator',
+    cp_subtitle: 'Deduct Haversine freight, APMC cess, and storage degradation to find your highest take-home profit',
+    cp_quick_presets: '1-Click Pre-filled Routes',
+    cp_show_map: 'Show Geospatial Map',
+    cp_hide_map: 'Hide Map',
+    cp_origin_details: 'Farm Origin & Produce Details',
+    cp_qty_kg: 'Quantity in Kilograms (kg)',
+    cp_farm_lat: 'Farm Origin GPS (Latitude)',
+    cp_farm_lng: 'Farm Origin GPS (Longitude)',
+    cp_storage_days: 'Storage / Holding Days before Transit',
+    cp_target_mandis: 'Target APMC Mandis to Compare',
+    cp_add_mandi: 'Add Mandi',
+    cp_run_calc: 'Run Net Realization Optimization',
+    cp_winner_title: 'Optimal Recommendation',
+    cp_max_take_home: 'Maximum Take-Home Realization',
+    cp_in_hand_after: 'in hand after freight',
+    cp_ranked_title: 'All Evaluated Mandis (Ranked)',
+    cp_distance: 'Distance',
+    cp_freight: 'Freight',
+    cp_cess: 'Cess',
+
+    // Numeral Script Customizer
+    numeral_script_title: 'Numbers Script',
+    numeral_auto: 'Auto (Matches Language)',
+    numeral_latin: 'English (1, 2, 3)',
+    numeral_devanagari: 'Devanagari (१, २, ३)',
+    numeral_odia: 'Odia (୧, ୨, ୩)',
 
     // Tour Prompt & Character
     chacha_name: 'Kisan Chacha (Balaram)',
@@ -45,12 +114,14 @@ export const TRANSLATIONS = {
     tour_prev_btn: '← Back',
     tour_finish_btn: 'Got it, Let\'s Start! 🌾',
     page_tour_title: 'About This Page',
+    hide_mascot: 'Hide Mascot',
+    show_mascot: 'Show Mascot',
 
     // AI Assistant
     ai_title: 'Kisan AI Sahayak',
     ai_subtitle: 'Instant Agri Intelligence & Mandi Help',
-    ai_greeting: 'Namaste! I am your MandiSetu AI Assistant. Ask me about today\'s mandi prices, crop grading, freight rates, or how to get the highest profit for your harvest.',
-    ai_ask_placeholder: 'Type your agriculture or mandi question...',
+    ai_greeting: 'Namaste! I am your MandiSetu AI Assistant. You can say hi or ask me about today\'s mandi prices, crop grading, freight rates, or net realization.',
+    ai_ask_placeholder: 'Type your question or say hello...',
     ai_quick_onion: '🧅 Onion price in Lasalgaon?',
     ai_quick_wheat: '🌾 Wheat 14-day forecast?',
     ai_quick_net: '💰 How does Net Realization work?',
@@ -58,10 +129,24 @@ export const TRANSLATIONS = {
   },
 
   hi: {
-    // Brand
+    // Brand & General
     brand_name: 'मंडीसेतु',
     brand_tagline: 'किसानों को उचित बाजार मूल्य से जोड़ने का सेतु',
     verified_badge: 'एगमार्कनेट (भारत सरकार) द्वारा सत्यापित',
+    live_feed_active: 'लाइव एगमार्कनेट डेटा सक्रिय',
+    quick_demo: '1-क्लिक डेमो खाते',
+    search_placeholder: 'मंडी, फसल, किस्म खोजें...',
+    refresh: 'ताज़ा करें',
+    all_states: 'सभी राज्य',
+    actions: 'कार्रवाई',
+    status: 'स्थिति',
+    grade: 'ग्रेड',
+    quantity: 'मात्रा / वजन',
+    price: 'भाव / मूल्य',
+    commodity: 'फसल / जिंस',
+    district: 'जिला',
+    state: 'राज्य',
+    date: 'तारीख',
 
     // Nav
     nav_dashboard: 'डैशबोर्ड',
@@ -82,13 +167,68 @@ export const TRANSLATIONS = {
     nav_sign_out: 'लॉग आउट करें',
     nav_tour: 'वेबसाइट टूर',
 
-    // Header & Actions
-    live_feed_active: 'लाइव एगमार्कनेट डेटा सक्रिय',
-    quick_demo: '1-क्लिक डेमो खाते',
-    search_placeholder: 'मंडी, फसल, किस्म खोजें...',
-    refresh: 'ताज़ा करें',
-    all_states: 'सभी राज्य',
-    calculate_now: 'शुद्ध मुनाफा गणना करें',
+    // Farmer Dashboard Page
+    fd_welcome: 'राम-राम',
+    fd_subtitle: 'सटीक एगमार्कनेट भाव और सीधे खरीदार मिलान के साथ आपकी आय में वृद्धि।',
+    fd_list_new: 'नई फसल लिस्ट करें',
+    fd_total_lots: 'कुल दर्ज फसलें',
+    fd_active_lots: 'मंडी में सक्रिय',
+    fd_matched_offers: 'खरीदारों के ऑफर',
+    fd_weather_status: 'मौसम सलाह',
+    fd_low_risk: 'कम जोखिम',
+    fd_quick_actions: 'त्वरित सेवाएं एवं 12 मॉड्यूल',
+    fd_active_listings: 'आपकी सक्रिय फसल लिस्टिंग',
+    fd_active_desc: 'बाजार में बिक्री हेतु उपलब्ध आपकी फसलों की वास्तविक स्थिति',
+    fd_view_all: 'सभी फसलें देखें',
+    fd_floor_price: 'न्यूनतम भाव',
+    fd_target_mandi: 'लक्षित मंडी',
+
+    // Prices Page
+    pp_title: 'मंडी भाव खोज एवं मूल्य पूर्वानुमान',
+    pp_subtitle: 'वास्तविक एपीएमसी दरें और 14-दिवसीय प्रॉफेट एमएल मूल्य पूर्वानुमान ग्राफ',
+    pp_tab_table: 'लाइव मंडी तालिका',
+    pp_tab_map: 'इंटरैक्टिव मंडी मानचित्र',
+    pp_tab_trend: '14-दिवसीय पूर्वानुमान ग्राफ',
+    pp_search_ph: 'मंडी, जिला, राज्य या किस्म खोजें...',
+    pp_col_mandi: 'मंडी व जिला',
+    pp_col_state: 'राज्य',
+    pp_col_variety: 'किस्म',
+    pp_col_modal: 'मॉडल भाव (₹/क्विंटल)',
+    pp_col_kg: 'प्रति किलो भाव',
+    pp_col_range: 'न्यूनतम - अधिकतम',
+    pp_col_arrival: 'आवक तारीख',
+    pp_btn_map: 'नक्शे पर देखें',
+    pp_map_banner_title: 'अखिल भारतीय मंडी भू-स्थानिक खोजकर्ता',
+    pp_map_banner_desc: 'गूगल मैप्स की तरह किसी भी पिन पर क्लिक करके वास्तविक भाव, दैनिक आवक और दिशा-निर्देश देखें।',
+
+    // Calculator Page
+    cp_title: 'शुद्ध मुनाफा (नेट रियलाइजेशन) एवं परिवहन कैलकुलेटर',
+    cp_subtitle: 'गाड़ी भाड़ा, मंडी टैक्स और भंडारण खर्च काटकर जानिए कि किस मंडी में आपको सबसे अधिक रुपये बचेंगे',
+    cp_quick_presets: '1-क्लिक तैयार मार्ग',
+    cp_show_map: 'मानचित्र दिखाएं',
+    cp_hide_map: 'मानचित्र छिपाएं',
+    cp_origin_details: 'खेत का स्थान व फसल विवरण',
+    cp_qty_kg: 'मात्रा किलोग्राम (kg) में',
+    cp_farm_lat: 'खेत का जीपीएस अक्षांश (Latitude)',
+    cp_farm_lng: 'खेत का जीपीएस देशांतर (Longitude)',
+    cp_storage_days: 'परिवहन से पहले भंडारण के दिन',
+    cp_target_mandis: 'तुलना हेतु लक्षित मंडियां',
+    cp_add_mandi: 'मंडी जोड़ें',
+    cp_run_calc: 'शुद्ध मुनाफे की गणना करें',
+    cp_winner_title: 'सर्वोत्तम मंडी सुझाव',
+    cp_max_take_home: 'अधिकतम शुद्ध बचत (हाथ में)',
+    cp_in_hand_after: 'भाड़ा काटने के बाद प्रति किलो हाथ में',
+    cp_ranked_title: 'सभी मंडियों की तुलना (रैंक अनुसार)',
+    cp_distance: 'दूरी',
+    cp_freight: 'भाड़ा',
+    cp_cess: 'टैक्स',
+
+    // Numeral Script Customizer
+    numeral_script_title: 'संख्या लिपि (अंक)',
+    numeral_auto: 'स्वतः (भाषा अनुसार)',
+    numeral_latin: 'अंग्रेजी (1, 2, 3)',
+    numeral_devanagari: 'देवनागरी (१, २, ३)',
+    numeral_odia: 'ओड़िया (୧, ୨, ୩)',
 
     // Tour Prompt & Character
     chacha_name: 'किसान चाचा (बलराम जी)',
@@ -100,23 +240,39 @@ export const TRANSLATIONS = {
     tour_prev_btn: '← पीछे',
     tour_finish_btn: 'समझ गया, शुरू करें! 🌾',
     page_tour_title: 'इस पेज की जानकारी',
+    hide_mascot: 'चाचाजी को छिपाएं',
+    show_mascot: 'चाचाजी को बुलाएं',
 
     // AI Assistant
     ai_title: 'किसान एआई सहायक',
     ai_subtitle: 'त्वरित कृषि जानकारी और मंडी सहायता',
-    ai_greeting: 'राम-राम जी! मैं आपका मंडीसेतु एआई सहायक हूँ। मुझसे आज के मंडी भाव, फसल ग्रेडिंग, माल भाड़ा या सबसे अधिक मुनाफा पाने का तरीका पूछें।',
-    ai_ask_placeholder: 'कृषि या मंडी से जुड़ा प्रश्न पूछें...',
-    ai_quick_onion: '🧅 लासलगांव में प्याज का भाव क्या है?',
-    ai_quick_wheat: '🌾 गेहूं का 14 दिनों का पूर्वानुमान?',
-    ai_quick_net: '💰 शुद्ध मुनाफा कैलकुलेटर कैसे काम करता है?',
-    ai_quick_grade: '📷 मोबाइल फोटो से फसल ग्रेडिंग कैसे करें?',
+    ai_greeting: 'राम-राम जी! मैं आपका मंडीसेतु एआई सहायक हूँ। आप नमस्ते, हैलो कह सकते हैं या आज के मंडी भाव, फसल ग्रेडिंग और भाड़ा पूछ सकते हैं।',
+    ai_ask_placeholder: 'नमस्ते लिखें या अपना प्रश्न पूछें...',
+    ai_quick_onion: '🧅 लासलगांव में प्याज का भाव?',
+    ai_quick_wheat: '🌾 गेहूं का 14 दिनों का अनुमान?',
+    ai_quick_net: '💰 शुद्ध मुनाफा कैसे निकालें?',
+    ai_quick_grade: '📷 मोबाइल फोटो से ग्रेडिंग?',
   },
 
   mr: {
-    // Brand
+    // Brand & General
     brand_name: 'मंडीसेतू',
     brand_tagline: 'शेतकऱ्यांना रास्त बाजारभावाशी जोडणारा सेतू',
     verified_badge: 'एगमार्कनेट (भारत सरकार) प्रमाणित',
+    live_feed_active: 'थेट एगमार्कनेट भाव सुरू आहेत',
+    quick_demo: '१-क्लिक डेमो खाती',
+    search_placeholder: 'बाजार समिती, पीक किंवा जात शोधा...',
+    refresh: 'ताजे करा',
+    all_states: 'सर्व राज्ये',
+    actions: 'कृती',
+    status: 'स्थिती',
+    grade: 'प्रतवारी (ग्रेड)',
+    quantity: 'वजन / आवक',
+    price: 'बाजारभाव',
+    commodity: 'शेतमाल',
+    district: 'जिल्हा',
+    state: 'राज्य',
+    date: 'दिनांक',
 
     // Nav
     nav_dashboard: 'डॅशबोर्ड',
@@ -137,13 +293,68 @@ export const TRANSLATIONS = {
     nav_sign_out: 'बाहेर पडा',
     nav_tour: 'वेबसाइट टूर',
 
-    // Header & Actions
-    live_feed_active: 'थेट एगमार्कनेट भाव सुरू आहेत',
-    quick_demo: '१-क्लिक डेमो खाती',
-    search_placeholder: 'बाजार समिती, पीक किंवा जात शोधा...',
-    refresh: 'ताजे करा',
-    all_states: 'सर्व राज्ये',
-    calculate_now: 'नफ्याची गणना करा',
+    // Farmer Dashboard Page
+    fd_welcome: 'राम राम',
+    fd_subtitle: 'थेट बाजारभाव आणि हमखास खरेदीदारांच्या साहाय्याने तुमचे उत्पन्न वाढवा.',
+    fd_list_new: 'नवीन शेतमाल जोडा',
+    fd_total_lots: 'एकूण नोंदवलेला माल',
+    fd_active_lots: 'बाजारत विक्रीस उपलब्ध',
+    fd_matched_offers: 'व्यापाऱ्यांच्या ऑफर्स',
+    fd_weather_status: 'हवामान सल्ला',
+    fd_low_risk: 'कमी जोखीम',
+    fd_quick_actions: 'त्वरित सुविधा व १२ मॉड्यूल्स',
+    fd_active_listings: 'तुमचा सक्रिय शेतमाल',
+    fd_active_desc: 'सध्या विक्रीसाठी बाजारात उपलब्ध असलेल्या शेतमालाची माहिती',
+    fd_view_all: 'सर्व शेतमाल पहा',
+    fd_floor_price: 'अपेक्षित किमान भाव',
+    fd_target_mandi: 'निवडलेली बाजार समिती',
+
+    // Prices Page
+    pp_title: 'थेट बाजारभाव शोध व भावाचा अंदाज',
+    pp_subtitle: 'अधिकृत बाजार समित्यांचे थेट दर आणि १४ दिवसांचा मशीन लर्निंग अंदाज',
+    pp_tab_table: 'थेट भाव तक्ता',
+    pp_tab_map: 'इंटरॅक्टिव्ह बाजार नकाशा',
+    pp_tab_trend: '१४ दिवसांचा अंदाज आलेख',
+    pp_search_ph: 'बाजार समिती, जिल्हा, राज्य किंवा जात शोधा...',
+    pp_col_mandi: 'बाजार समिती व जिल्हा',
+    pp_col_state: 'राज्य',
+    pp_col_variety: 'जात',
+    pp_col_modal: 'सरासरी दर (₹/क्विंटल)',
+    pp_col_kg: 'प्रति किलो दर',
+    pp_col_range: 'किमान - कमाल',
+    pp_col_arrival: 'आवक दिनांक',
+    pp_btn_map: 'नकाशावर पहा',
+    pp_map_banner_title: 'अखिल भारतीय बाजार समिती नकाशा',
+    pp_map_banner_desc: 'नकाशावरील पिनवर क्लिक करून थेट दर, आवक आणि गुगल मॅप्स रस्ता मार्ग तपासा.',
+
+    // Calculator Page
+    cp_title: 'प्रत्यक्ष निव्वळ नफा व वाहतूक खर्च कॅल्क्युलेटर',
+    cp_subtitle: 'वाहतूक खर्च, आडत आणि सेस वजा करून प्रत्यक्ष हातात किती नफा पडेल हे जाणून घ्या',
+    cp_quick_presets: '१-क्लिक मार्ग निवडी',
+    cp_show_map: 'नकाशा दाखवा',
+    cp_hide_map: 'नकाशा लपवा',
+    cp_origin_details: 'शेताचे स्थान व शेतमाल तपशील',
+    cp_qty_kg: 'वजन किलोग्रॅम (kg) मध्ये',
+    cp_farm_lat: 'शेताचे जीपीएस अक्षांश (Lat)',
+    cp_farm_lng: 'शेताचे जीपीएस रेखांश (Lng)',
+    cp_storage_days: 'विक्रीपूर्वी साठवणुकीचे दिवस',
+    cp_target_mandis: 'तुलना करण्यासाठी बाजार समित्या',
+    cp_add_mandi: 'बाजार समिती जोडा',
+    cp_run_calc: 'निव्वळ नफ्याची गणना करा',
+    cp_winner_title: 'सर्वात फायदेशीर बाजार समिती',
+    cp_max_take_home: 'जास्तीत जास्त निव्वळ नफा (हातात)',
+    cp_in_hand_after: 'वाहतूक खर्च वजा जाता प्रति किलो हातात',
+    cp_ranked_title: 'सर्व बाजार समित्यांची तुलना (नफ्यानुसार)',
+    cp_distance: 'अंतर',
+    cp_freight: 'भाडे',
+    cp_cess: 'आडत/सेस',
+
+    // Numeral Script Customizer
+    numeral_script_title: 'अंक लिपी (संख्या)',
+    numeral_auto: 'आपोआप (भाषेनुसार)',
+    numeral_latin: 'इंग्रजी (1, 2, 3)',
+    numeral_devanagari: 'देवनागरी (१, २, ३)',
+    numeral_odia: 'ओडिया (୧, ୨, ୩)',
 
     // Tour Prompt & Character
     chacha_name: 'शेतकरी काका (बळीराम)',
@@ -155,23 +366,39 @@ export const TRANSLATIONS = {
     tour_prev_btn: '← मागे',
     tour_finish_btn: 'समजले, सुरुवात करूया! 🌾',
     page_tour_title: 'या पानाबद्दल माहिती',
+    hide_mascot: 'काकांना लपवा',
+    show_mascot: 'काकांना बोलवा',
 
     // AI Assistant
     ai_title: 'शेतकरी एआय सहाय्यक',
     ai_subtitle: 'त्वरित कृषी माहिती व बाजार मदत',
-    ai_greeting: 'राम राम! मी तुमचा मंडीसेतू एआय सहाय्यक आहे. मला आजचे बाजारभाव, प्रतवारी, वाहतूक खर्च किंवा जास्तीत जास्त नफा मिळवण्याबाबत काहीही विचारा.',
-    ai_ask_placeholder: 'तुमचा कृषी प्रश्न येथे विचारा...',
-    ai_quick_onion: '🧅 लासलगाव बाजारात कांद्याचा भाव काय?',
-    ai_quick_wheat: '🌾 गव्हाचा पुढील १४ दिवसांचा अंदाज?',
-    ai_quick_net: '💰 प्रत्यक्ष हातात किती नफा पडेल?',
-    ai_quick_grade: '📷 फोटो काढून प्रतवारी कशी करायची?',
+    ai_greeting: 'राम राम! मी तुमचा मंडीसेतू एआय सहाय्यक आहे. मला नमस्कार, हॅलो म्हणा किंवा आजचे बाजारभाव, प्रतवारी आणि वाहतूक खर्च विचारा.',
+    ai_ask_placeholder: 'नमस्कार लिहा किंवा प्रश्न विचारा...',
+    ai_quick_onion: '🧅 लासलगावमध्ये कांदा भाव?',
+    ai_quick_wheat: '🌾 गव्हाचा १४ दिवसांचा अंदाज?',
+    ai_quick_net: '💰 प्रत्यक्ष नफा कसा काढायचा?',
+    ai_quick_grade: '📷 फोटो काढून प्रतवारी कशी?',
   },
 
   or: {
-    // Brand
+    // Brand & General
     brand_name: 'ମଣ୍ଡିସେତୁ',
     brand_tagline: 'କୃଷକଙ୍କୁ ଉଚିତ ବଜାର ଦର ସହ ଯୋଡୁଥିବା ମାଧ୍ୟମ',
     verified_badge: 'ଏଗମାର୍କନେଟ୍ (ଭାରତ ସରକାର) ପ୍ରମାଣିତ',
+    live_feed_active: 'ଲାଇଭ୍ ଏଗମାର୍କନେଟ୍ ଡାଟା ଚାଲୁଅଛି',
+    quick_demo: '୧-କ୍ଲିକ୍ ଡେମୋ ଆକାଉଣ୍ଟ',
+    search_placeholder: 'ମଣ୍ଡି, ଫସଲ କିସମ ଖୋଜନ୍ତୁ...',
+    refresh: 'ତାଜା କରନ୍ତୁ',
+    all_states: 'ସବୁ ରାଜ୍ୟ',
+    actions: 'କାର୍ଯ୍ୟାନୁଷ୍ଠାନ',
+    status: 'ସ୍ଥିତି',
+    grade: 'ଗ୍ରେଡ୍',
+    quantity: 'ପରିମାଣ / ଓଜନ',
+    price: 'ମୂଲ୍ୟ / ଦର',
+    commodity: 'ଫସଲ',
+    district: 'ଜିଲ୍ଲା',
+    state: 'ରାଜ୍ୟ',
+    date: 'ତାରିଖ',
 
     // Nav
     nav_dashboard: 'ଡ୍ୟାସବୋର୍ଡ',
@@ -192,13 +419,68 @@ export const TRANSLATIONS = {
     nav_sign_out: 'ସାଇନ୍ ଆଉଟ୍',
     nav_tour: 'ୱେବସାଇଟ୍ ଟୁର୍',
 
-    // Header & Actions
-    live_feed_active: 'ଲାଇଭ୍ ଏଗମାର୍କନେଟ୍ ଡାଟା ଚାଲୁଅଛି',
-    quick_demo: '୧-କ୍ଲିକ୍ ଡେମୋ ଆକାଉଣ୍ଟ',
-    search_placeholder: 'ମଣ୍ଡି, ଫସଲ କିସମ ଖୋଜନ୍ତୁ...',
-    refresh: 'ତାଜା କରନ୍ତୁ',
-    all_states: 'ସବୁ ରାଜ୍ୟ',
-    calculate_now: 'ନିଟ୍ ଲାଭ ହିସାବ କରନ୍ତୁ',
+    // Farmer Dashboard Page
+    fd_welcome: 'ନମସ୍କାର',
+    fd_subtitle: 'ସଠିକ୍ ମଣ୍ଡି ଦର ଏବଂ ବିଶ୍ୱସ୍ତ ବ୍ୟବସାୟୀଙ୍କ ସହ ଆପଣଙ୍କ ରୋଜଗାର ବଢ଼ାନ୍ତୁ।',
+    fd_list_new: 'ନୂଆ ଫସଲ ଯୋଡ଼ନ୍ତୁ',
+    fd_total_lots: 'ମୋଟ ଫସଲ ଲଟ୍',
+    fd_active_lots: 'ମଣ୍ଡିରେ ଉପଲବ୍ଧ',
+    fd_matched_offers: 'ବ୍ୟବସାୟୀଙ୍କ ଅଫର୍',
+    fd_weather_status: 'ପାଣିପାଗ ସୂଚନା',
+    fd_low_risk: 'କମ୍ ବିପଦ',
+    fd_quick_actions: 'କ୍ଷିପ୍ର ସେବା ଓ ୧୨ ମଡ୍ୟୁଲ୍',
+    fd_active_listings: 'ଆପଣଙ୍କ ସକ୍ରିୟ ଫସଲ ତାଲିକା',
+    fd_active_desc: 'ବିକ୍ରୟ ପାଇଁ ପ୍ରସ୍ତୁତ ଥିବା ଆପଣଙ୍କ ଫସଲର ବର୍ତ୍ତମାନ ସ୍ଥିତି',
+    fd_view_all: 'ସବୁ ଫସଲ ଦେଖନ୍ତୁ',
+    fd_floor_price: 'ନ୍ୟୂନତମ ଦର',
+    fd_target_mandi: 'ନିର୍ବାଚିତ ମଣ୍ଡି',
+
+    // Prices Page
+    pp_title: 'ମଣ୍ଡି ଦର ଅନୁସନ୍ଧାନ ଓ ଭବିଷ୍ୟତ ଆକଳନ',
+    pp_subtitle: 'ସରକାରୀ ଏଗମାର୍କନେଟ୍ ଦର ସହିତ ୧୪ ଦିନର ଏଆଇ ମୂଲ୍ୟ ଆକଳନ ଗ୍ରାଫ୍',
+    pp_tab_table: 'ଲାଇଭ୍ ମଣ୍ଡି ଟେବୁଲ୍',
+    pp_tab_map: 'ମାନଚିତ୍ରରେ ମଣ୍ଡି ଖୋଜନ୍ତୁ',
+    pp_tab_trend: '୧୪ ଦିନର ଭବିଷ୍ୟତ ଦର',
+    pp_search_ph: 'ମଣ୍ଡି, ଜିଲ୍ଲା, ରାଜ୍ୟ କିମ୍ବା କିସମ ଖୋଜନ୍ତୁ...',
+    pp_col_mandi: 'ମଣ୍ଡି ଓ ଜିଲ୍ଲା',
+    pp_col_state: 'ରାଜ୍ୟ',
+    pp_col_variety: 'କିସମ',
+    pp_col_modal: 'ମଡାଲ୍ ଦର (₹/କ୍ୱିଣ୍ଟାଲ୍)',
+    pp_col_kg: 'କିଲୋ ପିଛା ଦର',
+    pp_col_range: 'ସର୍ବନିମ୍ନ - ସର୍ବାଧିକ',
+    pp_col_arrival: 'ଆଗମନ ତାରିଖ',
+    pp_btn_map: 'ମ୍ୟାପ୍ ରେ ଦେଖନ୍ତୁ',
+    pp_map_banner_title: 'ସର୍ବଭାରତୀୟ ମଣ୍ଡି ଭୌଗୋଳିକ ମାନଚିତ୍ର',
+    pp_map_banner_desc: 'ଗୁଗୁଲ୍ ମ୍ୟାପ୍ ଭଳି ପିନ୍ କ୍ଲିକ୍ କରି ଦୈନିକ ଆଗମନ ଓ ଲାଇଭ୍ ଦର ଦେଖନ୍ତୁ।',
+
+    // Calculator Page
+    cp_title: 'ନିଟ୍ ଲାଭ ଓ ପରିବହନ ଖର୍ଚ୍ଚ କାଲକୁଲେଟର',
+    cp_subtitle: 'ଗାଡ଼ି ଭଡ଼ା ଓ କମିଶନ କାଟି ପ୍ରକୃତରେ ହାତରେ କେତେ ଟଙ୍କା ରହିବ ତାହା ଜାଣନ୍ତୁ',
+    cp_quick_presets: '୧-କ୍ଲିକ୍ ପ୍ରସ୍ତୁତ ରୁଟ୍',
+    cp_show_map: 'ମାନଚିତ୍ର ଦେଖନ୍ତୁ',
+    cp_hide_map: 'ମାନଚିତ୍ର ଲୁଚାନ୍ତୁ',
+    cp_origin_details: 'ଚାଷଜମି ସ୍ଥାନ ଓ ଫସଲ ବିବରଣୀ',
+    cp_qty_kg: 'ପରିମାଣ କିଲୋଗ୍ରାମ (kg) ରେ',
+    cp_farm_lat: 'ଜମିର ଜିପିଏସ୍ ଅକ୍ଷାଂଶ (Lat)',
+    cp_farm_lng: 'ଜମିର ଜିପିଏସ୍ ଦ୍ରାଘିମା (Lng)',
+    cp_storage_days: 'ପରିବହନ ପୂର୍ବରୁ ସାଇତିବା ଦିନ',
+    cp_target_mandis: 'ତୁଳନା ପାଇଁ ଲକ୍ଷ୍ୟ ମଣ୍ଡିଗୁଡ଼ିକ',
+    cp_add_mandi: 'ମଣ୍ଡି ଯୋଗ କରନ୍ତୁ',
+    cp_run_calc: 'ନିଟ୍ ଲାଭ ହିସାବ କରନ୍ତୁ',
+    cp_winner_title: 'ସର୍ବୋତ୍ତମ ମଣ୍ଡି ପରାମର୍ଶ',
+    cp_max_take_home: 'ସର୍ବାଧିକ ନିଟ୍ ଲାଭ (ହାତରେ)',
+    cp_in_hand_after: 'ଭଡ଼ା କଟିବା ପରେ କିଲୋ ପିଛା ହାତରେ',
+    cp_ranked_title: 'ସମସ୍ତ ମଣ୍ଡିର ତୁଳନାତ୍ମକ ତାଲିକା',
+    cp_distance: 'ଦୂରତା',
+    cp_freight: 'ଭଡ଼ା',
+    cp_cess: 'କମିଶନ',
+
+    // Numeral Script Customizer
+    numeral_script_title: 'ସଂଖ୍ୟା ଲିପି',
+    numeral_auto: 'ସ୍ୱତଃ (ଭାଷା ଅନୁସାରେ)',
+    numeral_latin: 'ଇଂରାଜୀ (1, 2, 3)',
+    numeral_devanagari: 'ଦେବନାଗରୀ (१, २, ३)',
+    numeral_odia: 'ଓଡ଼ିଆ (୧, ୨, ୩)',
 
     // Tour Prompt & Character
     chacha_name: 'କିଷାନ ମଉସା (ବଳରାମ)',
@@ -210,16 +492,18 @@ export const TRANSLATIONS = {
     tour_prev_btn: '← ପଛକୁ',
     tour_finish_btn: 'ବୁଝିଗଲି, ଆରମ୍ଭ କରିବା! 🌾',
     page_tour_title: 'ଏହି ପୃଷ୍ଠାର ବିବରଣୀ',
+    hide_mascot: 'ମଉସାଙ୍କୁ ଲୁଚାନ୍ତୁ',
+    show_mascot: 'ମଉସାଙ୍କୁ ଡାକନ୍ତୁ',
 
     // AI Assistant
     ai_title: 'କିଷାନ ଏଆଇ ସହାୟକ',
     ai_subtitle: 'ତୁରନ୍ତ କୃଷି ସୂଚନା ଓ ମଣ୍ଡି ସହାୟତା',
-    ai_greeting: 'ନମସ୍କାର! ମୁଁ ଆପଣଙ୍କ ମଣ୍ଡିସେତୁ ଏଆଇ ସହାୟକ। ଆଜିର ମଣ୍ଡି ଦର, ଫସଲ ଗ୍ରେଡିଂ, ପରିବହନ ଖର୍ଚ୍ଚ କିମ୍ବା ଉଚିତ ଲାଭ ପାଇବା ବିଷୟରେ ଯାହା ପଚାରିବାକୁ ଚାହାନ୍ତି ପଚାରନ୍ତୁ।',
-    ai_ask_placeholder: 'ଆପଣଙ୍କର କୃଷି ପ୍ରଶ୍ନ ପଚାରନ୍ତୁ...',
-    ai_quick_onion: '🧅 ନାସିକରେ ପିଆଜର ଆଜିର ଦର କେତେ?',
-    ai_quick_wheat: '🌾 ଗହମର ୧୪ ଦିନର ଆଗାମୀ ଦର କିପରି ରହିବ?',
-    ai_quick_net: '💰 ନିଟ୍ ଲାଭ କାଲକୁଲେଟର କିପରି କାମ କରେ?',
-    ai_quick_grade: '📷 ଫଟୋ ଉଠାଇ ଫସଲର ଗ୍ରେଡ୍ କିପରି ଜାଣିବି?',
+    ai_greeting: 'ନମସ୍କାର! ମୁଁ ଆପଣଙ୍କ ମଣ୍ଡିସେତୁ ଏଆଇ ସହାୟକ। ଆପଣ ନମସ୍କାର କହିପାରିବେ କିମ୍ବା ଆଜିର ମଣ୍ଡି ଦର, ଫସଲ ଗ୍ରେଡିଂ ଓ ପରିବହନ ଭଡ଼ା ବିଷୟରେ ପଚାରିପାରିବେ।',
+    ai_ask_placeholder: 'ନମସ୍କାର ଲେଖନ୍ତୁ କିମ୍ବା ପ୍ରଶ୍ନ ପଚାରନ୍ତୁ...',
+    ai_quick_onion: '🧅 ନାସିକରେ ପିଆଜର ଆଜିର ଦର?',
+    ai_quick_wheat: '🌾 ଗହମର ୧୪ ଦିନର ଆଗାମୀ ଦର?',
+    ai_quick_net: '💰 ନିଟ୍ ଲାଭ କିପରି ହିସାବ ହୁଏ?',
+    ai_quick_grade: '📷 ଫଟୋ ଉଠାଇ ଫସଲ ଗ୍ରେଡିଂ?',
   },
 }
 
@@ -229,7 +513,7 @@ export const PAGE_EXPLANATIONS = {
     en: {
       title: 'Module 2: Price Discovery & Geospatial Map',
       steps: [
-        'Here you can check real-time Agmarknet modal rates for major mandis across India.',
+        'Check real-time Agmarknet modal rates for major mandis across India.',
         'Switch to the "Interactive Mandi Map" tab to locate APMC mandis on Google-Maps-style pins with live price bubbles.',
         'Use the "14-Day Price Forecast" to see machine learning (Prophet) projections before you harvest.',
       ],
@@ -361,68 +645,6 @@ export const PAGE_EXPLANATIONS = {
         'ଆପଣଙ୍କ ମୋବାଇଲ୍ କ୍ୟାମେରା ଦ୍ୱାରା ଫସଲର ସ୍ପଷ୍ଟ ଫଟୋ ଉଠାଇ ଅପଲୋଡ୍ କରନ୍ତୁ।',
         'ଏଆଇ ମଡେଲ୍ ରଙ୍ଗ ଓ ଆକାର ଯାଞ୍ଚ କରି ଫସଲର ଗ୍ରେଡ୍ (A+, A, B, C) ସ୍ଥିର କରେ।',
         'ଉତ୍ତମ ଗ୍ରେଡ୍ ଥିଲେ ବ୍ୟବସାୟୀମାନେ ଅଧିକ ଦର ଦେଇ ମାଲ କିଣିଥାନ୍ତି।',
-      ],
-    },
-  },
-
-  '/sale-window': {
-    en: {
-      title: 'Module 7: Optimal Sale Window Engine',
-      steps: [
-        'Balances expected price escalation against crop perishability and daily storage costs.',
-        'Identifies the exact date window when your take-home cash reaches the mathematical peak.',
-      ],
-    },
-    hi: {
-      title: 'मॉड्यूल 7: सर्वोत्तम बिक्री समय इंजन',
-      steps: [
-        'यह इंजन फसल खराब होने के खतरे और आने वाले दिनों के भाव की तुलना करता है।',
-        'आपको बताता है कि किस तारीख को फसल बेचने पर नुकसान सबसे कम और मुनाफा सबसे ज्यादा होगा।',
-      ],
-    },
-    mr: {
-      title: 'मॉड्यूल ७: योग्य विक्री वेळ निवड',
-      steps: [
-        'पीक खराब होण्याची शक्यता आणि भविष्यातील भाववाढ यांचा मेळ घालतो.',
-        'कोणत्या तारखेला माल विकल्यास जास्तीत जास्त नफा मिळेल हे अचूक दाखवतो.',
-      ],
-    },
-    or: {
-      title: 'ମଡ୍ୟୁଲ୍ ୭: ବିକ୍ରିର ଉପଯୁକ୍ତ ସମୟ ନିର୍ଦ୍ଧାରଣ',
-      steps: [
-        'ଫସଲ ନଷ୍ଟ ହେବାର ଆଶଙ୍କା ଏବଂ ଆଗାମୀ ଦର ବୃଦ୍ଧିର ତୁଳନା କରି ସଠିକ୍ ସମୟ କୁହେ।',
-        'କେଉଁ ତାରିଖରେ ବିକ୍ରି କଲେ ସବୁଠୁ ଅଧିକ ଲାଭ ମିଳିବ ତାହା ନିର୍ଣ୍ଣୟ କରେ।',
-      ],
-    },
-  },
-
-  '/weather': {
-    en: {
-      title: 'Module 11: Weather-Integrated Risk Advisory',
-      steps: [
-        'Hyperlocal weather forecasts alerting you to unseasonal rainfall, humidity, or extreme heat.',
-        'Ensures you schedule open-truck transport only during safe weather windows to prevent spoilage.',
-      ],
-    },
-    hi: {
-      title: 'मॉड्यूल 11: मौसम जोखिम सलाह',
-      steps: [
-        'आपके क्षेत्र में बेमौसम बारिश, आंधी या तेज धूप का 7-दिवसीय सटीक पूर्वानुमान।',
-        'सुरक्षित दिनों में ही माल की कटाई और परिवहन की योजना बनाएं ताकि फसल भीगने से बचे।',
-      ],
-    },
-    mr: {
-      title: 'मॉड्यूल ११: हवामान जोखीम सल्ला',
-      steps: [
-        'तुमच्या परिसरातील अवकाळी पाऊस, वादळ किंवा उष्णतेचा अचूक अंदाज देतो.',
-        'शेतमाल सुरक्षितपणे बाजारात पोहोचवण्यासाठी योग्य हवामान असलेल्या दिवसांची निवड करा.',
-      ],
-    },
-    or: {
-      title: 'ମଡ୍ୟୁଲ୍ ୧୧: ପାଣିପାଗ ସତର୍କତା ସୂଚନା',
-      steps: [
-        'ଆପଣଙ୍କ ଅଞ୍ଚଳରେ ଅଦିନିଆ ବର୍ଷା ବା ଖରା ସମ୍ପର୍କରେ ଆଗୁଆ ସତର୍କ ସୂଚନା ପ୍ରଦାନ କରେ।',
-        'ସୁରକ୍ଷିତ ପାଣିପାଗ ଦେଖି ପରିବହନ କଲେ ଫସଲ ନଷ୍ଟ ହେବାରୁ ରକ୍ଷା ମିଳିବ।',
       ],
     },
   },

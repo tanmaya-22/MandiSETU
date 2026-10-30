@@ -63,22 +63,23 @@ async def init():
         await create_all_tables()
         print("[✓] Tables created successfully!")
 
-        # 3. Seed demo users
-        print("[*] Seeding default demo accounts...")
-        demo_accounts = [
-            {"email": "farmer@demo.com", "full_name": "Ramesh Patel (Farmer)", "role": UserRole.FARMER, "state": "Maharashtra", "district": "Nashik"},
-            {"email": "buyer@demo.com", "full_name": "AgriCorp Traders (Buyer)", "role": UserRole.BUYER, "state": "Maharashtra", "district": "Navi Mumbai", "business_name": "AgriCorp Agro Commodities Ltd"},
-            {"email": "admin@demo.com", "full_name": "System Admin", "role": UserRole.ADMIN, "state": "Delhi", "district": "New Delhi"},
+        # 3. Seed demo and owner users
+        print("[*] Seeding default demo and owner accounts...")
+        accounts = [
+            {"email": "tanmayapradhan2322@gmail.com", "full_name": "TanmayA (Platform Owner)", "role": UserRole.ADMIN, "state": "Odisha", "district": "Cuttack", "password": "sanurimi@2210"},
+            {"email": "farmer@demo.com", "full_name": "Ramesh Patel (Farmer)", "role": UserRole.FARMER, "state": "Maharashtra", "district": "Nashik", "password": "demo1234"},
+            {"email": "buyer@demo.com", "full_name": "AgriCorp Traders (Buyer)", "role": UserRole.BUYER, "state": "Maharashtra", "district": "Navi Mumbai", "business_name": "AgriCorp Agro Commodities Ltd", "password": "demo1234"},
+            {"email": "admin@demo.com", "full_name": "Demo Admin (Restricted)", "role": UserRole.ADMIN, "state": "Delhi", "district": "New Delhi", "password": "demo1234"},
         ]
 
         async with AsyncSessionLocal() as db:
-            for acc in demo_accounts:
+            for acc in accounts:
                 res = await db.execute(select(User).where(User.email == acc["email"]))
                 if not res.scalar_one_or_none():
                     u = User(
                         email=acc["email"],
                         full_name=acc["full_name"],
-                        hashed_password=hash_password("demo1234"),
+                        hashed_password=hash_password(acc["password"]),
                         role=acc["role"],
                         state=acc["state"],
                         district=acc["district"],
@@ -88,7 +89,7 @@ async def init():
                     )
                     db.add(u)
             await db.commit()
-            print("[✓] Demo accounts seeded: farmer@demo.com / buyer@demo.com / admin@demo.com (password: demo1234)")
+            print("[✓] Accounts seeded: TanmayA (Owner), farmer@demo.com, buyer@demo.com, admin@demo.com")
 
         print("\n✨ MANDISETU BACKEND & DATABASE ARE READY TO RUN!")
         print("Run: uvicorn app.main:app --reload --port 8000\n")

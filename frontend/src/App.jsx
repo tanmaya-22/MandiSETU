@@ -26,6 +26,9 @@ import DisputesPage from './pages/disputes/DisputesPage'
 import GradingPage from './pages/grading/GradingPage'
 import WeatherPage from './pages/weather/WeatherPage'
 import AnalyticsPage from './pages/analytics/AnalyticsPage'
+import MandiMapPage from './pages/maps/MandiMapPage'
+import FeedbackPage from './pages/feedback/FeedbackPage'
+import ProfilePage from './pages/profile/ProfilePage'
 
 import Layout from './components/common/Layout'
 import LandingPage from './pages/LandingPage'
@@ -119,8 +122,10 @@ export default function App() {
           <Route path="/logistics" element={<LogisticsPage />} />
           <Route path="/disputes" element={<DisputesPage />} />
           <Route path="/weather" element={<WeatherPage />} />
-
+          <Route path="/mandi-map" element={<MandiMapPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/feedback" element={<FeedbackPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Route>
 
         {/* Fallback */}

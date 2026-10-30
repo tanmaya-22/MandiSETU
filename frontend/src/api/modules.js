@@ -49,12 +49,26 @@ export const REAL_AGMARKNET_DATA = {
 }
 
 // Default verified demo users for offline / zero-backend resilience
-const DEMO_USERS = [
+export const DEMO_USERS = [
+  {
+    email: 'tanmayapradhan2322@gmail.com',
+    username: 'TanmayA',
+    password: 'sanurimi@2210',
+    full_name: 'TanmayA (Platform Owner)',
+    role: 'admin',
+    isOwner: true,
+    isDemo: false,
+    phone: '+91 7008800192',
+    state: 'Odisha',
+    district: 'Cuttack',
+  },
   {
     email: 'farmer@demo.com',
+    username: 'farmer',
     password: 'demo1234',
     full_name: 'Ramesh Patel (Farmer)',
     role: 'farmer',
+    isOwner: false,
     phone: '+91 98765 43210',
     state: 'Maharashtra',
     district: 'Nashik',
@@ -63,9 +77,11 @@ const DEMO_USERS = [
   },
   {
     email: 'buyer@demo.com',
+    username: 'buyer',
     password: 'demo1234',
     full_name: 'AgriCorp Traders (Buyer)',
     role: 'buyer',
+    isOwner: false,
     phone: '+91 98220 12345',
     state: 'Maharashtra',
     district: 'Navi Mumbai',
@@ -74,18 +90,23 @@ const DEMO_USERS = [
   },
   {
     email: 'admin@demo.com',
+    username: 'demo_admin',
     password: 'demo1234',
-    full_name: 'System Admin',
+    full_name: 'Demo Admin (Restricted)',
     role: 'admin',
+    isOwner: false,
+    isDemo: true,
     phone: '+91 98111 22233',
     state: 'Delhi',
     district: 'New Delhi',
   },
   {
     email: 'fpo@demo.com',
+    username: 'fpo',
     password: 'demo1234',
     full_name: 'Sahyadri Farmers Producer Co.',
     role: 'fpo',
+    isOwner: false,
     phone: '+91 94222 33445',
     state: 'Maharashtra',
     district: 'Nashik',
@@ -93,22 +114,49 @@ const DEMO_USERS = [
   },
 ]
 
-function getLocalUsers() {
+export function getLocalUsers() {
   try {
     const raw = localStorage.getItem('mandisetu_registered_users')
-    return raw ? JSON.parse(raw) : DEMO_USERS
+    if (!raw) {
+      localStorage.setItem('mandisetu_registered_users', JSON.stringify(DEMO_USERS))
+      return DEMO_USERS
+    }
+    const parsed = JSON.parse(raw)
+    // Ensure TanmayA owner is always present
+    if (!parsed.some(u => u.username === 'TanmayA' || u.email === 'tanmayapradhan2322@gmail.com')) {
+      parsed.unshift(DEMO_USERS[0])
+      localStorage.setItem('mandisetu_registered_users', JSON.stringify(parsed))
+    }
+    return parsed
   } catch {
     return DEMO_USERS
   }
 }
 
-function saveLocalUser(user) {
+export function saveLocalUser(user) {
   try {
     const existing = getLocalUsers()
     const updated = [...existing.filter((u) => u.email.toLowerCase() !== user.email.toLowerCase()), user]
     localStorage.setItem('mandisetu_registered_users', JSON.stringify(updated))
   } catch (err) {
     console.error('Failed to save user locally', err)
+  }
+}
+
+export function updateLocalUser(email, updates) {
+  try {
+    const existing = getLocalUsers()
+    const updated = existing.map(u => {
+      if (u.email.toLowerCase() === email.toLowerCase()) {
+        return { ...u, ...updates }
+      }
+      return u
+    })
+    localStorage.setItem('mandisetu_registered_users', JSON.stringify(updated))
+    return true
+  } catch (err) {
+    console.error('Failed to update user locally', err)
+    return false
   }
 }
 
@@ -135,12 +183,22 @@ export const authAPI = {
   login: async (data) => {
     try {
       const res = await api.post('/auth/login', data)
-      return res
+      // Check if user is owner
+      const isOwner = data.email === 'tanmayapradhan2322@gmail.com' || data.email === 'TanmayA'
+      return {
+        data: {
+          ...res.data,
+          isOwner,
+        }
+      }
     } catch (err) {
       console.warn('[MandiSetu] Backend login unavailable or returned error. Checking local registered users and demo credentials.', err)
       const users = getLocalUsers()
       const match = users.find(
-        (u) => u.email.toLowerCase() === data.email.toLowerCase() && u.password === data.password
+        (u) =>
+          (u.email?.toLowerCase() === data.email?.toLowerCase() ||
+           u.username?.toLowerCase() === data.email?.toLowerCase()) &&
+          u.password === data.password
       )
       if (match) {
         return {
@@ -149,29 +207,17 @@ export const authAPI = {
             role: match.role || 'farmer',
             user_id: match.id || 'usr_' + Date.now(),
             full_name: match.full_name || match.email.split('@')[0],
+            username: match.username || match.full_name,
             email: match.email,
             phone: match.phone,
             state: match.state,
             district: match.district,
+            isOwner: match.isOwner ?? (match.username === 'TanmayA' || match.email === 'tanmayapradhan2322@gmail.com'),
+            isDemo: match.isDemo ?? false,
           },
         }
       }
-      // If user provided a password for any existing account in demo
-      const demoAccount = DEMO_USERS.find(
-        (u) => u.email.toLowerCase() === data.email.toLowerCase()
-      )
-      if (demoAccount && demoAccount.password === data.password) {
-        return {
-          data: {
-            access_token: 'jwt-token-demo-' + Math.random().toString(36).substring(2),
-            role: demoAccount.role,
-            user_id: 'usr_demo_' + demoAccount.role,
-            full_name: demoAccount.full_name,
-            email: demoAccount.email,
-          },
-        }
-      }
-      throw new Error('Invalid email or password. You can use farmer@demo.com / demo1234 or create a new account!')
+      throw new Error('Invalid email/username or password. TanmayA owner: TanmayA / sanurimi@2210')
     }
   },
 

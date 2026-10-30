@@ -1,373 +1,392 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { X, Sparkles, ArrowRight, ArrowLeft, Check, HelpCircle, Info, MessageCircle } from 'lucide-react'
+import {
+  X, Sparkles, ChevronRight, ChevronLeft, Volume2, HelpCircle,
+  Play, CheckCircle2, ArrowRight, Move
+} from 'lucide-react'
 import { useLangStore } from '../../store/langStore'
-import { PAGE_EXPLANATIONS } from '../../i18n/translations'
 
-// Stylized Indian Farmer Mascot (Kisan Chacha / Balaram Kaka)
-export function FarmerAvatar({ animated = true, size = 64 }) {
-  return (
-    <div
-      style={{ width: size, height: size }}
-      className={`relative rounded-full bg-gradient-to-tr from-amber-500 via-orange-400 to-emerald-600 p-1 shadow-2xl flex-shrink-0 cursor-pointer ${
-        animated ? 'animate-float' : ''
-      }`}
-    >
-      <div className="w-full h-full rounded-full bg-amber-50 dark:bg-amber-950/80 overflow-hidden flex items-center justify-center border-2 border-white dark:border-amber-400">
-        <svg
-          viewBox="0 0 100 100"
-          className="w-full h-full transform translate-y-1"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          {/* Kurta Body */}
-          <path d="M20 90 L30 65 L70 65 L80 90 Z" fill="#F8FAFC" stroke="#CBD5E1" strokeWidth="2" />
-          {/* Green Gamcha (Towel over shoulder) */}
-          <path d="M25 65 C22 75, 20 85, 22 95 C27 96, 32 94, 30 80 L32 65 Z" fill="#15803D" />
-          <path d="M24 75 L30 75" stroke="#FDE047" strokeWidth="1.5" />
-          {/* Neck */}
-          <rect x="44" y="52" width="12" height="15" fill="#D97706" rx="4" />
-          {/* Head & Ears */}
-          <circle cx="34" cy="46" r="6" fill="#D97706" />
-          <circle cx="66" cy="46" r="6" fill="#D97706" />
-          <ellipse cx="50" cy="46" rx="16" ry="18" fill="#F59E0B" />
-          {/* Eyes (warm & smiling) */}
-          <ellipse cx="44" cy="44" rx="2" ry="2.5" fill="#1F2937" />
-          <ellipse cx="56" cy="44" rx="2" ry="2.5" fill="#1F2937" />
-          <path d="M41 40 Q44 38 47 40" stroke="#78350F" strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M53 40 Q56 38 59 40" stroke="#78350F" strokeWidth="1.5" strokeLinecap="round" />
-          {/* Traditional Red Tilak */}
-          <path d="M49 33 L51 33 L50 38 Z" fill="#DC2626" />
-          {/* Big White Mustache (Elder Indian Farmer Look) */}
-          <path
-            d="M36 53 Q44 51 50 54 Q56 51 64 53 Q57 60 50 56 Q43 60 36 53 Z"
-            fill="#FFFFFF"
-            stroke="#E2E8F0"
-            strokeWidth="1"
-          />
-          {/* Smile */}
-          <path d="M46 59 Q50 62 54 59" stroke="#78350F" strokeWidth="1.5" strokeLinecap="round" />
-          {/* Saffron & Orange Pagdi (Indian Turban) */}
-          <path
-            d="M30 35 C28 20, 42 12, 50 12 C58 12, 72 20, 70 35 C64 28, 36 28, 30 35 Z"
-            fill="#EA580C"
-          />
-          <path
-            d="M32 32 C40 24, 60 24, 68 32 C60 38, 40 38, 32 32 Z"
-            fill="#F97316"
-          />
-          <circle cx="50" cy="22" r="5" fill="#FBBF24" />
-        </svg>
-      </div>
-      {/* Live active beacon */}
-      <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-gray-900 animate-pulse" />
-    </div>
-  )
+// Comprehensive Interactive Walkthroughs by Page in all 4 languages
+const PAGE_INTERACTIVE_TOURS = {
+  '/dashboard': {
+    title: { en: 'Dashboard Walkthrough', hi: 'डैशबोर्ड गाइड', mr: 'डॅशबोर्ड माहिती', or: 'ଡ୍ୟାସବୋର୍ଡ ମାର୍ଗଦର୍ଶିକା' },
+    steps: [
+      {
+        title: { en: 'Welcome to your Farm Command Center', hi: 'आपके फार्म कमांड सेंटर में स्वागत है', mr: 'तुमच्या मुख्य केंद्रावर स्वागत', or: 'ଆପଣଙ୍କ ମୁଖ୍ୟ କେନ୍ଦ୍ରକୁ ସ୍ୱାଗତ' },
+        desc: {
+          en: 'Namaste! Here you get a daily pulse of all 12 modules. The top 4 cards show Today’s Best Local Price, Active Contracts, Pending Escrow Payments, and Certified Produce Grade.',
+          hi: 'नमस्ते भाई! यहाँ आपको सभी 12 मॉड्यूल का दैनिक सार मिलता है। ऊपर के 4 कार्ड आपको सर्वश्रेष्ठ भाव, सक्रिय अनुबंध और बकाया भुगतान दिखाते हैं।',
+          mr: 'नमस्कार! येथे तुम्हाला 12 मॉड्यूल्सचा दैनिक गोषवारा मिळतो. वरील 4 कार्ड सर्वोत्तम भाव आणि सक्रिय करार दर्शवतात.',
+          or: 'ନମସ୍କାର! ଏଠାରେ ଆପଣ ସମସ୍ତ 12ଟି ମଡ୍ୟୁଲର ଦୈନିକ ସାରାଂଶ ପାଇବେ। ଉପର କାର୍ଡରେ ଆଜିର ସର୍ବୋତ୍ତମ ଦର ଓ ସକ୍ରିୟ ଚୁକ୍ତି ଦେଖାଏ।'
+        },
+        actionHint: {
+          en: 'Tip: Click any stat card to jump straight to that module.',
+          hi: 'सुझाव: सीधे उस मॉड्यूल में जाने के लिए किसी भी कार्ड पर क्लिक करें।',
+          mr: 'टीप: त्या मॉड्यूलवर जाण्यासाठी कोणत्याही कार्डवर क्लिक करा.',
+          or: 'ଟିପ୍ପଣୀ: ସିଧାସଳଖ ସେହି ମଡ୍ୟୁଲକୁ ଯିବା ପାଇଁ କାର୍ଡ ଉପରେ କ୍ଲିକ କରନ୍ତୁ।'
+        }
+      },
+      {
+        title: { en: 'Market Snapshot & MSP Check', hi: 'बाज़ार स्नैपशॉट और MSP जांच', mr: 'बाजार आढावा आणि MSP तपासणी', or: 'ବଜାର ସାରାଂଶ ଓ MSP ଯାଞ୍ଚ' },
+        desc: {
+          en: 'Look at the Market Snapshot on your screen. The green percentages indicate rates trading above the Govt MSP benchmark, while red warns you of temporary price drops.',
+          hi: 'बाज़ार स्नैपशॉट देखें। हरे रंग का प्रतिशत सरकारी MSP से अधिक भाव दर्शाता है, जबकि लाल रंग अस्थायी मंदी की चेतावनी देता है।',
+          mr: 'मार्केट स्नॅपशॉट पहा. हिरवी टक्केवारी सरकारी MSP पेक्षा जास्त भाव दर्शवते.',
+          or: 'ମାର୍କେଟ ସ୍ନାପସଟ ଦେଖନ୍ତୁ। ସବୁଜ ରଙ୍ଗ ସରକାରୀ MSP ଠାରୁ ଅଧିକ ଦର ଦର୍ଶାଏ।'
+        },
+        actionHint: {
+          en: 'How to change: Select your target crop to view 14-day AI price trajectory forecasts.',
+          hi: 'बदलने का तरीका: 14 दिनों का मूल्य पूर्वानुमान देखने के लिए अपनी फसल चुनें।',
+          mr: 'बदलण्याचा मार्ग: 14 दिवसांचा अंदाज पाहण्यासाठी आपले पीक निवडा.',
+          or: 'ପରିବର୍ତ୍ତନ କିପରି କରିବେ: 14-ଦିନର ମୂଲ୍ୟ ପୂର୍ବାନୁମାନ ଦେଖିବାକୁ ଫସଲ ବାଛନ୍ତୁ।'
+        }
+      }
+    ]
+  },
+
+  '/prices': {
+    title: { en: 'Price Discovery & Sorting Tour', hi: 'मंडी भाव व सॉर्टिंग गाइड', mr: 'भाव शोध आणि सॉर्टिंग मार्गदर्शक', or: 'ଦର ଖୋଜ ଓ ସର୍ଟିଂ ମାର୍ଗଦର୍ଶିକା' },
+    steps: [
+      {
+        title: { en: 'Real-Time Agmarknet Mandi Rates', hi: 'रीयल-टाइम एगमार्कनेट मंडी भाव', mr: 'थेट एगमार्कनेट मंडी दर', or: 'ଲାଇଭ ଏଗମାର୍କନେଟ ମଣ୍ଡି ଦର' },
+        desc: {
+          en: 'This table compiles official APMC rates from over 500 mandis across India. Each row lists Min, Max, and Modal (most frequent) clearing rates.',
+          hi: 'यह तालिका भारत भर की 500 से अधिक मंडियों के आधिकारिक APMC भाव दिखाती है। प्रत्येक पंक्ति में न्यूनतम, अधिकतम और मोडल दरें हैं।',
+          mr: 'हा तक्ता भारतातील 500 हून अधिक मंड्यांमधील अधिकृत दर दाखवतो.',
+          or: 'ଏହି ତାଲିକା ଭାରତର 500ରୁ ଅଧିକ ମଣ୍ଡିର ସରକାରୀ ଦର ଦେଖାଏ।'
+        },
+        actionHint: {
+          en: 'Interactive: Click on any column header like "Modal ₹/qtl" or "Mandi" to sort from highest to lowest rate.',
+          hi: 'इंटरएक्टिव: उच्चतम से निम्नतम दर सॉर्ट करने के लिए "Modal ₹/qtl" कॉलम हेडर पर क्लिक करें।',
+          mr: 'सॉर्ट करण्यासाठी "Modal ₹/qtl" हेडरवर क्लिक करा.',
+          or: 'ଉଚ୍ଚରୁ ନିମ୍ନ ଦର ସର୍ଟ କରିବାକୁ "Modal ₹/qtl" ଉପରେ କ୍ଲିକ କରନ୍ତୁ।'
+        }
+      },
+      {
+        title: { en: 'What the Green Checkmark (✓) Means', hi: 'हरे टिक (✓) का क्या अर्थ है', mr: 'हिरव्या टिकचा (✓) अर्थ काय', or: 'ସବୁଜ ଚିହ୍ନର (✓) ଅର୍ଥ କ’ଣ' },
+        desc: {
+          en: 'Whenever you see a green checkmark next to the price, that mandi is offering rates strictly ABOVE the central government MSP benchmark. A red cross warns you it is below MSP.',
+          hi: 'जब भी आप भाव के पास हरा टिक देखें, इसका मतलब है कि वह मंडी सरकारी MSP से अधिक दाम दे रही है। लाल क्रॉस का मतलब भाव MSP से कम है।',
+          mr: 'हिरवा टिक म्हणजे तो भाव सरकारी MSP पेक्षा जास्त आहे.',
+          or: 'ସବୁଜ ଚିହ୍ନ ଥିଲେ ମଣ୍ଡିଟି ସରକାରୀ MSP ଠାରୁ ଅଧିକ ଦର ଦେଉଛି।'
+        },
+        actionHint: {
+          en: 'Use the State dropdown at top to filter only mandis in your region.',
+          hi: 'शीर्ष पर राज्य ड्रॉपडाउन का उपयोग करके केवल अपने क्षेत्र की मंडियों को फ़िल्टर करें।',
+          mr: 'फक्त तुमच्या राज्यातील मंड्या पाहण्यासाठी फिल्टर वापरा.',
+          or: 'କେବଳ ଆପଣଙ୍କ ରାଜ୍ୟର ମଣ୍ଡି ଦେଖିବାକୁ ଫିଲ୍ଟର ବ୍ୟବହାର କରନ୍ତୁ।'
+        }
+      }
+    ]
+  },
+
+  '/calculator': {
+    title: { en: 'Net Realization Calculator Demo', hi: 'शुद्ध आय कैलकुलेटर गाइड', mr: 'कॅल्क्युलेटर डेमो', or: 'କ୍ୟାଲକୁଲେଟର ଡେମୋ' },
+    steps: [
+      {
+        title: { en: 'Why Gross Price is Not Your Take-Home', hi: 'सकल भाव आपकी असली कमाई क्यों नहीं है', mr: 'एकूण भाव तुमची खरी कमाई का नाही', or: 'ମୋଟ ଦର ଆପଣଙ୍କ ପ୍ରକୃତ ଆୟ କାହିଁକି ନୁହେଁ' },
+        desc: {
+          en: 'Mandi buyers often quote ₹2,500/qtl, but after transport fuel, commission, weighbridge cess, and bag packaging, your actual realization may drop to ₹2,200/qtl. This tool calculates every rupee accurately.',
+          hi: 'मंडी में व्यापारी ₹2,500/क्विंटल बोलते हैं, लेकिन भाड़ा, दलाली, तुलाई और बोरी खर्च के बाद आपके हाथ में ₹2,200 ही बचते हैं। यह टूल हर एक रुपये की सही गणना करता है।',
+          mr: 'वाहतूक, हमाली आणि कमिशन वजा केल्यानंतर तुमच्या हातात येणारी खरी रक्कम हा कॅल्क्युलेटर दाखवतो.',
+          or: 'ପରିବହନ, ଦଲାଲି ଓ ବସ୍ତା ଖର୍ଚ୍ଚ କାଟିବା ପରେ ହାତକୁ ଆସୁଥିବା ନିଟ ଟଙ୍କା ଏଠାରେ ସଠିକ ଗଣନା ହୁଏ।'
+        },
+        actionHint: {
+          en: 'How to use: Change the Quantity input and watch the Cost Breakdown update instantly on the right.',
+          hi: 'उपयोग कैसे करें: मात्रा (क्विंटल) बदलें और दाईं ओर लागत विवरण को तुरंत बदलते हुए देखें।',
+          mr: 'कसे वापरावे: प्रमाण बदला आणि उजवीकडील खर्च आपोआप बदलताना पहा.',
+          or: 'ପରିମାଣ ବଦଳାନ୍ତୁ ଓ ଡାହାଣ ପଟେ ଖର୍ଚ୍ଚ ପରିବର୍ତ୍ତନ ଦେଖନ୍ତୁ।'
+        }
+      },
+      {
+        title: { en: 'Transport Distance & Packaging Variables', hi: 'परिवहन दूरी व पैकेजिंग विकल्प', mr: 'वाहतूक खर्च आणि पॅकिंग', or: 'ପରିବହନ ଓ ପ୍ୟାକିଂ ଖର୍ଚ୍ଚ' },
+        desc: {
+          en: 'Increasing transport cost directly reduces your net realization. Try comparing a closer mandi with slightly lower rate vs a distant mandi with higher rate to see where you make more profit!',
+          hi: 'परिवहन लागत बढ़ने से आपका मुनाफा घटता है। पास की मंडी बनाम दूर की मंडी की तुलना करें और देखें कि किसमें ज़्यादा बचत होगी!',
+          mr: 'जवळची मंडी आणि लांबची मंडी यांच्या नफ्याची तुलना करून पहा!',
+          or: 'ପାଖ ମଣ୍ଡି ଓ ଦୂର ମଣ୍ଡିର ଖର୍ଚ୍ଚ ତୁଳନା କରି ପ୍ରକୃତ ଲାଭ ବାଛନ୍ତୁ।'
+        },
+        actionHint: {
+          en: 'Check the Net Realization card: Green means your net profit safely exceeds Govt MSP!',
+          hi: 'नेट रियलाइजेशन कार्ड देखें: हरा रंग बताता है कि आपका शुद्ध मुनाफा MSP से अधिक है!',
+          mr: 'हिरवा रंग म्हणजे तुमचा निव्वळ नफा MSP पेक्षा सुरक्षितपणे जास्त आहे!',
+          or: 'ସବୁଜ ରଙ୍ଗ ଦର୍ଶାଏ ଆପଣଙ୍କ ନିଟ ଲାଭ MSP ଠାରୁ ଅଧିକ।'
+        }
+      }
+    ]
+  },
+
+  '/mandi-map': {
+    title: { en: 'OpenStreetMap Mandi Guide', hi: 'मंडी मानचित्र व लोकेशन गाइड', mr: 'मंडी नकाशा मार्गदर्शक', or: 'ମଣ୍ଡି ମାନଚିତ୍ର ମାର୍ଗଦର୍ଶିକା' },
+    steps: [
+      {
+        title: { en: 'Zero API Keys & Real Public Map', hi: 'बिना किसी API Key के खुला मानचित्र', mr: 'मोफत ओपन मॅप', or: 'ମାଗଣା ଓପନ ମାନଚିତ୍ର' },
+        desc: {
+          en: 'This interactive map uses OpenStreetMap with zero proprietary Google API keys. Every marker shows an active APMC market with live contact numbers and daily arrival volumes.',
+          hi: 'यह मानचित्र ओपनस्ट्रीटमैप पर आधारित है जिसमें किसी गूगल एपीआई की आवश्यकता नहीं है। हर मार्कर पर मंडी का फोन नंबर व सुविधाएं उपलब्ध हैं।',
+          mr: 'हा नकाशा ओपनस्ट्रीटमॅपवर आधारित आहे. प्रत्येक मार्करवर फोन नंबर आणि सुविधा आहेत.',
+          or: 'ଏହି ମାନଚିତ୍ରରେ କୌଣସି ଗୁଗଲ API କି ଦରକାର ନାହିଁ। ପ୍ରତି ମାର୍କରରେ ଫୋନ ନମ୍ବର ଓ ସୁବିଧା ଅଛି।'
+        },
+        actionHint: {
+          en: 'Interactive: Click "📍 Use My Location" to automatically find and center the nearest mandi to your farm!',
+          hi: 'इंटरएक्टिव: अपने खेत से सबसे नज़दीकी मंडी खोजने के लिए "📍 Use My Location" बटन दबाएँ!',
+          mr: 'जवळची मंडी शोधण्यासाठी "📍 Use My Location" बटणावर क्लिक करा!',
+          or: 'ନିକଟତମ ମଣ୍ଡି ଖୋଜିବାକୁ "📍 Use My Location" ବଟନ ଦବାନ୍ତୁ।'
+        }
+      }
+    ]
+  }
 }
 
-export default function FarmerGuide({ isOpen, onClose, pageMode = false }) {
-  const { lang, t } = useLangStore()
+export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pageMode: forcePageMode }) {
   const location = useLocation()
-  const navigate = useNavigate()
+  const { language } = useLangStore()
 
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [isFirstVisitPrompt, setIsFirstVisitPrompt] = useState(false)
+  // State
+  const [isOpen, setIsOpen] = useState(false)
+  const [isDismissed, setIsDismissed] = useState(false)
   const [tourStep, setTourStep] = useState(0)
+  const [isTourActive, setIsTourActive] = useState(false)
 
-  // Multi-step full platform walkthrough
-  const FULL_TOUR_STEPS = [
-    {
-      route: '/',
-      title: {
-        en: 'Namaste! Welcome to MandiSetu',
-        hi: 'नमस्ते! मंडीसेतु पर आपका स्वागत है',
-        mr: 'नमस्कार! मंडीसेतूवर तुमचे स्वागत आहे',
-        or: 'ନମସ୍କାର! ମଣ୍ଡିସେତୁରେ ଆପଣଙ୍କୁ ସ୍ୱାଗତ',
-      },
-      content: {
-        en: 'I am Kisan Chacha, your guide. MandiSetu connects you directly with buyers and eliminates commission agents. Let me show you how to maximize your farm income!',
-        hi: 'मैं किसान चाचा बलराम हूँ। मंडीसेतु आपको सीधे बड़े खरीदारों से जोड़ता है और बिचौलियों का कमीशन खत्म करता है। चलिए मैं आपको दिखाता हूँ कि अपनी आय कैसे बढ़ाएं!',
-        mr: 'मी शेतकरी काका बळीराम. मंडीसेतू तुम्हाला थेट मोठ्या व्यापाऱ्यांशी जोडते आणि दलालांचे कमिशन वाचवते. चला जाणून घेऊया शेती नफा कसा वाढवायचा!',
-        or: 'ମୁଁ କିଷାନ ମଉସା ବଳରାମ। ମଣ୍ଡିସେତୁ ଆପଣଙ୍କୁ ସିଧାସଳଖ ବ୍ୟବସାୟୀଙ୍କ ସହ ଯୋଡେ। ଆସନ୍ତୁ ଜାଣିବା କିପରି ଅଧିକ ଲାଭ ପାଇବେ!',
-      },
-    },
-    {
-      route: '/prices',
-      title: {
-        en: 'Module 2: Live APMC Prices & Mandi Map',
-        hi: 'मॉड्यूल 2: लाइव मंडी भाव और मानचित्र',
-        mr: 'मॉड्यूल २: थेट बाजारभाव व नकाशा',
-        or: 'ମଡ୍ୟୁଲ୍ ୨: ଲାଇଭ୍ ମଣ୍ଡି ଦର ଓ ମ୍ୟାପ୍',
-      },
-      content: {
-        en: 'Track official Agmarknet prices across 500+ mandis. Click the "Interactive Mandi Map" to see real Google-style map pins with live rates per quintal!',
-        hi: 'यहाँ 500 से ज्यादा मंडियों के असली एगमार्कनेट भाव देखें। इंटरैक्टिव मैप पर क्लिक करके सीधे गूगल मैप्स की तरह लाइव भाव के पिन देखें!',
-        mr: '५०० हून अधिक बाजार समित्यांचे थेट दर तपासा. नकाशा टॅबवर जाऊन गुगल मॅप्सप्रमाणे थेट बाजारभाव व आवक पहा!',
-        or: '୫୦୦ରୁ ଅଧିକ ମଣ୍ଡିର ସରକାରୀ ଏଗମାର୍କନେଟ୍ ଦର ଦେଖନ୍ତୁ। ମାନଚିତ୍ର ବଟନ୍ ଦବାଇ ସିଧାସଳଖ ଲାଇଭ୍ ଦର ଦେଖନ୍ତୁ!',
-      },
-    },
-    {
-      route: '/calculator',
-      title: {
-        en: 'Module 3: Net Realization Calculator',
-        hi: 'मॉड्यूल 3: शुद्ध मुनाफा कैलकुलेटर',
-        mr: 'मॉड्यूल ३: निव्वळ नफा कॅल्क्युलेटर',
-        or: 'ମଡ୍ୟୁଲ୍ ୩: ନିଟ୍ ଲାଭ କାଲକୁଲେଟର',
-      },
-      content: {
-        en: 'Don\'t let high truck freight eat your profits! This calculator deducts transport cost and APMC cess to tell you which mandi gives you the highest cash in hand.',
-        hi: 'ज्यादा भाड़े के कारण आपका मुनाफा न घटे! यह कैलकुलेटर गाड़ी भाड़ा और मंडी टैक्स काटकर बताता है कि कहाँ माल बेचने पर सबसे ज्यादा रुपये बचेंगे।',
-        mr: 'वाहतूक खर्चामुळे नफा कमी होऊ देऊ नका! हे साधन अंतर व भाडे वजा करून दाखवते की कोणत्या बाजारात प्रत्यक्ष हातात जास्त पैसे मिळतील.',
-        or: 'ଗାଡି ଭଡ଼ା ଯୋଗୁଁ ଆପଣଙ୍କ ଲାଭ କମିବ ନାହିଁ! ଏହି ଟୁଲ୍ ସବୁ ଖର୍ଚ୍ଚ କାଟି ପ୍ରକୃତ ଲାଭ ହିସାବ କରେ।',
-      },
-    },
-    {
-      route: '/grading',
-      title: {
-        en: 'Module 10: AI Quality Grading',
-        hi: 'मॉड्यूल 10: एआई फसल ग्रेडिंग',
-        mr: 'मॉड्यूल १०: एआई गुणवत्ता प्रतवारी',
-        or: 'ମଡ୍ୟୁଲ୍ ୧୦: ଏଆଇ ଫସଲ ଗ୍ରେଡିଂ',
-      },
-      content: {
-        en: 'Upload a simple smartphone photo of your crop. Our Computer Vision AI instantly grades it A+, A, or B so buyers pay you premium rates without unfair cuts.',
-        hi: 'अपने मोबाइल से फसल की फोटो खींचकर अपलोड करें। हमारा एआई मॉडल तुरंत ग्रेड A+ या A तय करता है, जिससे खरीदार बिना कटौती के पूरा भाव देते हैं।',
-        mr: 'मोबाईलने शेतमालाचा फोटो काढून टाका. एआय तात्काळ A+ किंवा A प्रतवारी ठरवते आणि व्यापारी पूर्ण दर देतात.',
-        or: 'ମୋବାଇଲ୍ ଫଟୋ ଅପଲୋଡ୍ କରି ଫସଲର ଗ୍ରେଡ୍ ଜାଣନ୍ତୁ। A+ ଗ୍ରେଡ୍ ଥିଲେ ବ୍ୟବସାୟୀ ପୂରା ଦର ଦେବେ।',
-      },
-    },
-    {
-      route: '/listings',
-      title: {
-        en: 'Module 4: Zero-Commission Produce Lots',
-        hi: 'मॉड्यूल 4: सीधी फसल बिक्री',
-        mr: 'मॉड्यूल ४: थेट शेतमाल विक्री',
-        or: 'ମଡ୍ୟୁଲ୍ ୪: ସିଧାସଳଖ ଫସଲ ବିକ୍ରୟ',
-      },
-      content: {
-        en: 'List your produce in 30 seconds. Verified institutional buyers will place bids directly to you, protected by MandiSetu escrow payments!',
-        hi: '30 सेकंड में अपनी फसल लिस्ट करें। देश भर के सत्यापित खरीदार आपको सीधे ऑफर भेजेंगे और आपका भुगतान एस्क्रो खाते में सुरक्षित रहेगा!',
-        mr: '३० सेकंदात शेतमाल विक्रीसाठी नोंदवा. विश्वासू व्यापारी थेट खरेदी करतील आणि तुमचे पैसे सुरक्षित राहतील!',
-        or: '୩୦ ସେକେଣ୍ଡରେ ଆପଣଙ୍କ ଫସଲ ଯୋଡ଼ନ୍ତୁ। ବଡ଼ ବ୍ୟବସାୟୀ ସିଧାସଳଖ କିଣିବେ ଓ ପେମେଣ୍ଟ ସୁରକ୍ଷିତ ରହିବ!',
-      },
-    },
-  ]
+  // Drag and Drop state
+  const [position, setPosition] = useState({ x: 24, y: window.innerHeight - 110 })
+  const [isDragging, setIsDragging] = useState(false)
+  const dragStartRef = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 })
+  const hasMovedRef = useRef(false)
 
-  // Prompt on first visit
+  // Current page tour
+  const currentTour = PAGE_INTERACTIVE_TOURS[location.pathname] || PAGE_INTERACTIVE_TOURS['/dashboard']
+  const steps = currentTour.steps
+  const activeStep = steps[tourStep] || steps[0]
+
+  // Respond to global custom events
   useEffect(() => {
-    const visited = localStorage.getItem('mandisetu_tour_seen')
-    if (!visited) {
-      const timer = setTimeout(() => {
-        setIsFirstVisitPrompt(true)
-        setDialogOpen(true)
-      }, 1000)
-      return () => clearTimeout(timer)
+    if (forceOpen) {
+      setIsOpen(true)
+      setIsTourActive(true)
+      setIsDismissed(false)
     }
+  }, [forceOpen])
+
+  // Reset tour step when route changes
+  useEffect(() => {
+    setTourStep(0)
+  }, [location.pathname])
+
+  // Window resize handler
+  useEffect(() => {
+    const handleResize = () => {
+      setPosition((prev) => ({
+        x: Math.min(prev.x, window.innerWidth - 80),
+        y: Math.min(prev.y, window.innerHeight - 110),
+      }))
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Sync with external trigger (e.g. Header (i) or tour button)
+  // Draggable logic for Chacha avatar
+  const handleMouseDown = (e) => {
+    setIsDragging(true)
+    hasMovedRef.current = false
+    dragStartRef.current = {
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      posX: position.x,
+      posY: position.y,
+    }
+  }
+
   useEffect(() => {
-    if (isOpen) {
-      setIsFirstVisitPrompt(false)
-      setDialogOpen(true)
-    }
-  }, [isOpen])
-
-  const handleStartTour = () => {
-    setIsFirstVisitPrompt(false)
-    setTourStep(0)
-    setDialogOpen(true)
-    localStorage.setItem('mandisetu_tour_seen', 'true')
-  }
-
-  const handleCloseDialog = () => {
-    setDialogOpen(false)
-    setIsFirstVisitPrompt(false)
-    localStorage.setItem('mandisetu_tour_seen', 'true')
-    if (onClose) onClose()
-  }
-
-  const handleNextStep = () => {
-    if (tourStep < FULL_TOUR_STEPS.length - 1) {
-      const nextStep = tourStep + 1
-      setTourStep(nextStep)
-      const targetRoute = FULL_TOUR_STEPS[nextStep].route
-      if (location.pathname !== targetRoute) {
-        navigate(targetRoute)
+    const handleMouseMove = (e) => {
+      if (!isDragging) return
+      const dx = e.clientX - dragStartRef.current.mouseX
+      const dy = e.clientY - dragStartRef.current.mouseY
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        hasMovedRef.current = true
       }
-    } else {
-      handleCloseDialog()
+      setPosition({
+        x: Math.max(10, Math.min(window.innerWidth - 80, dragStartRef.current.posX + dx)),
+        y: Math.max(10, Math.min(window.innerHeight - 90, dragStartRef.current.posY + dy)),
+      })
     }
-  }
 
-  const handlePrevStep = () => {
-    if (tourStep > 0) {
-      const prevStep = tourStep - 1
-      setTourStep(prevStep)
-      const targetRoute = FULL_TOUR_STEPS[prevStep].route
-      if (location.pathname !== targetRoute) {
-        navigate(targetRoute)
-      }
+    const handleMouseUp = () => {
+      setIsDragging(false)
     }
-  }
 
-  const currentPath = location.pathname
-  const pageExplanation = PAGE_EXPLANATIONS[currentPath]?.[lang] || PAGE_EXPLANATIONS[currentPath]?.en
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove)
+      window.addEventListener('mouseup', handleMouseUp)
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isDragging])
+
+  // Labels across 4 languages
+  const labels = {
+    en: { name: 'Kisan Chacha (AI Guide)', next: 'Next Step', prev: 'Back', close: 'Close Tour', startTour: 'Take Interactive Tour', hint: 'Interactive Action' },
+    hi: { name: 'किसान चाचा (मार्गदर्शक)', next: 'अगला चरण', prev: 'पीछे', close: 'टूर बंद करें', startTour: 'इंटरएक्टिव टूर लें', hint: 'कार्रवाई सुझाव' },
+    mr: { name: 'किसान काका (AI मार्गदर्शक)', next: 'पुढील पायरी', prev: 'मागे', close: 'टूर बंद करा', startTour: 'टूर सुरू करा', hint: 'कृती सूचना' },
+    or: { name: 'କିସାନ କକା (ମାର୍ଗଦର୍ଶକ)', next: 'ପରବର୍ତ୍ତୀ', prev: 'ପଛକୁ', close: 'ଟୁର ବନ୍ଦ', startTour: 'ଇଣ୍ଟରାକ୍ଟିଭ ଟୁର ନିଅନ୍ତୁ', hint: 'ପଦକ୍ଷେପ ସୂଚନା' },
+  }
+  const l = labels[language] || labels.en
+
+  if (isDismissed) {
+    return (
+      <button
+        onClick={() => setIsDismissed(false)}
+        className="fixed bottom-4 left-4 z-40 px-3.5 py-1.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-lg flex items-center gap-1.5 transition-all hover:scale-105"
+        title="Reopen Kisan Chacha Tour Guide"
+      >
+        <span>🌾</span>
+        <span>Kisan Chacha Guide</span>
+      </button>
+    )
+  }
 
   return (
     <>
-      {/* 1. PERMANENT FLOATING MASCOT BUTTON (Bottom Left) — ALWAYS VISIBLE! */}
-      <div className="fixed bottom-5 left-5 z-[9990] flex items-center gap-2">
-        <div
-          onClick={() => {
-            setIsFirstVisitPrompt(false)
-            setDialogOpen(true)
-          }}
-          className="group relative flex items-center gap-2 cursor-pointer transition transform hover:scale-110 active:scale-95"
-        >
-          <FarmerAvatar size={58} />
-          {/* Animated floating prompt bubble next to mascot */}
-          {!dialogOpen && (
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-2xl shadow-xl border border-amber-300 dark:border-amber-500/40 text-xs font-bold text-gray-800 dark:text-gray-100 animate-bounce">
-              <span className="text-amber-500">✨</span>
-              <span>{t('chacha_name')}</span>
-              <span className="text-[10px] text-brand-600 dark:text-emerald-400">({t('nav_tour')})</span>
-            </div>
-          )}
+      {/* ── Draggable Floating Chacha Mascot on Left ── */}
+      <div
+        style={{ left: `${position.x}px`, top: `${position.y}px` }}
+        className="fixed z-50 select-none touch-none"
+      >
+        <div className="relative group">
+          {/* Animated Avatar Circle */}
+          <div
+            onMouseDown={handleMouseDown}
+            onClick={() => {
+              if (!hasMovedRef.current) {
+                setIsOpen(!isOpen)
+                setIsTourActive(true)
+              }
+            }}
+            className={`w-16 h-16 rounded-full flex items-center justify-center cursor-pointer shadow-2xl transition-all border-4 ${
+              isOpen
+                ? 'border-amber-400 bg-amber-600 scale-105 ring-4 ring-amber-400/30'
+                : 'border-white dark:border-gray-800 bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-600 shadow-amber-500/30 hover:scale-110 active:scale-95'
+            }`}
+            title="Kisan Chacha — Interactive Page Guide (Drag anywhere on page!)"
+          >
+            {/* Animated Indian Farmer Emoji/Icon */}
+            <span className="text-3xl select-none filter drop-shadow">👨‍🌾</span>
+          </div>
+
+          {/* Dedicated Cancel / Dismiss Button (Cross on top-right of Chacha) */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setIsDismissed(true)
+              setIsOpen(false)
+              if (forceClose) forceClose()
+            }}
+            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center text-xs shadow-md transition-colors"
+            title="Dismiss Kisan Chacha from screen"
+          >
+            ✕
+          </button>
+
+          {/* Drag me indicator */}
+          <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold text-gray-500 dark:text-gray-400 whitespace-nowrap pointer-events-none">
+            ⠿ Drag me
+          </div>
         </div>
       </div>
 
-      {/* 2. INTERACTIVE DIALOG POPUP WHEN OPEN */}
-      {dialogOpen && (
-        <div className="fixed bottom-20 left-4 sm:left-6 z-[9999] max-w-md w-[calc(100vw-2rem)] animate-fade-in-up">
-          <div className="bg-white/98 dark:bg-gray-900/98 backdrop-blur-xl rounded-3xl p-5 shadow-2xl border-2 border-amber-400 dark:border-amber-500 text-gray-900 dark:text-white relative">
-            {/* Close Button */}
+      {/* ── Interactive Tour Dialogue Box (Clean, Solid, No overlapping) ── */}
+      {isOpen && (
+        <div className="fixed bottom-24 left-4 sm:left-6 z-50 w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border-2 border-amber-400 dark:border-amber-500 rounded-3xl shadow-2xl overflow-hidden animate-fade-in-up">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 p-4 text-white flex items-center justify-between shadow">
+            <div className="flex items-center gap-2.5">
+              <span className="text-2xl">🌾</span>
+              <div>
+                <h3 className="font-extrabold text-sm leading-tight flex items-center gap-1.5">
+                  <span>{l.name}</span>
+                </h3>
+                <span className="text-[10px] text-amber-100 font-medium">
+                  {currentTour.title[language] || currentTour.title.en} · Step {tourStep + 1} of {steps.length}
+                </span>
+              </div>
+            </div>
+
             <button
-              onClick={handleCloseDialog}
-              className="absolute top-3.5 right-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              onClick={() => {
+                setIsOpen(false)
+                if (forceClose) forceClose()
+              }}
+              className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10"
             >
-              <X size={18} />
+              <X size={17} />
             </button>
+          </div>
 
-            {/* First Visit Prompt */}
-            {isFirstVisitPrompt ? (
-              <div className="flex items-start gap-3.5">
-                <FarmerAvatar size={64} />
-                <div className="flex-1 pr-3">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className="font-extrabold text-sm text-brand-700 dark:text-emerald-400">
-                      {t('chacha_name')}
-                    </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-semibold">
-                      Kisan Guide
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-700 dark:text-gray-200 leading-relaxed mb-3.5">
-                    {t('tour_welcome_prompt')}
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleStartTour}
-                      className="btn-primary text-xs py-2 px-3.5 flex items-center gap-1.5 font-bold shadow-md"
-                    >
-                      <Sparkles size={14} />
-                      <span>{t('tour_start_btn')}</span>
-                    </button>
-                    <button
-                      onClick={handleCloseDialog}
-                      className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white transition"
-                    >
-                      {t('tour_skip_btn')}
-                    </button>
-                  </div>
-                </div>
+          {/* Step Content */}
+          <div className="p-5 space-y-3.5 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100">
+            <div>
+              <div className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1">
+                {activeStep.title[language] || activeStep.title.en}
               </div>
-            ) : pageMode && pageExplanation ? (
-              /* Single Page Explanation Mode (Triggered by (i) button) */
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 pb-2 border-b border-gray-100 dark:border-gray-800">
-                  <FarmerAvatar size={48} />
-                  <div>
-                    <h4 className="font-extrabold text-sm text-brand-700 dark:text-emerald-400">
-                      {pageExplanation.title}
-                    </h4>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                      {t('chacha_name')} · {t('page_tour_title')}
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-2 text-xs text-gray-700 dark:text-gray-200">
-                  {pageExplanation.steps.map((st, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <span className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
-                        {i + 1}
-                      </span>
-                      <p className="leading-relaxed">{st}</p>
-                    </div>
-                  ))}
-                </div>
-                <button
-                  onClick={handleCloseDialog}
-                  className="btn-primary w-full text-xs py-2 mt-2 font-bold flex items-center justify-center gap-1"
-                >
-                  <Check size={14} />
-                  <span>{t('tour_finish_btn')}</span>
-                </button>
-              </div>
-            ) : (
-              /* Full Multi-Step Tour Mode */
-              <div className="space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-800">
-                  <div className="flex items-center gap-2.5">
-                    <FarmerAvatar size={44} />
-                    <div>
-                      <h4 className="font-extrabold text-sm text-brand-700 dark:text-emerald-400">
-                        {FULL_TOUR_STEPS[tourStep].title[lang] || FULL_TOUR_STEPS[tourStep].title.en}
-                      </h4>
-                      <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                        Step {tourStep + 1} of {FULL_TOUR_STEPS.length}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+              <p className="text-xs sm:text-sm leading-relaxed text-gray-700 dark:text-gray-200">
+                {activeStep.desc[language] || activeStep.desc.en}
+              </p>
+            </div>
 
-                <p className="text-xs text-gray-700 dark:text-gray-200 leading-relaxed min-h-[50px]">
-                  {FULL_TOUR_STEPS[tourStep].content[lang] || FULL_TOUR_STEPS[tourStep].content.en}
-                </p>
-
-                {/* Stepper Progress dots */}
-                <div className="flex items-center justify-center gap-1.5 py-1">
-                  {FULL_TOUR_STEPS.map((_, idx) => (
-                    <span
-                      key={idx}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${
-                        idx === tourStep ? 'w-6 bg-brand-600 dark:bg-emerald-400' : 'w-2 bg-gray-200 dark:bg-gray-700'
-                      }`}
-                    />
-                  ))}
-                </div>
-
-                {/* Tour Controls */}
-                <div className="flex items-center justify-between pt-1">
-                  <button
-                    onClick={handlePrevStep}
-                    disabled={tourStep === 0}
-                    className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white disabled:opacity-30 transition flex items-center gap-1"
-                  >
-                    <ArrowLeft size={13} />
-                    <span>{t('tour_prev_btn')}</span>
-                  </button>
-
-                  <button
-                    onClick={handleNextStep}
-                    className="btn-primary text-xs py-1.5 px-4 font-bold flex items-center gap-1 shadow-md"
-                  >
-                    <span>{tourStep === FULL_TOUR_STEPS.length - 1 ? t('tour_finish_btn') : t('tour_next_btn')}</span>
-                    <ArrowRight size={13} />
-                  </button>
-                </div>
+            {/* Action Hint / How to change value */}
+            {activeStep.actionHint && (
+              <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2">
+                <Sparkles size={15} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                <span className="leading-snug">{activeStep.actionHint[language] || activeStep.actionHint.en}</span>
               </div>
             )}
+          </div>
+
+          {/* Footer Controls (Prev, Next, Close) */}
+          <div className="px-5 py-3.5 bg-gray-50 dark:bg-gray-800/60 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+            <button
+              onClick={() => {
+                setIsOpen(false)
+                if (forceClose) forceClose()
+              }}
+              className="text-xs font-semibold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            >
+              {l.close}
+            </button>
+
+            <div className="flex items-center gap-2">
+              {tourStep > 0 && (
+                <button
+                  onClick={() => setTourStep(tourStep - 1)}
+                  className="px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-700 text-xs font-semibold hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  {l.prev}
+                </button>
+              )}
+
+              {tourStep < steps.length - 1 ? (
+                <button
+                  onClick={() => setTourStep(tourStep + 1)}
+                  className="px-4 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow flex items-center gap-1"
+                >
+                  <span>{l.next}</span>
+                  <ChevronRight size={14} />
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setIsOpen(false)
+                    if (forceClose) forceClose()
+                  }}
+                  className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow flex items-center gap-1"
+                >
+                  <CheckCircle2 size={14} />
+                  <span>Finish Tour</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

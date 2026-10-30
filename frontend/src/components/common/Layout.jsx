@@ -1,444 +1,327 @@
-import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom'
+import { useState, useRef, useEffect } from 'react'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import {
+  Home, TrendingUp, Calculator, Award, Tractor, ShieldCheck,
+  FileText, Clock, AlertTriangle, MapPin, CloudRain, Truck,
+  BarChart2, MessageSquare, User, Shield, LogOut, ChevronDown,
+  Sparkles, Menu, MoreHorizontal, Leaf, HelpCircle
+} from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
+import { useThemeStore } from '../../store/themeStore'
 import { useLangStore } from '../../store/langStore'
 import HeaderControls from './HeaderControls'
-import {
-  LayoutDashboard, TrendingUp, Calculator, Package, Users,
-  CreditCard, Lightbulb, ShieldCheck, Truck, AlertTriangle,
-  Camera, CloudRain, BarChart3, LogOut, Menu, X, Leaf,
-  MoreHorizontal, Equal, ChevronDown, User, Mail, Phone, MapPin,
-  ExternalLink, Settings, Sparkles
-} from 'lucide-react'
-import { useState, useRef, useEffect } from 'react'
+import Footer from './Footer'
+
+// Ordered Modules strictly in ascending logical order
+const ASCENDING_MODULES = [
+  { to: '/dashboard', icon: Home, label: '01. Dashboard', role: 'all' },
+  { to: '/prices', icon: TrendingUp, label: '02. Price Discovery', role: 'all' },
+  { to: '/calculator', icon: Calculator, label: '03. Net-Realization Calc', role: 'all' },
+  { to: '/grading', icon: Award, label: '04. AI Produce Grading', role: 'all' },
+  { to: '/listings', icon: Tractor, label: '05. Produce Lot Listings', role: 'all' },
+  { to: '/matching', icon: ShieldCheck, label: '06. Buyer Matching Engine', role: 'all' },
+  { to: '/transactions', icon: FileText, label: '07. Smart Contracts & Escrow', role: 'all' },
+  { to: '/sale-window', icon: Clock, label: '08. Pre-Harvest Sale Window', role: 'all' },
+  { to: '/disputes', icon: AlertTriangle, label: '09. Grievance Arbitration', role: 'all' },
+  { to: '/mandi-map', icon: MapPin, label: '10. Mandi Maps (OSM)', role: 'all' },
+  { to: '/weather', icon: CloudRain, label: '11. Weather Intelligence', role: 'all' },
+  { to: '/logistics', icon: Truck, label: '12. Logistics & Transport', role: 'all' },
+  { to: '/analytics', icon: BarChart2, label: '13. Macro Agri Analytics', role: 'all' },
+  { to: '/feedback', icon: MessageSquare, label: '14. Platform Feedback', role: 'all' },
+  { to: '/profile', icon: User, label: '15. My Profile & Settings', role: 'all' },
+]
 
 export default function Layout() {
-  const { role, user, logout } = useAuthStore()
-  const { t } = useLangStore()
+  const { user, logout } = useAuthStore()
+  const { isDark } = useThemeStore()
+  const { language } = useLangStore()
   const navigate = useNavigate()
+  const location = useLocation()
 
-  // Sidebar collapse states:
-  // - sidebarOpen: for mobile drawer
-  // - isCollapsed: for desktop width minimization (w-64 <-> w-20)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  // Sidebar starts opened by default on desktop
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false)
-  const profileRef = useRef(null)
+  const profileMenuRef = useRef(null)
 
-  // Close profile dropdown when clicking outside
+  // Close profile dropdown on outside click
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (profileRef.current && !profileRef.current.contains(event.target)) {
+    const handleOutsideClick = (e) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
         setProfileDropdownOpen(false)
       }
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
   }, [])
-
-  const navItems = (userRole) => {
-    const dashboardLink =
-      userRole === 'buyer'
-        ? { to: '/buyer-dashboard', icon: LayoutDashboard, label: t('nav_dashboard'), module: '1' }
-        : userRole === 'admin'
-        ? { to: '/admin', icon: LayoutDashboard, label: t('nav_dashboard'), module: '1' }
-        : { to: '/farmer-dashboard', icon: LayoutDashboard, label: t('nav_dashboard'), module: '1' }
-
-    const base = [
-      dashboardLink,
-      { to: '/prices',       icon: TrendingUp,   label: t('nav_prices'),       module: '2' },
-      { to: '/calculator',   icon: Calculator,   label: t('nav_calculator'),   module: '3' },
-      { to: '/listings',     icon: Package,      label: t('nav_listings'),     module: '4' },
-      { to: '/transactions', icon: CreditCard,   label: t('nav_transactions'), module: '6' },
-      { to: '/buyers',       icon: Users,        label: t('nav_buyers'),       module: '8' },
-      { to: '/logistics',    icon: Truck,        label: t('nav_logistics'),    module: '8b' },
-      { to: '/disputes',     icon: AlertTriangle,label: t('nav_disputes'),     module: '9' },
-      { to: '/weather',      icon: CloudRain,    label: t('nav_weather'),      module: '11' },
-    ]
-    const farmer = [
-      { to: '/grading',      icon: Camera,       label: t('nav_grading'),      module: '10' },
-      { to: '/sale-window',  icon: Lightbulb,    label: t('nav_salewindow'),   module: '7' },
-    ]
-    const buyer = [
-      { to: '/matching',     icon: ShieldCheck,  label: t('nav_matching'),     module: '5' },
-    ]
-    const admin = [
-      { to: '/analytics',    icon: BarChart3,    label: t('nav_analytics'),    module: '12' },
-    ]
-
-    if (userRole === 'admin') return [...base, ...farmer, ...buyer, ...admin]
-    if (userRole === 'buyer') return [...base, ...buyer]
-    return [...base, ...farmer]
-  }
-
-  const items = navItems(role)
 
   const handleLogout = () => {
     logout()
-    navigate('/login')
+    navigate('/')
   }
 
-  const handleOpenPageTour = () => {
-    window.dispatchEvent(new CustomEvent('mandisetu_open_guide', { detail: { pageMode: true } }))
+  // Trigger Chacha's interactive tour
+  const handleStartTour = () => {
+    window.dispatchEvent(
+      new CustomEvent('mandisetu_open_guide', { detail: { pageMode: true } })
+    )
   }
 
-  const handleOpenFullTour = () => {
-    window.dispatchEvent(new CustomEvent('mandisetu_open_guide', { detail: { pageMode: false } }))
-  }
-
-  const roleStyles = {
-    farmer: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-    buyer: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-    admin: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    fpo: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-  }
-
-  const initials = user?.full_name
-    ? user.full_name
-        .split(' ')
-        .map((n) => n[0])
-        .slice(0, 2)
-        .join('')
-        .toUpperCase()
-    : 'MS'
+  const isOwner =
+    user?.isOwner ||
+    user?.email?.toLowerCase() === 'tanmayapradhan2322@gmail.com' ||
+    user?.username === 'TanmayA' ||
+    user?.name === 'TanmayA'
 
   return (
-    <div className="min-h-screen flex bg-gray-50/70 dark:bg-gray-950 font-sans antialiased text-gray-900 dark:text-gray-100 transition-colors duration-200">
-      {/* ─── Collapsible Sidebar ──────────────────────────────────────────────── */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 bg-gradient-to-b from-brand-950 via-brand-900 to-gray-950 text-white transform transition-all duration-300 ease-in-out
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 lg:flex lg:flex-col shadow-2xl border-r border-brand-800/40
-        ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}`}
-      >
-        {/* Brand Header with Minimize / Expand Toggle */}
-        <div className="flex items-center justify-between px-4 py-5 border-b border-brand-800/50">
-          {!isCollapsed ? (
-            <Link to="/" className="flex items-center gap-2.5 group overflow-hidden">
-              <div className="w-9 h-9 bg-gradient-to-tr from-brand-500 to-emerald-400 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition flex-shrink-0">
-                <Leaf size={18} className="text-white" />
+    <div className={`min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 ${isDark ? 'dark' : ''}`}>
+      {/* ── Top Header Navigation Bar ── */}
+      <header className="sticky top-0 z-40 h-16 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 flex items-center justify-between transition-colors shadow-sm">
+        <div className="flex items-center gap-3">
+          {/* Brand Logo & Name */}
+          <NavLink to="/" className="flex items-center gap-2.5 group">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-600 to-emerald-500 flex items-center justify-center shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform">
+              <Leaf size={20} className="text-white" />
+            </div>
+            <div className="hidden sm:block">
+              <span className="text-lg font-black tracking-tight bg-gradient-to-r from-brand-700 to-emerald-600 dark:from-emerald-400 dark:to-teal-300 bg-clip-text text-transparent">
+                MandiSetu
+              </span>
+              <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest -mt-1">
+                Bridge To Fair Markets
+              </span>
+            </div>
+          </NavLink>
+
+          {/* Clean Aesthetic Menu Button (Appears when sidebar is collapsed) */}
+          {!sidebarOpen && (
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="ml-2 px-3.5 py-1.5 rounded-2xl bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800 text-brand-800 dark:text-brand-300 font-bold text-xs flex items-center gap-1.5 shadow-sm hover:bg-brand-100 dark:hover:bg-brand-900/40 transition-all hover:scale-105"
+              title="Open Navigation Menu"
+            >
+              <Menu size={15} />
+              <span>Menu</span>
+            </button>
+          )}
+        </div>
+
+        {/* Center / Right Controls */}
+        <div className="flex items-center gap-3">
+          {/* Take Page Tour interactive button */}
+          <button
+            onClick={handleStartTour}
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-300 text-xs font-bold hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors shadow-sm"
+            title="Interactive walkthrough of this page by Kisan Chacha"
+          >
+            <Sparkles size={14} className="text-amber-500" />
+            <span>Interactive Demo</span>
+          </button>
+
+          {/* Language & Numeral Switcher & Theme Toggle */}
+          <HeaderControls />
+
+          {/* ── Top-Right User Profile with Full Navigation Powers ── */}
+          <div className="relative" ref={profileMenuRef}>
+            <button
+              onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+              className="flex items-center gap-2 p-1.5 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
+            >
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-500 flex items-center justify-center text-white font-extrabold text-sm shadow-md group-hover:scale-105 transition-transform">
+                {user?.full_name?.[0] || user?.name?.[0] || 'U'}
               </div>
-              <div className="truncate">
-                <p className="font-extrabold text-lg leading-tight tracking-tight text-white">{t('brand_name')}</p>
-                <p className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">Agri-Market Suite</p>
+              <div className="hidden lg:block text-left text-xs pr-1">
+                <div className="font-bold text-gray-900 dark:text-white truncate max-w-[110px]">
+                  {user?.full_name || user?.name || 'Farmer'}
+                </div>
+                <div className="text-[10px] text-gray-400 capitalize -mt-0.5 font-medium">
+                  {isOwner ? '👑 Owner' : user?.role || 'Farmer'}
+                </div>
               </div>
-            </Link>
-          ) : (
-            <Link to="/" className="mx-auto" title={t('brand_name')}>
-              <div className="w-10 h-10 bg-gradient-to-tr from-brand-500 to-emerald-400 rounded-xl flex items-center justify-center shadow-lg hover:scale-105 transition">
-                <Leaf size={20} className="text-white" />
+              <ChevronDown size={14} className={`text-gray-400 transition-transform ${profileDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Profile Dropdown Menu */}
+            {profileDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-72 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl z-50 p-3 space-y-2 animate-fade-in">
+                {/* User Info Header */}
+                <div className="p-3 rounded-2xl bg-gradient-to-r from-brand-50 to-emerald-50 dark:from-gray-800 dark:to-gray-800/60 border border-brand-100 dark:border-gray-700">
+                  <div className="font-extrabold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
+                    <span>{user?.full_name || user?.name || 'Logged User'}</span>
+                    {isOwner && <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-200 text-amber-900 font-bold">OWNER</span>}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate mt-0.5">
+                    {user?.email || 'farmer@mandisetu.in'}
+                  </div>
+                  <div className="text-[11px] text-brand-700 dark:text-brand-400 font-semibold mt-1">
+                    Role: <span className="capitalize">{user?.role || 'farmer'}</span> · {user?.state || 'India'}
+                  </div>
+                </div>
+
+                {/* Direct Navigation Links */}
+                <div className="space-y-1 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                  <button
+                    onClick={() => { navigate('/profile'); setProfileDropdownOpen(false) }}
+                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2.5 transition-colors"
+                  >
+                    <User size={15} className="text-brand-600" />
+                    <span>View & Edit My Profile</span>
+                  </button>
+
+                  <button
+                    onClick={() => { navigate('/dashboard'); setProfileDropdownOpen(false) }}
+                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2.5 transition-colors"
+                  >
+                    <Home size={15} className="text-blue-600" />
+                    <span>Farmer Dashboard</span>
+                  </button>
+
+                  <button
+                    onClick={() => { navigate('/prices'); setProfileDropdownOpen(false) }}
+                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2.5 transition-colors"
+                  >
+                    <TrendingUp size={15} className="text-emerald-600" />
+                    <span>Market Prices & Agmarknet</span>
+                  </button>
+
+                  <button
+                    onClick={() => { navigate('/mandi-map'); setProfileDropdownOpen(false) }}
+                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2.5 transition-colors"
+                  >
+                    <MapPin size={15} className="text-indigo-600" />
+                    <span>Mandi Map & Nearby APMC</span>
+                  </button>
+
+                  <button
+                    onClick={() => { navigate('/feedback'); setProfileDropdownOpen(false) }}
+                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2.5 transition-colors"
+                  >
+                    <MessageSquare size={15} className="text-amber-600" />
+                    <span>Give Platform Feedback</span>
+                  </button>
+
+                  {user?.role === 'admin' && (
+                    <button
+                      onClick={() => { navigate('/admin'); setProfileDropdownOpen(false) }}
+                      className="w-full text-left px-3 py-2 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-900 dark:text-purple-300 font-bold flex items-center gap-2.5 transition-colors"
+                    >
+                      <Shield size={15} className="text-purple-600" />
+                      <span>Admin Oversight Panel</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="pt-1 border-t border-gray-100 dark:border-gray-800">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-3 py-2 rounded-xl text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 text-xs font-bold flex items-center gap-2.5 transition-colors"
+                  >
+                    <LogOut size={15} />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
               </div>
-            </Link>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* ── Main Layout Body (Sidebar + Content + Footer) ── */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* ── Sidebar Navigation ── */}
+        <aside
+          className={`bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col transition-all duration-300 flex-shrink-0 z-30 ${
+            sidebarOpen ? 'w-64' : 'w-0 -translate-x-full md:w-0'
+          }`}
+        >
+          {/* Sidebar Top: Header with 3 Dots to minimize */}
+          {sidebarOpen && (
+            <div className="h-12 px-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                12 Modules (Ascending)
+              </span>
+
+              {/* Three dots button to minimize sidebar */}
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                title="Minimize menu (3 dots)"
+              >
+                <MoreHorizontal size={18} />
+              </button>
+            </div>
           )}
 
-          {/* Desktop Minimize Button (Three dots when open, Two horizontal lines '=' when collapsed) */}
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            title={isCollapsed ? 'Expand Sidebar (2 Lines)' : 'Minimize Sidebar (3 Dots)'}
-            className="hidden lg:flex items-center justify-center p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-emerald-300 hover:text-white transition"
-          >
-            {isCollapsed ? (
-              /* Two horizontal lines '=' to expand */
-              <div className="flex flex-col gap-1 items-center justify-center w-5 h-5">
-                <span className="w-4 h-0.5 bg-emerald-400 rounded-full"></span>
-                <span className="w-4 h-0.5 bg-emerald-400 rounded-full"></span>
-              </div>
-            ) : (
-              /* Three dots '...' to minimize */
-              <MoreHorizontal size={18} />
-            )}
-          </button>
+          {/* Module Links (Ascending Order) */}
+          {sidebarOpen && (
+            <nav className="flex-1 overflow-y-auto p-3 space-y-1 scrollbar-thin">
+              {ASCENDING_MODULES.map((item) => {
+                const Icon = item.icon
+                const isActive = location.pathname === item.to
 
-          {/* Mobile close */}
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-gray-400 hover:text-white p-1"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* User Card inside Sidebar (Hidden or compact in collapsed mode) */}
-        {!isCollapsed ? (
-          <div className="px-5 py-4 border-b border-brand-800/40 bg-white/[0.03]">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0">
-                {initials}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold text-white truncate">{user?.full_name || 'Agri User'}</p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                      roleStyles[role] || roleStyles.farmer
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-2xl text-xs font-semibold transition-all hover-lift ${
+                      isActive
+                        ? 'bg-brand-500/10 text-brand-700 dark:text-brand-300 font-extrabold shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                     }`}
                   >
-                    {role || 'Farmer'}
-                  </span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                    <Icon size={16} className={isActive ? 'text-brand-600' : 'text-gray-400'} />
+                    <span className="truncate">{item.label}</span>
+                  </NavLink>
+                )
+              })}
+
+              {/* Admin Panel Link */}
+              {user?.role === 'admin' && (
+                <NavLink
+                  to="/admin"
+                  className={({ isActive }) =>
+                    `flex items-center gap-2.5 px-3 py-2 rounded-2xl text-xs font-bold transition-all mt-3 ${
+                      isActive
+                        ? 'bg-purple-100 dark:bg-purple-950 text-purple-900 dark:text-purple-300 shadow-sm'
+                        : 'text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30'
+                    }`
+                  }
+                >
+                  <Shield size={16} className="text-purple-600" />
+                  <span>16. Admin Command</span>
+                </NavLink>
+              )}
+            </nav>
+          )}
+
+          {/* Sidebar Bottom: User snapshot */}
+          {sidebarOpen && (
+            <div className="p-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+              <div className="flex items-center gap-2 text-xs">
+                <div className="w-8 h-8 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-xs">
+                  {user?.full_name?.[0] || 'U'}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-gray-900 dark:text-white truncate">
+                    {user?.full_name || 'Farmer'}
+                  </div>
+                  <div className="text-[10px] text-gray-400 truncate">
+                    {user?.district || 'India'}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="py-3 flex justify-center border-b border-brand-800/40">
-            <div
-              className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center text-white font-bold text-xs shadow-md cursor-pointer"
-              title={user?.full_name}
-              onClick={() => setProfileDropdownOpen(true)}
-            >
-              {initials}
-            </div>
-          </div>
-        )}
+          )}
+        </aside>
 
-        {/* Navigation items list */}
-        <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-1 scrollbar-none">
-          {items.map(({ to, icon: Icon, label, module: mod }) => (
-            <NavLink
-              key={to}
-              to={to}
-              onClick={() => setSidebarOpen(false)}
-              title={isCollapsed ? `${label} (M${mod})` : ''}
-              className={({ isActive }) =>
-                `flex items-center rounded-xl text-xs font-semibold transition-all duration-200 group ${
-                  isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2.5'
-                } ${
-                  isActive
-                    ? 'bg-gradient-to-r from-brand-600 to-emerald-600 text-white shadow-md font-bold'
-                    : 'text-gray-300 hover:bg-white/10 hover:text-white'
-                }`
-              }
-            >
-              <Icon size={18} className="transition-transform group-hover:scale-110 flex-shrink-0" />
-              {!isCollapsed && (
-                <>
-                  <span className="flex-1 truncate">{label}</span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/20 text-emerald-300/80">
-                    M{mod}
-                  </span>
-                </>
-              )}
-            </NavLink>
-          ))}
-        </nav>
+        {/* ── Main Scrollable Page Area ── */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+            <Outlet />
+          </main>
 
-        {/* Sign Out Button */}
-        <div className="p-3 border-t border-brand-800/50 bg-black/20">
-          <button
-            onClick={handleLogout}
-            title={isCollapsed ? t('nav_sign_out') : ''}
-            className={`flex items-center rounded-xl text-xs font-semibold text-gray-300 hover:text-red-400 hover:bg-red-500/10 transition ${
-              isCollapsed ? 'justify-center p-2.5 w-full' : 'gap-2.5 w-full px-3 py-2'
-            }`}
-          >
-            <LogOut size={16} />
-            {!isCollapsed && <span>{t('nav_sign_out')}</span>}
-          </button>
+          {/* ── Footer on Every Page with Copyright, Credits & Contact ── */}
+          <Footer />
         </div>
-      </aside>
-
-      {/* Backdrop for mobile */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* ─── Main Content Area ──────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Header Bar */}
-        <header className="sticky top-0 z-30 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200/80 dark:border-gray-800 px-4 sm:px-6 py-3 flex items-center justify-between gap-4 transition-colors">
-          <div className="flex items-center gap-3">
-            {/* Mobile menu drawer button */}
-            <button
-              className="lg:hidden p-1.5 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu size={20} />
-            </button>
-
-            {/* Desktop Quick Sidebar Expand / Collapse button (Two horizontal lines) */}
-            <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              title={isCollapsed ? 'Expand Sidebar (2 Lines)' : 'Minimize Sidebar (3 Dots)'}
-              className="hidden lg:flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition text-xs font-bold border border-gray-200 dark:border-gray-700"
-            >
-              {isCollapsed ? (
-                /* Two horizontal lines '=' to expand */
-                <div className="flex flex-col gap-1 items-center justify-center w-4 h-4">
-                  <span className="w-3.5 h-0.5 bg-emerald-600 dark:bg-emerald-400 rounded-full"></span>
-                  <span className="w-3.5 h-0.5 bg-emerald-600 dark:bg-emerald-400 rounded-full"></span>
-                </div>
-              ) : (
-                <MoreHorizontal size={16} className="text-gray-500" />
-              )}
-              <span>{isCollapsed ? 'Expand Menu' : 'Minimize'}</span>
-            </button>
-
-            <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>{t('live_feed_active')}</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Multilingual Switcher + Dark Mode Toggle + (i) Page Tour Button */}
-            <HeaderControls
-              onOpenPageTour={handleOpenPageTour}
-              onOpenFullTour={handleOpenFullTour}
-            />
-
-            {/* ─── Top Right Interactive User Profile & Quick Navigation ────────── */}
-            <div className="relative" ref={profileRef}>
-              <button
-                onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                className="flex items-center gap-2 pl-2 border-l border-gray-200 dark:border-gray-800 p-1 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition group cursor-pointer"
-                title="View Profile & Navigation"
-              >
-                <div className="text-right hidden sm:block">
-                  <p className="text-xs font-bold text-gray-900 dark:text-gray-100 leading-tight group-hover:text-brand-600 dark:group-hover:text-emerald-400 transition">
-                    {user?.full_name || 'Agri User'}
-                  </p>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 capitalize">{role || 'Farmer'}</p>
-                </div>
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white font-bold text-xs flex items-center justify-center shadow-md group-hover:scale-105 transition">
-                  {initials}
-                </div>
-                <ChevronDown size={14} className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-200" />
-              </button>
-
-              {/* Profile Navigation Dropdown Panel */}
-              {profileDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 py-3 z-50 animate-scale-in text-gray-900 dark:text-gray-100">
-                  {/* Profile Header Details */}
-                  <div className="px-4 pb-3 border-b border-gray-100 dark:border-gray-800">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white font-extrabold text-base flex items-center justify-center shadow-md">
-                        {initials}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h4 className="font-extrabold text-sm text-gray-900 dark:text-white truncate">
-                          {user?.full_name || 'Agri Member'}
-                        </h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate flex items-center gap-1 mt-0.5">
-                          <Mail size={12} />
-                          <span>{user?.email || 'user@mandisetu.com'}</span>
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${roleStyles[role] || roleStyles.farmer}`}>
-                            {role || 'Farmer'}
-                          </span>
-                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                            <span>ID:</span>
-                            <span className="font-mono">{user?.user_id || user?.id || 'usr_' + (user?.email?.split('@')[0] || '101')}</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Contact & Location details */}
-                    <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-800 text-[11px] text-gray-500 dark:text-gray-400 space-y-1">
-                      {user?.phone && (
-                        <div className="flex items-center gap-1.5">
-                          <Phone size={12} className="text-gray-400" />
-                          <span>{user.phone}</span>
-                        </div>
-                      )}
-                      {(user?.district || user?.state) && (
-                        <div className="flex items-center gap-1.5">
-                          <MapPin size={12} className="text-gray-400" />
-                          <span>{user.district ? `${user.district}, ` : ''}{user.state || 'India'}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Navigation Power Hub */}
-                  <div className="p-2 space-y-0.5 text-xs font-semibold">
-                    <div className="px-3 py-1 text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-wider">
-                      Quick Platform Navigation
-                    </div>
-
-                    <Link
-                      to="/dashboard"
-                      onClick={() => setProfileDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-emerald-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 hover:text-brand-700 dark:hover:text-emerald-400 transition"
-                    >
-                      <LayoutDashboard size={16} className="text-emerald-600 dark:text-emerald-400" />
-                      <span>{t('nav_dashboard')}</span>
-                    </Link>
-
-                    <Link
-                      to="/listings"
-                      onClick={() => setProfileDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-emerald-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 hover:text-brand-700 dark:hover:text-emerald-400 transition"
-                    >
-                      <Package size={16} className="text-teal-600" />
-                      <span>{t('nav_listings')}</span>
-                    </Link>
-
-                    <Link
-                      to="/prices"
-                      onClick={() => setProfileDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-emerald-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 hover:text-brand-700 dark:hover:text-emerald-400 transition"
-                    >
-                      <TrendingUp size={16} className="text-blue-600" />
-                      <span>{t('nav_prices')}</span>
-                    </Link>
-
-                    <Link
-                      to="/calculator"
-                      onClick={() => setProfileDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-emerald-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 hover:text-brand-700 dark:hover:text-emerald-400 transition"
-                    >
-                      <Calculator size={16} className="text-amber-600" />
-                      <span>{t('nav_calculator')}</span>
-                    </Link>
-
-                    <Link
-                      to="/transactions"
-                      onClick={() => setProfileDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-emerald-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 hover:text-brand-700 dark:hover:text-emerald-400 transition"
-                    >
-                      <CreditCard size={16} className="text-purple-600" />
-                      <span>{t('nav_transactions')}</span>
-                    </Link>
-
-                    {role === 'admin' && (
-                      <Link
-                        to="/admin"
-                        onClick={() => setProfileDropdownOpen(false)}
-                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-purple-50 dark:hover:bg-gray-800 text-purple-700 dark:text-purple-400 font-bold transition"
-                      >
-                        <ShieldCheck size={16} className="text-purple-600" />
-                        <span>Admin Oversight & Users Audit</span>
-                      </Link>
-                    )}
-                  </div>
-
-                  {/* Actions & Sign Out */}
-                  <div className="p-2 pt-2 border-t border-gray-100 dark:border-gray-800">
-                    <button
-                      onClick={() => {
-                        setProfileDropdownOpen(false)
-                        handleLogout()
-                      }}
-                      className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition"
-                    >
-                      <LogOut size={16} />
-                      <span>{t('nav_sign_out')}</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
-
-        {/* Main View Container */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-          <Outlet />
-        </main>
       </div>
     </div>
   )

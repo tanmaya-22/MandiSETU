@@ -431,20 +431,51 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 7. Footer */}
-      <footer className="bg-gray-950 text-gray-400 py-12 border-t border-gray-900 text-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Leaf size={18} className="text-brand-400" />
-            <span className="text-white font-extrabold text-sm">{t('brand_name')}</span>
-            <span className="text-gray-500">· Digital Agricultural Marketplace</span>
+      {/* 7. Comprehensive Decluttered Modern Footer */}
+      <footer className="bg-gray-950 text-gray-300 py-12 border-t border-gray-800 text-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-8 border-b border-gray-800">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Leaf size={22} className="text-emerald-400" />
+                <span className="text-white font-extrabold text-lg">MandiSetu</span>
+                <span className="text-emerald-400 text-xs px-2 py-0.5 rounded-full bg-emerald-950 border border-emerald-800 font-bold">
+                  Agri-Market Platform
+                </span>
+              </div>
+              <p className="text-gray-400 text-xs max-w-md">
+                Empowering Indian farmers with Agmarknet price intelligence, net take-home calculators, OpenStreetMap logistics, and dispute arbitration.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-4 text-xs">
+              <Link to="/prices" className="hover:text-emerald-400 transition">Market Rates</Link>
+              <Link to="/calculator" className="hover:text-emerald-400 transition">Net Calculator</Link>
+              <Link to="/mandi-map" className="hover:text-emerald-400 transition">Mandi Maps</Link>
+              <Link to="/weather" className="hover:text-emerald-400 transition">Weather Alerts</Link>
+              <Link to="/feedback" className="text-emerald-400 font-bold hover:underline">💬 Give Feedback</Link>
+            </div>
           </div>
-          <div className="flex gap-6 text-gray-500">
-            <span>Agmarknet Verified</span>
-            <span>Prophet ML Engine</span>
-            <span>IEEE Research Project</span>
+
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-400">
+            <div>
+              © 2024–2026 MandiSetu. All rights reserved.
+            </div>
+
+            <div className="font-semibold text-gray-200 text-center">
+              Credits for Prototype: <span className="text-emerald-400 font-bold">Tanmaya; Anuj; Yatharth and team</span>
+            </div>
+
+            <div className="flex items-center gap-4 font-mono text-[11px]">
+              <a href="mailto:tanmayapradhan2322@gmail.com" className="hover:text-emerald-400 transition">
+                tanmayapradhan2322@gmail.com
+              </a>
+              <span>·</span>
+              <a href="tel:+917008800192" className="hover:text-emerald-400 transition">
+                +91 7008800192
+              </a>
+            </div>
           </div>
-          <p>© 2026 MandiSetu. Empowering Indian Farmers & FPOs.</p>
         </div>
       </footer>
     </div>
