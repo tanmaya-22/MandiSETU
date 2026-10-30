@@ -4,7 +4,7 @@ import {
   Home, TrendingUp, Calculator, Award, Tractor, ShieldCheck,
   FileText, Clock, AlertTriangle, MapPin, CloudRain, Truck,
   BarChart2, MessageSquare, User, Shield, LogOut, ChevronDown,
-  Sparkles, Menu, MoreHorizontal, Leaf, HelpCircle
+  Sparkles, Menu, MoreHorizontal, Leaf, HelpCircle, X
 } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import { useThemeStore } from '../../store/themeStore'
@@ -12,23 +12,23 @@ import { useLangStore } from '../../store/langStore'
 import HeaderControls from './HeaderControls'
 import Footer from './Footer'
 
-// Ordered Modules strictly in ascending logical order
+// Ordered Modules in ascending order with clean labels
 const ASCENDING_MODULES = [
-  { to: '/dashboard', icon: Home, label: '01. Dashboard', role: 'all' },
-  { to: '/prices', icon: TrendingUp, label: '02. Price Discovery', role: 'all' },
-  { to: '/calculator', icon: Calculator, label: '03. Net-Realization Calc', role: 'all' },
-  { to: '/grading', icon: Award, label: '04. AI Produce Grading', role: 'all' },
-  { to: '/listings', icon: Tractor, label: '05. Produce Lot Listings', role: 'all' },
-  { to: '/matching', icon: ShieldCheck, label: '06. Buyer Matching Engine', role: 'all' },
-  { to: '/transactions', icon: FileText, label: '07. Smart Contracts & Escrow', role: 'all' },
-  { to: '/sale-window', icon: Clock, label: '08. Pre-Harvest Sale Window', role: 'all' },
-  { to: '/disputes', icon: AlertTriangle, label: '09. Grievance Arbitration', role: 'all' },
-  { to: '/mandi-map', icon: MapPin, label: '10. Mandi Maps (OSM)', role: 'all' },
-  { to: '/weather', icon: CloudRain, label: '11. Weather Intelligence', role: 'all' },
-  { to: '/logistics', icon: Truck, label: '12. Logistics & Transport', role: 'all' },
-  { to: '/analytics', icon: BarChart2, label: '13. Macro Agri Analytics', role: 'all' },
-  { to: '/feedback', icon: MessageSquare, label: '14. Platform Feedback', role: 'all' },
-  { to: '/profile', icon: User, label: '15. My Profile & Settings', role: 'all' },
+  { to: '/dashboard', icon: Home, label: '01. Dashboard' },
+  { to: '/prices', icon: TrendingUp, label: '02. Market Prices' },
+  { to: '/calculator', icon: Calculator, label: '03. Net Calculator' },
+  { to: '/grading', icon: Award, label: '04. Produce Grading' },
+  { to: '/listings', icon: Tractor, label: '05. Produce Lots' },
+  { to: '/matching', icon: ShieldCheck, label: '06. Buyer Matching' },
+  { to: '/transactions', icon: FileText, label: '07. Smart Contracts' },
+  { to: '/sale-window', icon: Clock, label: '08. Sale Window' },
+  { to: '/disputes', icon: AlertTriangle, label: '09. Dispute Arbitration' },
+  { to: '/mandi-map', icon: MapPin, label: '10. Mandi Maps' },
+  { to: '/weather', icon: CloudRain, label: '11. Weather Intelligence' },
+  { to: '/logistics', icon: Truck, label: '12. Logistics Network' },
+  { to: '/analytics', icon: BarChart2, label: '13. Agri Analytics' },
+  { to: '/feedback', icon: MessageSquare, label: '14. Feedback & Support' },
+  { to: '/profile', icon: User, label: '15. Profile & Settings' },
 ]
 
 export default function Layout() {
@@ -38,7 +38,7 @@ export default function Layout() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Sidebar starts opened by default on desktop
+  // Sidebar starts open by default on desktop with comfortable generous width
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false)
   const profileMenuRef = useRef(null)
@@ -75,43 +75,43 @@ export default function Layout() {
   return (
     <div className={`min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 ${isDark ? 'dark' : ''}`}>
       {/* ── Top Header Navigation Bar ── */}
-      <header className="sticky top-0 z-40 h-16 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 flex items-center justify-between transition-colors shadow-sm">
+      <header className="sticky top-0 z-40 h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 flex items-center justify-between transition-colors shadow-sm">
         <div className="flex items-center gap-3">
-          {/* Brand Logo & Name */}
-          <NavLink to="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-600 to-emerald-500 flex items-center justify-center shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform">
-              <Leaf size={20} className="text-white" />
-            </div>
-            <div className="hidden sm:block">
-              <span className="text-lg font-black tracking-tight bg-gradient-to-r from-brand-700 to-emerald-600 dark:from-emerald-400 dark:to-teal-300 bg-clip-text text-transparent">
-                MandiSetu
-              </span>
-              <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest -mt-1">
-                Bridge To Fair Markets
-              </span>
-            </div>
-          </NavLink>
-
-          {/* Clean Aesthetic Menu Button (Appears when sidebar is collapsed) */}
+          {/* Aesthetic Menu Button when sidebar is collapsed */}
           {!sidebarOpen && (
             <button
               onClick={() => setSidebarOpen(true)}
-              className="ml-2 px-3.5 py-1.5 rounded-2xl bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800 text-brand-800 dark:text-brand-300 font-bold text-xs flex items-center gap-1.5 shadow-sm hover:bg-brand-100 dark:hover:bg-brand-900/40 transition-all hover:scale-105"
+              className="px-3.5 py-1.5 rounded-2xl bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800 text-brand-800 dark:text-brand-300 font-bold text-xs flex items-center gap-1.5 shadow-sm hover:bg-brand-100 dark:hover:bg-brand-900/40 transition-all hover:scale-105"
               title="Open Navigation Menu"
             >
-              <Menu size={15} />
+              <Menu size={16} />
               <span>Menu</span>
             </button>
           )}
+
+          {/* Brand Logo & Name (No weird bars or equal sign beside leaf!) */}
+          <NavLink to="/" className="flex items-center gap-2.5 group">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-600 to-emerald-500 flex items-center justify-center shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform">
+              <Leaf size={22} className="text-white" />
+            </div>
+            <div className="block">
+              <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-brand-700 via-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-300 bg-clip-text text-transparent">
+                MandiSetu
+              </span>
+              <span className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider -mt-1">
+                Fair Agricultural Markets
+              </span>
+            </div>
+          </NavLink>
         </div>
 
         {/* Center / Right Controls */}
         <div className="flex items-center gap-3">
-          {/* Take Page Tour interactive button */}
+          {/* Interactive Demo Tour trigger button */}
           <button
             onClick={handleStartTour}
-            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-300 text-xs font-bold hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors shadow-sm"
-            title="Interactive walkthrough of this page by Kisan Chacha"
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-300 text-xs font-bold hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-all hover:scale-105 shadow-sm"
+            title="Interactive Walkthrough with Kisan Chacha"
           >
             <Sparkles size={14} className="text-amber-500" />
             <span>Interactive Demo</span>
@@ -130,11 +130,11 @@ export default function Layout() {
                 {user?.full_name?.[0] || user?.name?.[0] || 'U'}
               </div>
               <div className="hidden lg:block text-left text-xs pr-1">
-                <div className="font-bold text-gray-900 dark:text-white truncate max-w-[110px]">
+                <div className="font-bold text-gray-900 dark:text-white truncate max-w-[120px]">
                   {user?.full_name || user?.name || 'Farmer'}
                 </div>
-                <div className="text-[10px] text-gray-400 capitalize -mt-0.5 font-medium">
-                  {isOwner ? '👑 Owner' : user?.role || 'Farmer'}
+                <div className="text-[10px] text-gray-500 dark:text-gray-400 capitalize -mt-0.5 font-medium">
+                  {isOwner ? '👑 Platform Admin' : user?.role || 'Farmer'}
                 </div>
               </div>
               <ChevronDown size={14} className={`text-gray-400 transition-transform ${profileDropdownOpen ? 'rotate-180' : ''}`} />
@@ -144,12 +144,12 @@ export default function Layout() {
             {profileDropdownOpen && (
               <div className="absolute right-0 mt-2 w-72 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl z-50 p-3 space-y-2 animate-fade-in">
                 {/* User Info Header */}
-                <div className="p-3 rounded-2xl bg-gradient-to-r from-brand-50 to-emerald-50 dark:from-gray-800 dark:to-gray-800/60 border border-brand-100 dark:border-gray-700">
+                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-brand-50 to-emerald-50 dark:from-gray-800 dark:to-gray-800/60 border border-brand-100 dark:border-gray-700">
                   <div className="font-extrabold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
                     <span>{user?.full_name || user?.name || 'Logged User'}</span>
-                    {isOwner && <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-200 text-amber-900 font-bold">OWNER</span>}
+                    {isOwner && <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-200 text-amber-900 font-bold">ADMIN</span>}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate mt-0.5">
+                  <div className="text-xs text-gray-600 dark:text-gray-300 font-mono truncate mt-0.5">
                     {user?.email || 'farmer@mandisetu.in'}
                   </div>
                   <div className="text-[11px] text-brand-700 dark:text-brand-400 font-semibold mt-1">
@@ -180,7 +180,7 @@ export default function Layout() {
                     className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2.5 transition-colors"
                   >
                     <TrendingUp size={15} className="text-emerald-600" />
-                    <span>Market Prices & Agmarknet</span>
+                    <span>Market Prices</span>
                   </button>
 
                   <button
@@ -188,7 +188,7 @@ export default function Layout() {
                     className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2.5 transition-colors"
                   >
                     <MapPin size={15} className="text-indigo-600" />
-                    <span>Mandi Map & Nearby APMC</span>
+                    <span>Mandi Maps</span>
                   </button>
 
                   <button
@@ -196,7 +196,7 @@ export default function Layout() {
                     className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2.5 transition-colors"
                   >
                     <MessageSquare size={15} className="text-amber-600" />
-                    <span>Give Platform Feedback</span>
+                    <span>Platform Feedback</span>
                   </button>
 
                   {user?.role === 'admin' && (
@@ -227,33 +227,33 @@ export default function Layout() {
 
       {/* ── Main Layout Body (Sidebar + Content + Footer) ── */}
       <div className="flex-1 flex overflow-hidden">
-        {/* ── Sidebar Navigation ── */}
+        {/* ── Sidebar Navigation with generous width and vibrant readable colors ── */}
         <aside
-          className={`bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col transition-all duration-300 flex-shrink-0 z-30 ${
-            sidebarOpen ? 'w-64' : 'w-0 -translate-x-full md:w-0'
+          className={`bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col transition-all duration-300 flex-shrink-0 z-30 shadow-sm ${
+            sidebarOpen ? 'w-64' : 'w-0 -translate-x-full md:w-0 overflow-hidden'
           }`}
         >
           {/* Sidebar Top: Header with 3 Dots to minimize */}
           {sidebarOpen && (
-            <div className="h-12 px-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                12 Modules (Ascending)
+            <div className="h-14 px-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-900/50">
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                Navigation Modules
               </span>
 
-              {/* Three dots button to minimize sidebar */}
+              {/* 3 Dots Button to minimize menu */}
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="p-1.5 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
                 title="Minimize menu (3 dots)"
               >
-                <MoreHorizontal size={18} />
+                <MoreHorizontal size={20} />
               </button>
             </div>
           )}
 
-          {/* Module Links (Ascending Order) */}
+          {/* Module Links (Ascending Order, Comfortable Font, Rich Contrast) */}
           {sidebarOpen && (
-            <nav className="flex-1 overflow-y-auto p-3 space-y-1 scrollbar-thin">
+            <nav className="flex-1 overflow-y-auto p-3 space-y-1.5 scrollbar-thin">
               {ASCENDING_MODULES.map((item) => {
                 const Icon = item.icon
                 const isActive = location.pathname === item.to
@@ -262,13 +262,13 @@ export default function Layout() {
                   <NavLink
                     key={item.to}
                     to={item.to}
-                    className={`flex items-center gap-2.5 px-3 py-2 rounded-2xl text-xs font-semibold transition-all hover-lift ${
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-semibold transition-all hover:scale-[1.02] ${
                       isActive
-                        ? 'bg-brand-500/10 text-brand-700 dark:text-brand-300 font-extrabold shadow-sm'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
+                        ? 'bg-brand-600 text-white font-bold shadow-md shadow-brand-600/20'
+                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                     }`}
                   >
-                    <Icon size={16} className={isActive ? 'text-brand-600' : 'text-gray-400'} />
+                    <Icon size={18} className={isActive ? 'text-white' : 'text-gray-500 dark:text-gray-400'} />
                     <span className="truncate">{item.label}</span>
                   </NavLink>
                 )
@@ -279,14 +279,14 @@ export default function Layout() {
                 <NavLink
                   to="/admin"
                   className={({ isActive }) =>
-                    `flex items-center gap-2.5 px-3 py-2 rounded-2xl text-xs font-bold transition-all mt-3 ${
+                    `flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-bold transition-all mt-3 hover:scale-[1.02] ${
                       isActive
-                        ? 'bg-purple-100 dark:bg-purple-950 text-purple-900 dark:text-purple-300 shadow-sm'
-                        : 'text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30'
+                        ? 'bg-purple-600 text-white shadow-md'
+                        : 'text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/50'
                     }`
                   }
                 >
-                  <Shield size={16} className="text-purple-600" />
+                  <Shield size={18} />
                   <span>16. Admin Command</span>
                 </NavLink>
               )}
@@ -295,16 +295,16 @@ export default function Layout() {
 
           {/* Sidebar Bottom: User snapshot */}
           {sidebarOpen && (
-            <div className="p-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
-              <div className="flex items-center gap-2 text-xs">
-                <div className="w-8 h-8 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-xs">
+            <div className="p-3.5 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+              <div className="flex items-center gap-3 text-xs">
+                <div className="w-9 h-9 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-sm shadow">
                   {user?.full_name?.[0] || 'U'}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="font-bold text-gray-900 dark:text-white truncate">
+                  <div className="font-bold text-gray-900 dark:text-white text-sm truncate">
                     {user?.full_name || 'Farmer'}
                   </div>
-                  <div className="text-[10px] text-gray-400 truncate">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                     {user?.district || 'India'}
                   </div>
                 </div>
@@ -319,7 +319,7 @@ export default function Layout() {
             <Outlet />
           </main>
 
-          {/* ── Footer on Every Page with Copyright, Credits & Contact ── */}
+          {/* ── Footer on Every Page with Prototype Credits ── */}
           <Footer />
         </div>
       </div>

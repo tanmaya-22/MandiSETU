@@ -462,18 +462,12 @@ export default function LandingPage() {
               © 2024–2026 MandiSetu. All rights reserved.
             </div>
 
-            <div className="font-semibold text-gray-200 text-center">
-              Credits for Prototype: <span className="text-emerald-400 font-bold">Tanmaya; Anuj; Yatharth and team</span>
+            <div className="font-bold text-gray-200 text-center">
+              Prototype Credits: <span className="text-emerald-400">TanmayA, Anuj, Yatharth and Team</span>
             </div>
 
-            <div className="flex items-center gap-4 font-mono text-[11px]">
-              <a href="mailto:tanmayapradhan2322@gmail.com" className="hover:text-emerald-400 transition">
-                tanmayapradhan2322@gmail.com
-              </a>
-              <span>·</span>
-              <a href="tel:+917008800192" className="hover:text-emerald-400 transition">
-                +91 7008800192
-              </a>
+            <div className="text-gray-400">
+              MandiSetu Platform · Built for Indian Farmers & APMC Markets
             </div>
           </div>
         </div>

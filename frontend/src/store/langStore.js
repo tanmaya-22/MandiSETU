@@ -22,7 +22,7 @@ const ODIA_DIGITS = ['୦', '୧', '୨', '୩', '୪', '୫', '୬', '୭', '�
 export function convertDigits(str, targetScript) {
   if (str === null || str === undefined) return ''
   const s = String(str)
-  if (targetScript === 'latin') {
+  if (!targetScript || targetScript === 'latin') {
     return s
       .replace(/[०-९]/g, (d) => DEVANAGARI_DIGITS.indexOf(d))
       .replace(/[୦-୯]/g, (d) => ODIA_DIGITS.indexOf(d))
@@ -40,16 +40,42 @@ export const useLangStore = create(
   persist(
     (set, get) => ({
       lang: 'en',
+      language: 'en',
       numeralScript: 'auto', // 'auto' | 'latin' | 'devanagari' | 'odia'
 
-      setLang: (newLang) => set({ lang: newLang }),
+      setLang: (newLang) => set({ lang: newLang, language: newLang }),
+      setLanguage: (newLang) => set({ lang: newLang, language: newLang }),
       setNumeralScript: (newScript) => set({ numeralScript: newScript }),
 
-      // Translation lookup
+      // Translation lookup supporting both nested dot-notation and flat keys
       t: (key) => {
-        const lang = get().lang || 'en'
+        const lang = get().lang || get().language || 'en'
         const dict = TRANSLATIONS[lang] || TRANSLATIONS.en
-        return dict[key] || TRANSLATIONS.en[key] || key
+
+        // 1. Direct key
+        if (dict && dict[key]) return dict[key]
+
+        // 2. Nested dot notation like "FarmerDashboard.todayBestPrice"
+        if (key && key.includes('.')) {
+          const parts = key.split('.')
+          let current = dict
+          for (const p of parts) {
+            current = current?.[p]
+          }
+          if (current) return current
+
+          // Fallback to English nested
+          let enCurrent = TRANSLATIONS.en
+          for (const p of parts) {
+            enCurrent = enCurrent?.[p]
+          }
+          if (enCurrent) return enCurrent
+        }
+
+        // 3. Fallback to English flat
+        if (TRANSLATIONS.en && TRANSLATIONS.en[key]) return TRANSLATIONS.en[key]
+
+        return key
       },
 
       // Number & Currency localized formatter
@@ -57,9 +83,11 @@ export const useLangStore = create(
         if (val === null || val === undefined || val === '') return ''
         const state = get()
         let activeScript = state.numeralScript
+        const currentLang = state.lang || state.language || 'en'
+
         if (activeScript === 'auto') {
-          if (state.lang === 'hi' || state.lang === 'mr') activeScript = 'devanagari'
-          else if (state.lang === 'or') activeScript = 'odia'
+          if (currentLang === 'hi' || currentLang === 'mr') activeScript = 'devanagari'
+          else if (currentLang === 'or') activeScript = 'odia'
           else activeScript = 'latin'
         }
         return convertDigits(val, activeScript)

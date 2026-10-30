@@ -87,7 +87,7 @@ export default function FeedbackPage() {
         <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-semibold mb-3">
             <HeartHandshake size={14} />
-            <span>Direct Feedback to Prototype Creator</span>
+            <span>Direct Feedback to the Admin & MandiSetu Team</span>
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight">Help Us Improve MandiSetu</h1>
           <p className="text-emerald-100 mt-2 text-sm leading-relaxed">
@@ -96,37 +96,40 @@ export default function FeedbackPage() {
         </div>
       </div>
 
-      {/* Creator & Contact Details Card */}
+      {/* Admin Contact Details Card */}
       <div className="bg-white dark:bg-gray-900 border border-brand-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 card-interactive">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-lg">
-            👑
+            🛡️
           </div>
           <div>
             <div className="text-sm font-semibold text-gray-900 dark:text-white">
-              Platform Lead & Prototype Owner: <span className="text-brand-600 dark:text-brand-400">TanmayA</span>
+              Platform Admin: <span className="text-brand-600 dark:text-brand-400 font-bold">TanmayA</span>
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              Prototype developed with Anuj, Yatharth & the MandiSetu engineering team.
+              Prototype developed with Anuj, Yatharth & the MandiSetu Team.
             </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 text-xs font-mono">
-          <a
-            href="mailto:tanmayapradhan2322@gmail.com"
-            className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-gray-700 dark:text-gray-300 rounded-xl border border-gray-200 dark:border-gray-700 transition-colors"
-          >
-            <Mail size={14} className="text-brand-600" />
-            <span>tanmayapradhan2322@gmail.com</span>
-          </a>
-          <a
-            href="tel:+917008800192"
-            className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-gray-700 dark:text-gray-300 rounded-xl border border-gray-200 dark:border-gray-700 transition-colors"
-          >
-            <Phone size={14} className="text-brand-600" />
-            <span>+91 7008800192</span>
-          </a>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-xs">
+          <span className="text-gray-500 dark:text-gray-400 font-semibold">Contact with the Admin Personally:</span>
+          <div className="flex flex-wrap items-center gap-2 font-mono">
+            <a
+              href="mailto:tanmayapradhan2322@gmail.com"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-gray-800 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-gray-700 dark:text-gray-300 rounded-xl border border-gray-200 dark:border-gray-700 transition-colors"
+            >
+              <Mail size={13} className="text-brand-600" />
+              <span>tanmayapradhan2322@gmail.com</span>
+            </a>
+            <a
+              href="tel:+917008800192"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-gray-800 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-gray-700 dark:text-gray-300 rounded-xl border border-gray-200 dark:border-gray-700 transition-colors"
+            >
+              <Phone size={13} className="text-brand-600" />
+              <span>+91 7008800192</span>
+            </a>
+          </div>
         </div>
       </div>
 
@@ -239,7 +242,7 @@ export default function FeedbackPage() {
             className="w-full py-3.5 bg-gradient-to-r from-brand-600 to-emerald-600 hover:from-brand-700 hover:to-emerald-700 text-white rounded-2xl font-bold text-sm shadow-lg shadow-brand-500/25 flex items-center justify-center gap-2 hover:scale-[1.01] transition-all"
           >
             <Send size={16} />
-            <span>Submit Feedback to TanmayA</span>
+            <span>Submit Feedback to the Admin</span>
           </button>
         </form>
       </div>

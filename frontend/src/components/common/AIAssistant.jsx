@@ -71,8 +71,14 @@ export default function AIAssistant() {
   const [input, setInput] = useState('')
   const messagesEndRef = useRef(null)
 
-  // Drag and Drop state
-  const [position, setPosition] = useState({ x: window.innerWidth - 90, y: window.innerHeight - 100 })
+  // Drag and Drop state with coordinate persistence
+  const [position, setPosition] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mandisetu_ai_pos')
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return { x: window.innerWidth - 90, y: window.innerHeight - 100 }
+  })
   const [isDragging, setIsDragging] = useState(false)
   const dragStartRef = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 })
   const hasMovedRef = useRef(false)
@@ -91,7 +97,6 @@ export default function AIAssistant() {
 
   // Draggable logic for Kisan AI button
   const handleMouseDown = (e) => {
-    // Only drag with left click and when clicking header or drag button
     setIsDragging(true)
     hasMovedRef.current = false
     dragStartRef.current = {
@@ -110,14 +115,18 @@ export default function AIAssistant() {
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
         hasMovedRef.current = true
       }
-      setPosition({
-        x: Math.max(10, Math.min(window.innerWidth - 70, dragStartRef.current.posX + dx)),
-        y: Math.max(10, Math.min(window.innerHeight - 80, dragStartRef.current.posY + dy)),
-      })
+      const newX = Math.max(10, Math.min(window.innerWidth - 70, dragStartRef.current.posX + dx))
+      const newY = Math.max(10, Math.min(window.innerHeight - 80, dragStartRef.current.posY + dy))
+      setPosition({ x: newX, y: newY })
     }
 
     const handleMouseUp = () => {
-      setIsDragging(false)
+      if (isDragging) {
+        setIsDragging(false)
+        try {
+          localStorage.setItem('mandisetu_ai_pos', JSON.stringify(position))
+        } catch {}
+      }
     }
 
     if (isDragging) {
@@ -128,7 +137,7 @@ export default function AIAssistant() {
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [isDragging])
+  }, [isDragging, position])
 
   // Initialize greeting when opening
   useEffect(() => {
