@@ -1,20 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { MapPin, Navigation, Info, ArrowUpRight, Layers, ZoomIn, ZoomOut, Search } from 'lucide-react'
+import { ALL_MANDIS } from '../../data/mandisData'
 
-// Realistic coordinates and public data for major Indian mandis
-export const MANDI_GEO_DATA = [
-  { id: 'm1', name: 'Azadpur Mandi', city: 'Delhi', state: 'Delhi', lat: 28.7126, lng: 77.1723, commodity: 'Wheat', modal_price: 2485, min_price: 2420, max_price: 2550, arrivals: 320, type: 'Grain & Produce' },
-  { id: 'm2', name: 'Lasalgaon APMC', city: 'Nashik', state: 'Maharashtra', lat: 20.1466, lng: 74.2259, commodity: 'Onion', modal_price: 3250, min_price: 2800, max_price: 3650, arrivals: 850, type: 'Asia Largest Onion Market' },
-  { id: 'm3', name: 'Vashi APMC', city: 'Navi Mumbai', state: 'Maharashtra', lat: 19.0760, lng: 73.0075, commodity: 'Onion', modal_price: 3750, min_price: 3200, max_price: 4100, arrivals: 920, type: 'Terminal Market' },
-  { id: 'm4', name: 'Kolar APMC Mandi', city: 'Kolar', state: 'Karnataka', lat: 13.1367, lng: 78.1291, commodity: 'Tomato', modal_price: 2050, min_price: 1600, max_price: 2400, arrivals: 720, type: 'Major Tomato Hub' },
-  { id: 'm5', name: 'Khanna Grain Market', city: 'Khanna', state: 'Punjab', lat: 30.7028, lng: 76.2195, commodity: 'Wheat', modal_price: 2375, min_price: 2325, max_price: 2425, arrivals: 450, type: 'Asia Largest Grain Mandi' },
-  { id: 'm6', name: 'Agra Mandi (Fatehabad)', city: 'Agra', state: 'Uttar Pradesh', lat: 27.1767, lng: 78.0081, commodity: 'Potato', modal_price: 1620, min_price: 1450, max_price: 1750, arrivals: 980, type: 'Potato Capital Hub' },
-  { id: 'm7', name: 'Indore Mandi (Chhawani)', city: 'Indore', state: 'Madhya Pradesh', lat: 22.7196, lng: 75.8577, commodity: 'Soybean', modal_price: 4780, min_price: 4600, max_price: 4950, arrivals: 580, type: 'Soybean Oilseed Mandi' },
-  { id: 'm8', name: 'Rajkot APMC', city: 'Rajkot', state: 'Gujarat', lat: 22.3039, lng: 70.8022, commodity: 'Cotton', modal_price: 7420, min_price: 7100, max_price: 7650, arrivals: 390, type: 'Cotton & Groundnut' },
-  { id: 'm9', name: 'Karnal Grain Market', city: 'Karnal', state: 'Haryana', lat: 29.6857, lng: 76.9905, commodity: 'Rice', modal_price: 3950, min_price: 3600, max_price: 4300, arrivals: 510, type: 'Basmati Rice Hub' },
-  { id: 'm10', name: 'Pimpalgaon Baswant APMC', city: 'Nashik', state: 'Maharashtra', lat: 20.1706, lng: 73.9856, commodity: 'Tomato', modal_price: 1850, min_price: 1500, max_price: 2200, arrivals: 640, type: 'Tomato & Grapes' },
-  { id: 'm11', name: 'Guntur APMC Mandi', city: 'Guntur', state: 'Andhra Pradesh', lat: 16.3067, lng: 80.4365, commodity: 'Cotton', modal_price: 7510, min_price: 7200, max_price: 7750, arrivals: 310, type: 'Cotton & Chilli Yard' },
-]
+// Realistic coordinates and public data for major Indian mandis across all regions
+export const MANDI_GEO_DATA = ALL_MANDIS
 
 export default function MandiMap({
   selectedCommodity = 'All',
@@ -70,12 +59,12 @@ export default function MandiMap({
         attributionControl: false,
       })
 
-      // Add modern CartoDB / OpenStreetMap tile layer (clean Google Maps aesthetic)
+      // Add 100% Free OpenStreetMap tile layer (Zero API key required, public domain)
       const standardTile = L.tileLayer(
-        'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
         {
           maxZoom: 19,
-          subdomains: 'abcd',
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         }
       )
 

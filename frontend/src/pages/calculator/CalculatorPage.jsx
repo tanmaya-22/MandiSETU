@@ -4,6 +4,7 @@ import { Plus, Trash2, Calculator, Award, Loader2, Sparkles, MapPin, Navigation,
 import { calcAPI } from '../../api/modules'
 import { PageHeader, Spinner, Card } from '../../components/common/UI'
 import MandiMap from '../../components/common/MandiMap'
+import { useLangStore } from '../../store/langStore'
 
 const PRESETS = [
   {
@@ -50,6 +51,7 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 }
 
 export default function CalculatorPage() {
+  const { t, formatNum, formatPrice } = useLangStore()
   const [form, setForm] = useState({
     commodity: 'Onion',
     quantity_kg: 5000,
@@ -158,14 +160,14 @@ export default function CalculatorPage() {
   return (
     <div className="space-y-6 animate-fade-in-up">
       <PageHeader
-        title="Net Realization & Transport Cost Calculator"
-        subtitle="Deduct Haversine freight, APMC cess, and storage degradation to find your highest take-home profit"
+        title={t('cp_title') || 'Net Realization & Transport Cost Calculator'}
+        subtitle={t('cp_subtitle') || 'Deduct Haversine freight, APMC cess, and storage degradation to find your highest take-home profit'}
       />
 
       {/* Quick Route Presets */}
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
-          <Sparkles size={14} className="text-amber-500" /> 1-Click Pre-filled Routes:
+          <Sparkles size={14} className="text-amber-500" /> {t('cp_quick_presets') || '1-Click Pre-filled Routes'}:
         </span>
         {PRESETS.map((p) => (
           <button
@@ -183,7 +185,7 @@ export default function CalculatorPage() {
           }`}
         >
           <MapPin size={14} />
-          <span>{showMap ? 'Hide Map' : 'Show Geospatial Map'}</span>
+          <span>{showMap ? (t('cp_hide_map') || 'Hide Map') : (t('cp_show_map') || 'Show Geospatial Map')}</span>
         </button>
       </div>
 
@@ -201,7 +203,7 @@ export default function CalculatorPage() {
           <div className="card">
             <h3 className="font-bold text-gray-900 text-base mb-3 flex items-center gap-2">
               <Navigation size={18} className="text-brand-600" />
-              <span>Farm Origin & Produce Details</span>
+              <span>{t('cp_origin_details') || 'Farm Origin & Produce Details'}</span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -217,7 +219,7 @@ export default function CalculatorPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Quantity in Kilograms (kg)
+                  {t('cp_qty_kg') || 'Quantity in Kilograms (kg)'}
                 </label>
                 <input
                   type="number"
@@ -227,13 +229,13 @@ export default function CalculatorPage() {
                   placeholder="e.g. 5000"
                 />
                 <span className="text-[11px] text-gray-500 mt-0.5 block">
-                  = {(Number(form.quantity_kg) / 100).toFixed(1)} Quintals ({(Number(form.quantity_kg) / 1000).toFixed(2)} Tonnes)
+                  = {formatNum((Number(form.quantity_kg) / 100).toFixed(1))} Quintals ({formatNum((Number(form.quantity_kg) / 1000).toFixed(2))} Tonnes)
                 </span>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Farm Origin GPS (Latitude)
+                  {t('cp_farm_lat') || 'Farm Origin GPS (Latitude)'}
                 </label>
                 <input
                   type="number"
@@ -246,7 +248,7 @@ export default function CalculatorPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Farm Origin GPS (Longitude)
+                  {t('cp_farm_lng') || 'Farm Origin GPS (Longitude)'}
                 </label>
                 <input
                   type="number"
@@ -260,8 +262,8 @@ export default function CalculatorPage() {
 
             <div className="mt-4 pt-3 border-t border-gray-100">
               <div className="flex justify-between items-center text-xs font-semibold text-gray-700 mb-1.5">
-                <span>Storage / Holding Days before Transit:</span>
-                <span className="font-bold text-brand-700">{form.storage_days} Days</span>
+                <span>{t('cp_storage_days') || 'Storage / Holding Days before Transit'}:</span>
+                <span className="font-bold text-brand-700">{formatNum(form.storage_days)} Days</span>
               </div>
               <input
                 type="range"
@@ -278,14 +280,14 @@ export default function CalculatorPage() {
           <div className="card">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="font-bold text-gray-900 text-base">Target APMC Mandis to Compare</h3>
+                <h3 className="font-bold text-gray-900 text-base">{t('cp_target_mandis') || 'Target APMC Mandis to Compare'}</h3>
                 <p className="text-xs text-gray-500">Add up to 6 mandis to find the optimum selling destination</p>
               </div>
               <button
                 onClick={addMarket}
                 className="btn-secondary text-xs flex items-center gap-1.5 px-3 py-1.5"
               >
-                <Plus size={14} /> Add Mandi
+                <Plus size={14} /> {t('cp_add_mandi') || 'Add Mandi'}
               </button>
             </div>
 
@@ -353,7 +355,7 @@ export default function CalculatorPage() {
               className="btn-primary w-full mt-4 py-3 flex items-center justify-center gap-2 font-bold shadow-md hover:shadow-lg"
             >
               {loading ? <Loader2 size={18} className="animate-spin" /> : <Calculator size={18} />}
-              {loading ? 'Optimizing Routes…' : 'Run Net Realization Optimization'}
+              {loading ? 'Optimizing Routes…' : (t('cp_run_calc') || 'Run Net Realization Optimization')}
             </button>
           </div>
         </div>
@@ -366,26 +368,26 @@ export default function CalculatorPage() {
               <div className="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-3xl p-5 text-white shadow-xl">
                 <div className="flex items-center gap-2 text-yellow-300 text-xs font-extrabold uppercase tracking-wider mb-1">
                   <Award size={18} />
-                  <span>Optimal Recommendation</span>
+                  <span>{t('cp_winner_title') || 'Optimal Recommendation'}</span>
                 </div>
                 <h3 className="text-xl font-extrabold">{best.market_name}</h3>
                 <div className="mt-3 p-3 bg-white/15 backdrop-blur-md rounded-2xl">
-                  <div className="text-xs text-emerald-100">Maximum Take-Home Realization</div>
-                  <div className="text-3xl font-extrabold">₹{best.net_realization.toLocaleString('en-IN')}</div>
+                  <div className="text-xs text-emerald-100">{t('cp_max_take_home') || 'Maximum Take-Home Realization'}</div>
+                  <div className="text-3xl font-extrabold">{formatPrice(best.net_realization)}</div>
                   <div className="text-xs text-emerald-200 mt-0.5">
-                    ₹{best.net_per_kg}/kg in hand (after ₹{best.transport_cost.toLocaleString('en-IN')} freight)
+                    ₹{formatNum(best.net_per_kg)}/kg {t('cp_in_hand_after') || 'in hand after freight'} ({formatPrice(best.transport_cost)} freight)
                   </div>
                 </div>
                 {advantage > 0 && (
                   <p className="text-xs text-emerald-100 mt-2 font-medium">
-                    Selling here earns you <strong className="text-white font-extrabold">+₹{advantage.toLocaleString('en-IN')} extra</strong> compared to the least profitable mandi option.
+                    Selling here earns you <strong className="text-white font-extrabold">+{formatPrice(advantage)} extra</strong> compared to the least profitable mandi option.
                   </p>
                 )}
               </div>
 
               {/* All Market Rankings */}
               <div className="card space-y-3">
-                <h4 className="font-bold text-gray-900 text-sm">All Evaluated Mandis (Ranked)</h4>
+                <h4 className="font-bold text-gray-900 text-sm">{t('cp_ranked_title') || 'All Evaluated Mandis (Ranked)'}</h4>
                 {results.map((r, idx) => (
                   <div
                     key={idx}
@@ -400,17 +402,17 @@ export default function CalculatorPage() {
                         <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
                           idx === 0 ? 'bg-brand-600 text-white' : 'bg-gray-200 text-gray-700'
                         }`}>
-                          {idx + 1}
+                          {formatNum(idx + 1)}
                         </span>
                         <span>{r.market_name}</span>
                       </div>
-                      <span className="text-xs font-bold text-brand-700">₹{r.net_realization.toLocaleString('en-IN')}</span>
+                      <span className="text-xs font-bold text-brand-700">{formatPrice(r.net_realization)}</span>
                     </div>
 
                     <div className="grid grid-cols-3 gap-2 text-[11px] text-gray-500 pt-1 border-t border-gray-200/60">
-                      <div>Dist: <strong>{r.distance_km} km</strong></div>
-                      <div>Freight: <strong>₹{r.transport_cost}</strong></div>
-                      <div>Cess: <strong>₹{r.commission}</strong></div>
+                      <div>{t('cp_distance') || 'Dist'}: <strong>{formatNum(r.distance_km)} km</strong></div>
+                      <div>{t('cp_freight') || 'Freight'}: <strong>{formatPrice(r.transport_cost)}</strong></div>
+                      <div>{t('cp_cess') || 'Cess'}: <strong>{formatPrice(r.commission)}</strong></div>
                     </div>
                   </div>
                 ))}

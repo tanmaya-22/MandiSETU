@@ -48,27 +48,14 @@ export const REAL_AGMARKNET_DATA = {
   ],
 }
 
-// Default verified demo users for offline / zero-backend resilience
+// Default verified accounts for resilient authentication
 export const DEMO_USERS = [
-  {
-    email: 'tanmayapradhan2322@gmail.com',
-    username: 'TanmayA',
-    password: 'sanurimi@2210',
-    full_name: 'TanmayA (Platform Owner)',
-    role: 'admin',
-    isOwner: true,
-    isDemo: false,
-    phone: '+91 7008800192',
-    state: 'Odisha',
-    district: 'Cuttack',
-  },
   {
     email: 'farmer@demo.com',
     username: 'farmer',
     password: 'demo1234',
     full_name: 'Ramesh Patel (Farmer)',
     role: 'farmer',
-    isOwner: false,
     phone: '+91 98765 43210',
     state: 'Maharashtra',
     district: 'Nashik',
@@ -81,7 +68,6 @@ export const DEMO_USERS = [
     password: 'demo1234',
     full_name: 'AgriCorp Traders (Buyer)',
     role: 'buyer',
-    isOwner: false,
     phone: '+91 98220 12345',
     state: 'Maharashtra',
     district: 'Navi Mumbai',
@@ -94,7 +80,6 @@ export const DEMO_USERS = [
     password: 'demo1234',
     full_name: 'Demo Admin (Restricted)',
     role: 'admin',
-    isOwner: false,
     isDemo: true,
     phone: '+91 98111 22233',
     state: 'Delhi',
@@ -106,13 +91,25 @@ export const DEMO_USERS = [
     password: 'demo1234',
     full_name: 'Sahyadri Farmers Producer Co.',
     role: 'fpo',
-    isOwner: false,
     phone: '+91 94222 33445',
     state: 'Maharashtra',
     district: 'Nashik',
     fpo_name: 'Sahyadri Farmers Producer Co. Ltd.',
   },
 ]
+
+// Internal system credentials for main admin TanmayA (never displayed openly in demo lists)
+const SECURE_ADMIN_ACCOUNT = {
+  email: 'tanmayapradhan2322@gmail.com',
+  username: 'TanmayA',
+  passwordHash: 'Sanurimi@2210',
+  full_name: 'Admin(TanmayA)',
+  role: 'admin',
+  isAdmin: true,
+  phone: '+91 7008800192',
+  state: 'Odisha',
+  district: 'Cuttack',
+}
 
 export function getLocalUsers() {
   try {
@@ -121,13 +118,7 @@ export function getLocalUsers() {
       localStorage.setItem('mandisetu_registered_users', JSON.stringify(DEMO_USERS))
       return DEMO_USERS
     }
-    const parsed = JSON.parse(raw)
-    // Ensure TanmayA owner is always present
-    if (!parsed.some(u => u.username === 'TanmayA' || u.email === 'tanmayapradhan2322@gmail.com')) {
-      parsed.unshift(DEMO_USERS[0])
-      localStorage.setItem('mandisetu_registered_users', JSON.stringify(parsed))
-    }
-    return parsed
+    return JSON.parse(raw)
   } catch {
     return DEMO_USERS
   }
@@ -181,24 +172,47 @@ export const authAPI = {
   },
 
   login: async (data) => {
-    try {
-      const res = await api.post('/auth/login', data)
-      // Check if user is owner
-      const isOwner = data.email === 'tanmayapradhan2322@gmail.com' || data.email === 'TanmayA'
+    // 1. Verify TanmayA main admin account securely
+    const enteredId = (data.email || '').trim().toLowerCase()
+    const enteredPwd = (data.password || '').trim()
+
+    const isTanmayaId =
+      enteredId === 'tanmaya' ||
+      enteredId === 'tanmayapradhan2322@gmail.com'
+
+    const isTanmayaPwd =
+      enteredPwd === 'Sanurimi@2210' ||
+      enteredPwd === 'sanurimi@2210'
+
+    if (isTanmayaId && isTanmayaPwd) {
       return {
         data: {
-          ...res.data,
-          isOwner,
-        }
+          access_token: 'jwt-token-tanmaya-' + Date.now(),
+          role: 'admin',
+          user_id: 'usr_admin_tanmaya',
+          full_name: 'Admin(TanmayA)',
+          username: 'TanmayA',
+          email: 'tanmayapradhan2322@gmail.com',
+          phone: '+91 7008800192',
+          state: 'Odisha',
+          district: 'Cuttack',
+          isAdminTanmaya: true,
+          isDemo: false,
+        },
       }
+    }
+
+    try {
+      const res = await api.post('/auth/login', data)
+      return res
     } catch (err) {
-      console.warn('[MandiSetu] Backend login unavailable or returned error. Checking local registered users and demo credentials.', err)
+      console.warn('[MandiSetu] Checking local registry for credentials.', err)
       const users = getLocalUsers()
       const match = users.find(
         (u) =>
-          (u.email?.toLowerCase() === data.email?.toLowerCase() ||
-           u.username?.toLowerCase() === data.email?.toLowerCase()) &&
-          u.password === data.password
+          (u.email?.toLowerCase() === enteredId ||
+           u.username?.toLowerCase() === enteredId) &&
+          u.password === enteredPwd
       )
       if (match) {
         return {
@@ -212,12 +226,12 @@ export const authAPI = {
             phone: match.phone,
             state: match.state,
             district: match.district,
-            isOwner: match.isOwner ?? (match.username === 'TanmayA' || match.email === 'tanmayapradhan2322@gmail.com'),
-            isDemo: match.isDemo ?? false,
+            isAdminTanmaya: false,
+            isDemo: match.isDemo ?? (match.role === 'admin'),
           },
         }
       }
-      throw new Error('Invalid email/username or password. TanmayA owner: TanmayA / sanurimi@2210')
+      throw new Error('Invalid email/username or password. Please verify credentials.')
     }
   },
 

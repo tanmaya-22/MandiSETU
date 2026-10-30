@@ -11,6 +11,7 @@ import {
 import { pricesAPI, REAL_AGMARKNET_DATA } from '../../api/modules'
 import { Spinner, PageHeader, Card } from '../../components/common/UI'
 import MandiMap from '../../components/common/MandiMap'
+import { useLangStore } from '../../store/langStore'
 
 const COMMODITIES = [
   { name: 'Wheat', hindi: 'गेहूं', emoji: '🌾', base: '₹2,485/Qtl' },
@@ -23,6 +24,7 @@ const COMMODITIES = [
 ]
 
 export default function PricesPage() {
+  const { t, formatNum, formatPrice } = useLangStore()
   const [tab, setTab] = useState('live') // 'live' | 'map' | 'trend'
   const [commodity, setCommodity] = useState('Wheat')
   const [stateFilter, setStateFilter] = useState('')
@@ -112,10 +114,10 @@ export default function PricesPage() {
             <span>Official Agmarknet (Ministry of Agriculture & Farmers Welfare) Verified</span>
           </div>
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-            Mandi Price Discovery & Forecasting
+            {t('pp_title') || 'Mandi Price Discovery & Forecasting'}
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Real APMC benchmark rates with 14-day Prophet ML price forecast curves
+            {t('pp_subtitle') || 'Real APMC benchmark rates with 14-day Prophet ML price forecast curves'}
           </p>
         </div>
 
@@ -170,7 +172,7 @@ export default function PricesPage() {
             }`}
           >
             <Table size={16} />
-            <span>Live Mandi Table ({filteredRows.length})</span>
+            <span>{t('pp_tab_table') || 'Live Mandi Table'} ({formatNum(filteredRows.length)})</span>
           </button>
 
           <button
@@ -183,7 +185,7 @@ export default function PricesPage() {
           >
             <MapIcon size={16} />
             <span className="flex items-center gap-1.5">
-              <span>Interactive Mandi Map</span>
+              <span>{t('pp_tab_map') || 'Interactive Mandi Map'}</span>
               <span className="px-1.5 py-0.2 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold rounded-full">New</span>
             </span>
           </button>
@@ -197,7 +199,7 @@ export default function PricesPage() {
             }`}
           >
             <TrendingUp size={16} />
-            <span>ML 14-Day Price Forecast</span>
+            <span>{t('pp_tab_trend') || 'ML 14-Day Price Forecast'}</span>
           </button>
         </div>
       </div>
@@ -213,7 +215,7 @@ export default function PricesPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by mandi name, district, state or variety..."
+                placeholder={t('pp_search_ph') || 'Search by mandi name, district, state or variety...'}
                 className="input-field pl-10"
               />
             </div>
@@ -244,13 +246,13 @@ export default function PricesPage() {
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
                   <tr className="bg-gray-50/80 border-b border-gray-100 text-xs font-bold text-gray-600 uppercase tracking-wider">
-                    <th className="py-3.5 px-4">Mandi & District</th>
-                    <th className="py-3.5 px-4">State</th>
-                    <th className="py-3.5 px-4">Variety</th>
-                    <th className="py-3.5 px-4 text-right">Modal Price (₹/Qtl)</th>
-                    <th className="py-3.5 px-4 text-right">Per Kg Equivalent</th>
-                    <th className="py-3.5 px-4 text-right">Min - Max</th>
-                    <th className="py-3.5 px-4 text-center">Arrival Date</th>
+                    <th className="py-3.5 px-4">{t('pp_col_mandi') || 'Mandi & District'}</th>
+                    <th className="py-3.5 px-4">{t('pp_col_state') || 'State'}</th>
+                    <th className="py-3.5 px-4">{t('pp_col_variety') || 'Variety'}</th>
+                    <th className="py-3.5 px-4 text-right">{t('pp_col_modal') || 'Modal Price (₹/Qtl)'}</th>
+                    <th className="py-3.5 px-4 text-right">{t('pp_col_kg') || 'Per Kg Equivalent'}</th>
+                    <th className="py-3.5 px-4 text-right">{t('pp_col_range') || 'Min - Max'}</th>
+                    <th className="py-3.5 px-4 text-center">{t('pp_col_arrival') || 'Arrival Date'}</th>
                     <th className="py-3.5 px-4 text-center">Actions</th>
                   </tr>
                 </thead>
@@ -275,13 +277,13 @@ export default function PricesPage() {
                         {r.variety || 'FAQ Quality'}
                       </td>
                       <td className="py-3.5 px-4 text-right font-extrabold text-brand-700 text-base">
-                        ₹{r.modal_price.toLocaleString('en-IN')}
+                        {formatPrice(r.modal_price)}
                       </td>
                       <td className="py-3.5 px-4 text-right font-bold text-gray-800 text-sm">
                         ₹{(r.modal_price / 100).toFixed(1)} / kg
                       </td>
                       <td className="py-3.5 px-4 text-right text-xs text-gray-500">
-                        ₹{r.min_price} - ₹{r.max_price}
+                        ₹{formatNum(r.min_price)} - ₹{formatNum(r.max_price)}
                       </td>
                       <td className="py-3.5 px-4 text-center text-xs text-gray-500 font-medium">
                         {r.arrival_date || 'Today'}
@@ -295,7 +297,7 @@ export default function PricesPage() {
                           className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition inline-flex items-center gap-1"
                         >
                           <MapPin size={12} />
-                          <span>Map</span>
+                          <span>{t('pp_btn_map') || 'Map'}</span>
                         </button>
                       </td>
                     </tr>
@@ -320,10 +322,10 @@ export default function PricesPage() {
             <div>
               <h3 className="font-extrabold text-lg flex items-center gap-2">
                 <MapPin size={20} className="text-yellow-300" />
-                <span>Pan-India Mandi Geospatial Explorer</span>
+                <span>{t('pp_map_banner_title') || 'Pan-India Mandi Geospatial Explorer'}</span>
               </h3>
               <p className="text-xs text-emerald-100 mt-1 max-w-xl">
-                Click any pin on the map to view real Agmarknet prices, daily arrivals volume, and navigate directly with Google Maps routing.
+                {t('pp_map_banner_desc') || 'Click any pin on the map to view real Agmarknet prices, daily arrivals volume, and navigate directly with Google Maps routing.'}
               </p>
             </div>
             <div className="text-xs bg-white/20 px-3 py-1.5 rounded-xl font-bold self-start sm:self-auto">

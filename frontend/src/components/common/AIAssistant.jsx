@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Bot, X, Send, Sparkles, MessageCircle, Move, HelpCircle } from 'lucide-react'
+import { Bot, X, Send, Sparkles, MessageCircle, Move, RotateCcw } from 'lucide-react'
 import { useLangStore } from '../../store/langStore'
 
 const KNOWLEDGE_BASE = {
@@ -25,7 +25,7 @@ const KNOWLEDGE_BASE = {
     en: 'The Net-Realization Calculator subtracts transport freight, loading charges, weighing fees, and APMC cess from gross revenue so you know your exact take-home in-hand cash.',
     hi: 'शुद्ध आय कैलकुलेटर कुल बिक्री में से परिवहन, लोडिंग, तुलाई और मंडी सेस काटकर आपकी असली नकद इन-हैंड कमाई दिखाता है।',
     mr: 'निव्वळ उत्पन्न कॅल्क्युलेटर वाहतूक खर्च, हमाली, तोलाई आणि बाजार सेस वजा करून तुमच्या हातात येणारी खरी कमाई दाखवतो.',
-    or: 'ନିଟ ଆୟ କ୍ୟାଲକୁଲେଟର ପରିବହନ, ଶ୍ରମ, ଓଜନ ଖର୍ଚ୍ଚ ଓ ମଣ୍ଡି ଫି କାଟି ଆପଣଙ୍କ ହାତକୁ ଆସୁଥିବା ପ୍ରକୃତ ଟଙ୍କା ଗଣନା କରେ।'
+    or: 'ନିଟ ଆୟ କ୍ୟାଲକୁଲେଟର ପରିବହନ, ଶ୍ରମ, ଓଜନ ଖର୍ଚ୍ଚ ଓ ମଣ୍ଡି ଫି କାଟି ଆପଣଙ୍କ ହାତକୁ ଆସୁଥିବା ନିଟ ଟଙ୍କା ଗଣନା କରେ।'
   },
   grading: {
     en: 'AI Produce Grading uses AGMARK quality guidelines (Grade A+, A, B, C) inspecting size uniformity, moisture percentage, and foreign matter. Grade A+ fetches 15-25% price premiums.',
@@ -64,12 +64,16 @@ const GREETING_TRIGGERS = [
 ]
 
 export default function AIAssistant() {
-  const { language } = useLangStore()
+  const { lang, language } = useLangStore()
+  const activeLang = lang || language || 'en'
+
   const [isOpen, setIsOpen] = useState(false)
   const [isDismissed, setIsDismissed] = useState(false)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const messagesEndRef = useRef(null)
+
+  const defaultPos = { x: window.innerWidth - 85, y: window.innerHeight - 95 }
 
   // Drag and Drop state with coordinate persistence
   const [position, setPosition] = useState(() => {
@@ -77,11 +81,38 @@ export default function AIAssistant() {
       const saved = localStorage.getItem('mandisetu_ai_pos')
       if (saved) return JSON.parse(saved)
     } catch {}
-    return { x: window.innerWidth - 90, y: window.innerHeight - 100 }
+    return { x: window.innerWidth - 85, y: window.innerHeight - 95 }
   })
+
   const [isDragging, setIsDragging] = useState(false)
   const dragStartRef = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 })
   const hasMovedRef = useRef(false)
+
+  // Listen for custom trigger to open / retrieve assistant from top header
+  useEffect(() => {
+    const handleRetrieve = () => {
+      setIsDismissed(false)
+      setIsOpen(true)
+    }
+    const handleResetPos = () => {
+      const reset = { x: window.innerWidth - 85, y: window.innerHeight - 95 }
+      setPosition(reset)
+      try {
+        localStorage.setItem('mandisetu_ai_pos', JSON.stringify(reset))
+      } catch {}
+    }
+    window.addEventListener('mandisetu_open_ai_assistant', handleRetrieve)
+    window.addEventListener('mandisetu_reset_ai_pos', handleResetPos)
+    return () => {
+      window.removeEventListener('mandisetu_open_ai_assistant', handleRetrieve)
+      window.removeEventListener('mandisetu_reset_ai_pos', handleResetPos)
+    }
+  }, [])
+
+  // Sync dismissal state globally so Layout top header knows whether to show "Talk to Assistant"
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('mandisetu_ai_state_change', { detail: { isDismissed } }))
+  }, [isDismissed])
 
   // Handle window resizing safely
   useEffect(() => {
@@ -94,6 +125,15 @@ export default function AIAssistant() {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  // Reset to original position
+  const handleResetPosition = () => {
+    const reset = { x: window.innerWidth - 85, y: window.innerHeight - 95 }
+    setPosition(reset)
+    try {
+      localStorage.setItem('mandisetu_ai_pos', JSON.stringify(reset))
+    } catch {}
+  }
 
   // Draggable logic for Kisan AI button
   const handleMouseDown = (e) => {
@@ -115,8 +155,8 @@ export default function AIAssistant() {
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
         hasMovedRef.current = true
       }
-      const newX = Math.max(10, Math.min(window.innerWidth - 70, dragStartRef.current.posX + dx))
-      const newY = Math.max(10, Math.min(window.innerHeight - 80, dragStartRef.current.posY + dy))
+      const newX = Math.max(10, Math.min(window.innerWidth - 75, dragStartRef.current.posX + dx))
+      const newY = Math.max(10, Math.min(window.innerHeight - 85, dragStartRef.current.posY + dy))
       setPosition({ x: newX, y: newY })
     }
 
@@ -142,11 +182,11 @@ export default function AIAssistant() {
   // Initialize greeting when opening
   useEffect(() => {
     if (isOpen && messages.length === 0) {
-      const gList = GREETINGS[language] || GREETINGS.en
+      const gList = GREETINGS[activeLang] || GREETINGS.en
       const initial = gList[0]
       setMessages([{ role: 'ai', text: initial }])
     }
-  }, [isOpen, language])
+  }, [isOpen, activeLang])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -157,25 +197,25 @@ export default function AIAssistant() {
 
     // 1. Check conversational greetings
     if (GREETING_TRIGGERS.some(g => lower.includes(g))) {
-      const gList = GREETINGS[language] || GREETINGS.en
+      const gList = GREETINGS[activeLang] || GREETINGS.en
       return gList[Math.floor(Math.random() * gList.length)]
     }
 
     // 2. Check knowledge base
     if (lower.includes('price') || lower.includes('rate') || lower.includes('bhav') || lower.includes('daam') || lower.includes('mandi') || lower.includes('bazaar')) {
-      return KNOWLEDGE_BASE.prices[language] || KNOWLEDGE_BASE.prices.en
+      return KNOWLEDGE_BASE.prices[activeLang] || KNOWLEDGE_BASE.prices.en
     }
     if (lower.includes('msp') || lower.includes('minimum support') || lower.includes('nyuntam')) {
-      return KNOWLEDGE_BASE.msp[language] || KNOWLEDGE_BASE.msp.en
+      return KNOWLEDGE_BASE.msp[activeLang] || KNOWLEDGE_BASE.msp.en
     }
     if (lower.includes('weather') || lower.includes('rain') || lower.includes('mausam') || lower.includes('barish') || lower.includes('forecast')) {
-      return KNOWLEDGE_BASE.weather[language] || KNOWLEDGE_BASE.weather.en
+      return KNOWLEDGE_BASE.weather[activeLang] || KNOWLEDGE_BASE.weather.en
     }
     if (lower.includes('calc') || lower.includes('take-home') || lower.includes('commission') || lower.includes('freight') || lower.includes('profit')) {
-      return KNOWLEDGE_BASE.calculator[language] || KNOWLEDGE_BASE.calculator.en
+      return KNOWLEDGE_BASE.calculator[activeLang] || KNOWLEDGE_BASE.calculator.en
     }
     if (lower.includes('grade') || lower.includes('quality') || lower.includes('agmark') || lower.includes('gunvatta')) {
-      return KNOWLEDGE_BASE.grading[language] || KNOWLEDGE_BASE.grading.en
+      return KNOWLEDGE_BASE.grading[activeLang] || KNOWLEDGE_BASE.grading.en
     }
 
     // Default Fallback
@@ -185,7 +225,7 @@ export default function AIAssistant() {
       mr: 'मी आपल्याला थेट एगमार्कनेट मंडी भाव, MSP दर, हवामान सल्ला, वाहतूक कॅल्क्युलेटर आणि पीक ग्रेडिंगमध्ये मदत करू शकतो. विचारा! 🌾',
       or: 'ମୁଁ ଆପଣଙ୍କୁ ଲାଇଭ ଏଗମାର୍କନେଟ ମଣ୍ଡି ଦର, MSP ତୁଳନା, ପାଣିପାଗ, ପରିବହନ କ୍ୟାଲକୁଲେଟର ଓ ଗ୍ରେଡିଂରେ ସାହାଯ୍ୟ କରିପାରିବି। ଯାହା ଇଚ୍ଛା ପଚାରନ୍ତୁ! 🌾'
     }
-    return fallbacks[language] || fallbacks.en
+    return fallbacks[activeLang] || fallbacks.en
   }
 
   const handleSend = (e) => {
@@ -234,15 +274,22 @@ export default function AIAssistant() {
               setIsDismissed(true)
             }}
             className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center text-xs shadow-md"
-            title="Hide AI Assistant (Click to remove)"
+            title="Hide AI Assistant (Click to remove; retrieve from top header)"
           >
             ✕
           </button>
 
-          {/* Drag Handle Indicator Tooltip */}
-          <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold text-gray-500 dark:text-gray-400 whitespace-nowrap pointer-events-none">
-            ⠿ Drag me
-          </div>
+          {/* Reset position icon on bottom-right of avatar */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              handleResetPosition()
+            }}
+            className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-gray-800 text-gray-200 hover:text-white flex items-center justify-center text-[10px] shadow"
+            title="Reset position to default corner"
+          >
+            <RotateCcw size={10} />
+          </button>
         </div>
       </div>
 
@@ -266,13 +313,21 @@ export default function AIAssistant() {
               </div>
             </div>
 
-            {/* Header Close button */}
-            <button
-              onClick={() => setIsOpen(false)}
-              className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-            >
-              <X size={18} />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleResetPosition}
+                className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10"
+                title="Reset position"
+              >
+                <RotateCcw size={14} />
+              </button>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10"
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
           {/* Messages Body */}

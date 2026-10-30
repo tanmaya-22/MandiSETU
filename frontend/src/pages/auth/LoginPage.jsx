@@ -7,15 +7,6 @@ import { useAuthStore } from '../../store/authStore'
 
 const QUICK_DEMO_USERS = [
   {
-    label: '👑 TanmayA (Platform Owner)',
-    email: 'TanmayA',
-    password: 'sanurimi@2210',
-    role: 'admin',
-    isOwner: true,
-    badge: 'bg-amber-100 text-amber-900 border-amber-300 font-bold',
-    desc: 'Full platform super-admin privileges & controls',
-  },
-  {
     label: '🌾 Farmer (Ramesh)',
     email: 'farmer@demo.com',
     password: 'demo1234',
@@ -37,7 +28,16 @@ const QUICK_DEMO_USERS = [
     password: 'demo1234',
     role: 'admin',
     badge: 'bg-purple-100 text-purple-800 border-purple-300',
-    desc: 'Demo oversight with TanmayA approval required for pivotal actions',
+    desc: 'Demo oversight (TanmayA approval required for pivotal actions)',
+  },
+  {
+    label: '👑 Admin(TanmayA)',
+    email: '',
+    password: '',
+    role: 'admin',
+    isEmptyForSecurity: true,
+    badge: 'bg-amber-100 text-amber-900 border-amber-300 font-bold',
+    desc: 'Main Admin portal — enter secure credentials manually',
   },
 ]
 
@@ -52,6 +52,11 @@ export default function LoginPage() {
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
   const handleQuickSelect = (user) => {
+    if (user.isEmptyForSecurity) {
+      setForm({ email: '', password: '' })
+      toast('Admin(TanmayA) selected. Please enter your username/email and password.', { icon: '👑' })
+      return
+    }
     setForm({ email: user.email, password: user.password || 'demo1234' })
     toast.success(`Loaded credentials for ${user.label}`, { icon: '✨' })
   }

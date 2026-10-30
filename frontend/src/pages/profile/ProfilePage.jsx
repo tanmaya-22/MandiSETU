@@ -83,9 +83,9 @@ export default function ProfilePage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold">{user?.full_name || user?.name || 'Registered User'}</h1>
-                {user?.isOwner && (
+                {(user?.isOwner || user?.isAdminTanmaya) && (
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-400 text-amber-950">
-                    👑 Platform Owner
+                    👑 Admin(TanmayA)
                   </span>
                 )}
               </div>

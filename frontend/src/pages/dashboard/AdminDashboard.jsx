@@ -52,9 +52,10 @@ const INITIAL_LOTS = [
 export default function AdminDashboard() {
   const { user } = useAuthStore()
 
-  // Strict check if currently logged-in user is platform owner TanmayA
+  // Strict check if currently logged-in user is Admin(TanmayA)
   const isOwner =
     user?.isOwner === true ||
+    user?.isAdminTanmaya === true ||
     user?.email?.toLowerCase() === 'tanmayapradhan2322@gmail.com' ||
     user?.username === 'TanmayA' ||
     user?.name === 'TanmayA' ||
@@ -275,11 +276,11 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-2 mb-1.5">
             {isOwner ? (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-800 shadow-sm">
-                👑 Super Admin & Platform Owner: TanmayA (Unrestricted Power)
+                👑 Admin(TanmayA) (Unrestricted Power)
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-950/60 text-purple-900 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
-                🛡️ Demo Admin Account (Restricted · TanmayA Approval Required for Pivotal Actions)
+                🛡️ Demo Admin Account (Restricted · Admin(TanmayA) Approval Required for Pivotal Actions)
               </span>
             )}
           </div>
@@ -370,11 +371,11 @@ export default function AdminDashboard() {
               <div>
                 <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-1">Administrative Privileges Notice</h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
-                  Only <strong>TanmayA</strong> as the platform owner holds full authorization to override quality grading, alter buyer trust scores, arbitrate grievances, and export sensitive user database files.
+                  Only <strong>Admin(TanmayA)</strong> holds full authorization to override quality grading, alter buyer trust scores, arbitrate grievances, and export sensitive user database files.
                 </p>
               </div>
               <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 text-xs text-amber-900 dark:text-amber-300 mt-4">
-                Current Session: <span className="font-bold">{isOwner ? 'TanmayA (All Powers Active)' : 'Demo Admin (Restricted)'}</span>
+                Current Session: <span className="font-bold">{isOwner ? 'Admin(TanmayA) (All Powers Active)' : 'Demo Admin (Restricted)'}</span>
               </div>
             </div>
           </div>
@@ -804,12 +805,12 @@ export default function AdminDashboard() {
               <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed pt-2">
                 You are currently accessing via the Demo Admin account. Modifying pivotal functions such as{' '}
                 <span className="font-bold text-gray-900 dark:text-white">"{deniedActionName}"</span>{' '}
-                requires explicit approval from platform owner <strong>TanmayA</strong>.
+                requires explicit approval from <strong>Admin(TanmayA)</strong>.
               </p>
             </div>
 
             <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800 text-xs text-gray-500 text-center font-mono">
-              Contact Owner: tanmayapradhan2322@gmail.com
+              Contact Admin(TanmayA): tanmayapradhan2322@gmail.com
             </div>
 
             <button

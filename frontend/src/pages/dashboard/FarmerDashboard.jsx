@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { listingsAPI } from '../../api/modules'
 import { useAuthStore } from '../../store/authStore'
+import { useLangStore } from '../../store/langStore'
 import { StatCard, Spinner, PageHeader, Card } from '../../components/common/UI'
 
 const MOCK_LOTS = [
@@ -16,19 +17,20 @@ const MOCK_LOTS = [
   { id: '3', commodity: 'Tomato', variety: 'Hybrid Round', quantity_kg: 2500, grade: 'B', min_price_per_kg: 19, status: 'active', mandi_name: 'Kolar Mandi', created_at: '2026-10-29' },
 ]
 
-const QUICK_ACTIONS = [
-  { to: '/listings/new', icon: Plus, label: 'Create Produce Lot', desc: 'List new harvest', color: 'bg-emerald-600 hover:bg-emerald-700 text-white' },
-  { to: '/prices', icon: TrendingUp, label: 'Price Discovery & Map', desc: 'Live APMC rates', color: 'bg-blue-600 hover:bg-blue-700 text-white' },
-  { to: '/calculator', icon: Calculator, label: 'Net Realization', desc: 'Compare mandis', color: 'bg-amber-600 hover:bg-amber-700 text-white' },
-  { to: '/grading', icon: Star, label: 'AI Quality Grading', desc: 'Computer vision', color: 'bg-yellow-500 hover:bg-yellow-600 text-white' },
-  { to: '/sale-window', icon: Calendar, label: 'Optimal Sale Window', desc: 'Price vs spoilage', color: 'bg-purple-600 hover:bg-purple-700 text-white' },
-  { to: '/weather', icon: CloudRain, label: 'Weather Risk', desc: 'Transit advisory', color: 'bg-teal-600 hover:bg-teal-700 text-white' },
-]
-
 export default function FarmerDashboard() {
   const user = useAuthStore((s) => s.user)
+  const { lang, language, t, formatNum, formatPrice } = useLangStore()
   const [lots, setLots] = useState([])
   const [loading, setLoading] = useState(true)
+
+  const QUICK_ACTIONS = [
+    { to: '/listings/new', icon: Plus, label: t('fd_list_new') || 'Create Produce Lot', desc: 'List new harvest', color: 'bg-emerald-600 hover:bg-emerald-700 text-white' },
+    { to: '/prices', icon: TrendingUp, label: t('nav_prices') || 'Price Discovery & Map', desc: 'Live APMC rates', color: 'bg-blue-600 hover:bg-blue-700 text-white' },
+    { to: '/calculator', icon: Calculator, label: t('nav_calculator') || 'Net Realization', desc: 'Compare mandis', color: 'bg-amber-600 hover:bg-amber-700 text-white' },
+    { to: '/grading', icon: Star, label: t('nav_grading') || 'AI Quality Grading', desc: 'Computer vision', color: 'bg-yellow-500 hover:bg-yellow-600 text-white' },
+    { to: '/sale-window', icon: Calendar, label: t('nav_salewindow') || 'Optimal Sale Window', desc: 'Price vs spoilage', color: 'bg-purple-600 hover:bg-purple-700 text-white' },
+    { to: '/weather', icon: CloudRain, label: t('nav_weather') || 'Weather Risk', desc: 'Transit advisory', color: 'bg-teal-600 hover:bg-teal-700 text-white' },
+  ]
 
   useEffect(() => {
     listingsAPI
@@ -53,15 +55,13 @@ export default function FarmerDashboard() {
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/15 backdrop-blur-md rounded-full text-xs font-bold text-emerald-200 mb-2">
               <CheckCircle2 size={13} className="text-emerald-400" />
-              <span>Verified Farmer Dashboard</span>
+              <span>{t('verified_badge') || 'Verified Farmer Dashboard'}</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Namaste, {user?.full_name || 'Ramesh Patel'}!
+              {t('fd_welcome') || 'Namaste'}, {user?.full_name || user?.name || 'Farmer'}!
             </h2>
             <p className="text-emerald-100 text-xs sm:text-sm mt-1 max-w-xl">
-              {user?.state && user?.district
-                ? `Region: ${user.district}, ${user.state} · 3 Lots Active in Public Markets`
-                : 'Empowering you with real-time Agmarknet rates and instant buyer matching.'}
+              {t('fd_subtitle') || 'Empowering you with real-time Agmarknet rates and instant buyer matching.'}
             </p>
           </div>
 
@@ -71,51 +71,51 @@ export default function FarmerDashboard() {
               className="px-5 py-2.5 bg-white text-brand-900 font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md hover:bg-emerald-50 transition transform hover:-translate-y-0.5"
             >
               <Plus size={16} />
-              <span>List New Produce</span>
+              <span>{t('fd_list_new') || 'List New Produce'}</span>
             </Link>
           </div>
         </div>
       </div>
 
-      {/* KPI Stats */}
+      {/* KPI Stats with Localization */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card-interactive p-4 sm:p-5 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+        <div className="card-interactive p-4 sm:p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center">
             <Package size={24} />
           </div>
           <div>
-            <p className="text-2xl font-extrabold text-gray-900">{lots.length}</p>
-            <p className="text-xs text-gray-500 font-medium">Total Listed Lots</p>
+            <p className="text-2xl font-extrabold text-gray-900 dark:text-white">{formatNum(lots.length)}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('fd_total_lots') || 'Total Listed Lots'}</p>
           </div>
         </div>
 
-        <div className="card-interactive p-4 sm:p-5 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center">
+        <div className="card-interactive p-4 sm:p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-950 text-brand-600 flex items-center justify-center">
             <CheckCircle2 size={24} />
           </div>
           <div>
-            <p className="text-2xl font-extrabold text-brand-700">{activeLots}</p>
-            <p className="text-xs text-gray-500 font-medium">Active in Mandi</p>
+            <p className="text-2xl font-extrabold text-brand-700 dark:text-brand-400">{formatNum(activeLots)}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('fd_active_lots') || 'Active in Mandi'}</p>
           </div>
         </div>
 
-        <div className="card-interactive p-4 sm:p-5 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+        <div className="card-interactive p-4 sm:p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 flex items-center justify-center">
             <TrendingUp size={24} />
           </div>
           <div>
-            <p className="text-2xl font-extrabold text-blue-700">{matchedLots}</p>
-            <p className="text-xs text-gray-500 font-medium">Buyer Offers Matched</p>
+            <p className="text-2xl font-extrabold text-blue-700 dark:text-blue-400">{formatNum(matchedLots)}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('fd_matched_offers') || 'Buyer Offers Matched'}</p>
           </div>
         </div>
 
-        <div className="card-interactive p-4 sm:p-5 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+        <div className="card-interactive p-4 sm:p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 flex items-center justify-center">
             <CloudRain size={24} />
           </div>
           <div>
-            <p className="text-2xl font-extrabold text-emerald-700">Low Risk</p>
-            <p className="text-xs text-gray-500 font-medium">Weather Advisory</p>
+            <p className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400">{t('fd_low_risk') || 'Low Risk'}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('fd_weather_status') || 'Weather Advisory'}</p>
           </div>
         </div>
       </div>
