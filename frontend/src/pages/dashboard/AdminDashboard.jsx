@@ -4,9 +4,17 @@ import {
   BarChart2, Users, Package, TrendingUp, IndianRupee,
   ShieldCheck, AlertTriangle, Activity, Download, Mail, Phone,
   Calendar, CheckCircle, RefreshCw, UserCheck, Lock, Unlock,
-  Sliders, Award, MessageSquare, FileText, CheckCircle2, XCircle, ChevronRight
+  Sliders, Award, MessageSquare, FileText, CheckCircle2, XCircle, ChevronRight,
+  Zap, Sparkles, Check, Crown
 } from 'lucide-react'
-import { analyticsAPI, authAPI, getLocalUsers } from '../../api/modules'
+import {
+  analyticsAPI,
+  authAPI,
+  getLocalUsers,
+  ROLE_AVAILABLE_POWERS,
+  updateUserPowers,
+  hasUserPower
+} from '../../api/modules'
 import { useAuthStore } from '../../store/authStore'
 import { StatCard, PageHeader } from '../../components/common/UI'
 
@@ -71,6 +79,20 @@ export default function AdminDashboard() {
   const [auditLog, setAuditLog] = useState([])
   const [loading, setLoading] = useState(true)
 
+  // Operational powers granted to the current user session (dynamic RBAC)
+  const canExportCSV = isOwner || hasUserPower(user, 'csv_export')
+  const canDecryptPII = isOwner || hasUserPower(user, 'decrypt_pii')
+  const canArbitrateDisputes = isOwner || hasUserPower(user, 'dispute_resolution')
+  const canOverrideQuality = isOwner || hasUserPower(user, 'quality_override')
+  const canOverridePrices = isOwner || hasUserPower(user, 'price_override')
+  const canManageUsers = isOwner || hasUserPower(user, 'user_management')
+
+  // Selected User for Granting / Revoking Powers
+  const [selectedUserForPowers, setSelectedUserForPowers] = useState(null)
+  const [customPowers, setCustomPowers] = useState([])
+  const [powerAuditReason, setPowerAuditReason] = useState('Official accreditation verified by Admin(TanmayA)')
+  const [savingPowers, setSavingPowers] = useState(false)
+
   // Pivotal Action Modals
   const [pivotalModal, setPivotalModal] = useState(null)
   const [permissionDeniedModal, setPermissionDeniedModal] = useState(false)
@@ -87,6 +109,18 @@ export default function AdminDashboard() {
       // 1. Users
       const usersList = getLocalUsers()
       setRegisteredUsers(usersList)
+      
+      // Keep selected user in sync with updated list
+      if (!selectedUserForPowers && usersList.length > 0) {
+        setSelectedUserForPowers(usersList[0])
+        setCustomPowers(usersList[0].powers || [])
+      } else if (selectedUserForPowers) {
+        const found = usersList.find((u) => u.email?.toLowerCase() === selectedUserForPowers.email?.toLowerCase())
+        if (found) {
+          setSelectedUserForPowers(found)
+          setCustomPowers(found.powers || [])
+        }
+      }
 
       // 2. Feedbacks
       const rawFb = localStorage.getItem('mandisetu_user_feedbacks')
@@ -112,7 +146,7 @@ export default function AdminDashboard() {
     const newEntry = {
       id: 'AUD-' + Date.now().toString().slice(-6),
       timestamp: new Date().toISOString(),
-      admin: isOwner ? 'TanmayA (Owner)' : 'Demo Admin',
+      admin: isOwner ? 'TanmayA (Owner)' : (user?.full_name || 'Demo Admin'),
       action,
       target,
       reason: details,
@@ -132,43 +166,114 @@ export default function AdminDashboard() {
     callback()
   }
 
-  // CSV Export
-  const handleExportCSV = () => {
-    triggerPivotalAction('Export User Database CSV', () => {
-      const headers = ['User ID', 'Full Name', 'Email', 'Phone', 'Role', 'State', 'District']
-      const rows = registeredUsers.map((u) => [
-        u.id || u.user_id || 'N/A',
-        `"${u.full_name || ''}"`,
-        u.email,
-        u.phone || 'N/A',
-        u.role || 'farmer',
-        u.state || 'N/A',
-        u.district || 'N/A',
-      ])
-      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n')
-      const encodedUri = encodeURI(csvContent)
-      const link = document.createElement('a')
-      link.setAttribute('href', encodedUri)
-      link.setAttribute('download', `mandisetu_users_tanmaya_${Date.now()}.csv`)
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      logAuditAction('CSV Export', 'All Registered Users', 'Full platform user registry exported by TanmayA')
-      toast.success('Complete User Directory Exported (TanmayA Verified)')
-    })
+  // Handle toggling an individual power for selected user
+  const handleTogglePower = (powerId) => {
+    if (!isOwner) {
+      setDeniedActionName('Modify User Authority & Powers')
+      setPermissionDeniedModal(true)
+      return
+    }
+    setCustomPowers((prev) =>
+      prev.includes(powerId) ? prev.filter((p) => p !== powerId) : [...prev, powerId]
+    )
   }
 
-  // Grievance resolution
+  // Handle 1-click authority preset tiers
+  const handleApplyPreset = (presetType) => {
+    if (!isOwner) {
+      setDeniedActionName('Apply Platform Authority Preset Tier')
+      setPermissionDeniedModal(true)
+      return
+    }
+    const role = selectedUserForPowers?.role || 'farmer'
+    const available = ROLE_AVAILABLE_POWERS[role] || []
+    if (presetType === 'standard') {
+      setCustomPowers([])
+    } else if (presetType === 'pro') {
+      setCustomPowers(available.slice(0, 2).map((p) => p.id))
+    } else if (presetType === 'vip') {
+      setCustomPowers(available.map((p) => p.id))
+    }
+  }
+
+  // Save powers to persistent local directory
+  const handleSavePowers = () => {
+    if (!isOwner) {
+      setDeniedActionName('Commit Authority Configuration to Production')
+      setPermissionDeniedModal(true)
+      return
+    }
+    if (!selectedUserForPowers) return
+    setSavingPowers(true)
+    try {
+      const ok = updateUserPowers(selectedUserForPowers.email, customPowers, powerAuditReason)
+      if (ok) {
+        logAuditAction(
+          'Authority Powers Configured',
+          selectedUserForPowers.email,
+          `Granted powers [${customPowers.join(', ') || 'Standard'}] with reason: ${powerAuditReason}`
+        )
+        toast.success(
+          `Authority powers saved for ${selectedUserForPowers.full_name || selectedUserForPowers.email} (Certified by TanmayA)`,
+          { icon: '⚡' }
+        )
+        loadAllData()
+      } else {
+        toast.error('Failed to update powers in directory')
+      }
+    } finally {
+      setSavingPowers(false)
+    }
+  }
+
+  // CSV Export (with dynamic RBAC check)
+  const handleExportCSV = () => {
+    if (!canExportCSV) {
+      setDeniedActionName('Export User Database CSV')
+      setPermissionDeniedModal(true)
+      return
+    }
+    const headers = ['User ID', 'Full Name', 'Email', 'Phone', 'Role', 'State', 'District', 'Active Powers']
+    const rows = registeredUsers.map((u) => [
+      u.id || u.user_id || 'N/A',
+      `"${u.full_name || ''}"`,
+      u.email,
+      u.phone || 'N/A',
+      u.role || 'farmer',
+      u.state || 'N/A',
+      u.district || 'N/A',
+      `"${(u.powers || []).join('; ')}"`,
+    ])
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n')
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', `mandisetu_users_tanmaya_${Date.now()}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    logAuditAction(
+      'CSV Export',
+      'All Registered Users',
+      isOwner ? 'Full platform user registry exported by TanmayA' : 'User registry exported by authorized Demo Admin (Power: csv_export)'
+    )
+    toast.success('Complete User Directory Exported (TanmayA Verified)')
+  }
+
+  // Grievance resolution (with dynamic RBAC check)
   const handleGrievanceAction = (grv, actionType) => {
-    triggerPivotalAction(`${actionType.toUpperCase()} Grievance ${grv.id}`, () => {
-      setPivotalModal({
-        type: 'grievance',
-        item: grv,
-        actionType,
-        title: `${actionType === 'resolve' ? 'Resolve' : actionType === 'escalate' ? 'Escalate' : 'Delete'} Grievance ${grv.id}`,
-      })
-      setOverrideReason('')
+    if (!canArbitrateDisputes) {
+      setDeniedActionName(`${actionType.toUpperCase()} Grievance ${grv.id}`)
+      setPermissionDeniedModal(true)
+      return
+    }
+    setPivotalModal({
+      type: 'grievance',
+      item: grv,
+      actionType,
+      title: `${actionType === 'resolve' ? 'Resolve' : actionType === 'escalate' ? 'Escalate' : 'Delete'} Grievance ${grv.id}`,
     })
+    setOverrideReason('')
   }
 
   const confirmGrievanceAction = () => {
@@ -178,26 +283,31 @@ export default function AdminDashboard() {
     }
     const { item, actionType } = pivotalModal
     if (actionType === 'delete') {
-      setGrievances(prev => prev.filter(g => g.id !== item.id))
+      setGrievances((prev) => prev.filter((g) => g.id !== item.id))
     } else {
-      setGrievances(prev => prev.map(g => g.id === item.id ? { ...g, status: actionType === 'resolve' ? 'resolved' : 'escalated' } : g))
+      setGrievances((prev) =>
+        prev.map((g) => (g.id === item.id ? { ...g, status: actionType === 'resolve' ? 'resolved' : 'escalated' } : g))
+      )
     }
     logAuditAction(`Grievance ${actionType}`, item.id, `Reason: ${overrideReason}`)
     toast.success(`Grievance ${item.id} ${actionType}d with documented audit reason.`)
     setPivotalModal(null)
   }
 
-  // Buyer Rating Override
+  // Buyer Rating Override (with dynamic RBAC check)
   const handleBuyerOverride = (buyer) => {
-    triggerPivotalAction(`Override Rating for ${buyer.name}`, () => {
-      setPivotalModal({
-        type: 'buyer',
-        item: buyer,
-        title: `Override Reliability Score: ${buyer.name}`,
-      })
-      setOverrideValue(String(buyer.rating))
-      setOverrideReason('')
+    if (!canOverridePrices) {
+      setDeniedActionName(`Override Rating for ${buyer.name}`)
+      setPermissionDeniedModal(true)
+      return
+    }
+    setPivotalModal({
+      type: 'buyer',
+      item: buyer,
+      title: `Override Reliability Score: ${buyer.name}`,
     })
+    setOverrideValue(String(buyer.rating))
+    setOverrideReason('')
   }
 
   const confirmBuyerOverride = () => {
@@ -210,23 +320,26 @@ export default function AdminDashboard() {
       toast.error('Rating must be between 1.0 and 5.0')
       return
     }
-    setBuyers(prev => prev.map(b => b.id === pivotalModal.item.id ? { ...b, rating: val } : b))
+    setBuyers((prev) => prev.map((b) => (b.id === pivotalModal.item.id ? { ...b, rating: val } : b)))
     logAuditAction('Buyer Rating Override', pivotalModal.item.id, `Score changed to ${val}★. Reason: ${overrideReason}`)
     toast.success(`Buyer rating updated to ${val}★`)
     setPivotalModal(null)
   }
 
-  // Quality Grade Override
+  // Quality Grade Override (with dynamic RBAC check)
   const handleQualityOverride = (lot) => {
-    triggerPivotalAction(`Override Quality Grade for Lot ${lot.id}`, () => {
-      setPivotalModal({
-        type: 'quality',
-        item: lot,
-        title: `Override AI Quality Grade: Lot ${lot.id}`,
-      })
-      setOverrideValue(lot.currentGrade)
-      setOverrideReason('')
+    if (!canOverrideQuality) {
+      setDeniedActionName(`Override Quality Grade for Lot ${lot.id}`)
+      setPermissionDeniedModal(true)
+      return
+    }
+    setPivotalModal({
+      type: 'quality',
+      item: lot,
+      title: `Override AI Quality Grade: Lot ${lot.id}`,
     })
+    setOverrideValue(lot.currentGrade)
+    setOverrideReason('')
   }
 
   const confirmQualityOverride = () => {
@@ -234,32 +347,33 @@ export default function AdminDashboard() {
       toast.error('Documented reason is mandatory!')
       return
     }
-    setLots(prev => prev.map(l => l.id === pivotalModal.item.id ? { ...l, currentGrade: overrideValue } : l))
+    setLots((prev) => prev.map((l) => (l.id === pivotalModal.item.id ? { ...l, currentGrade: overrideValue } : l)))
     logAuditAction('Produce Grade Override', pivotalModal.item.id, `Grade changed to ${overrideValue}. Reason: ${overrideReason}`)
     toast.success(`Lot grade updated to ${overrideValue}`)
     setPivotalModal(null)
   }
 
-  // Helper for masking text in demo mode
+  // Helper for masking text in demo mode (unmasked if decrypt_pii power or isOwner)
   const maskEmail = (email) => {
-    if (isOwner) return email
+    if (canDecryptPII) return email
     if (!email) return '••••••••'
     const parts = email.split('@')
     return `${parts[0].slice(0, 2)}***@${parts[1] || '***.com'}`
   }
 
   const maskId = (id) => {
-    if (isOwner) return id
+    if (canDecryptPII) return id
     return 'usr_•••••••'
   }
 
   const maskPhone = (phone) => {
-    if (isOwner) return phone
+    if (canDecryptPII) return phone
     return '+91 ••••• ••••'
   }
 
   const TABS = [
     { id: 'overview', label: '📊 Overview' },
+    { id: 'powers', label: '⚡ Authority & Powers' },
     { id: 'users', label: `👥 User Audit (${registeredUsers.length})` },
     { id: 'grievances', label: `⚖️ Grievances (${grievances.length})` },
     { id: 'buyers', label: '🏢 Buyer Ratings' },
@@ -304,22 +418,22 @@ export default function AdminDashboard() {
             <span>Refresh</span>
           </button>
 
-          {/* Export CSV with hover/click restriction */}
+          {/* Export CSV with dynamic authority status */}
           <div className="relative group">
             <button
               onClick={handleExportCSV}
               className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md transition-all ${
-                isOwner
+                canExportCSV
                   ? 'bg-brand-600 hover:bg-brand-700 text-white'
                   : 'bg-gray-200 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
               }`}
             >
-              {isOwner ? <Download size={14} /> : <Lock size={14} className="text-amber-500" />}
+              {canExportCSV ? <Download size={14} /> : <Lock size={14} className="text-amber-500" />}
               <span>Export CSV</span>
             </button>
-            {!isOwner && (
-              <div className="absolute right-0 top-full mt-1.5 w-60 p-2.5 bg-gray-900 text-white text-[11px] font-medium rounded-xl shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 border border-gray-700">
-                🔒 TanmayA approval required to export data.
+            {!canExportCSV && (
+              <div className="absolute right-0 top-full mt-1.5 w-64 p-2.5 bg-gray-900 text-white text-[11px] font-medium rounded-xl shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 border border-gray-700">
+                🔒 TanmayA approval required to export data. (Grant "csv_export" power)
               </div>
             )}
           </div>
@@ -371,14 +485,349 @@ export default function AdminDashboard() {
               <div>
                 <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-1">Administrative Privileges Notice</h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
-                  Only <strong>Admin(TanmayA)</strong> holds full authorization to override quality grading, alter buyer trust scores, arbitrate grievances, and export sensitive user database files.
+                  Only <strong>Admin(TanmayA)</strong> holds full authorization to override quality grading, alter buyer trust scores, arbitrate grievances, and provision granular operational powers.
                 </p>
               </div>
-              <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 text-xs text-amber-900 dark:text-amber-300 mt-4">
-                Current Session: <span className="font-bold">{isOwner ? 'Admin(TanmayA) (All Powers Active)' : 'Demo Admin (Restricted)'}</span>
+              <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 text-xs text-amber-900 dark:text-amber-300 mt-4 flex items-center justify-between">
+                <span>Current Session: <strong className="font-bold">{isOwner ? 'Admin(TanmayA) (Root Authority)' : 'Demo Admin (Restricted)'}</strong></span>
+                <button
+                  onClick={() => setActiveTab('powers')}
+                  className="px-2.5 py-1 rounded-lg bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100 text-[11px] font-bold hover:scale-105 transition-all"
+                >
+                  Configure Powers →
+                </button>
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── TAB: AUTHORITY & POWERS (ADMIN TANMAYA EXCLUSIVE GOVERNANCE) ── */}
+      {activeTab === 'powers' && (
+        <div className="space-y-6">
+          {/* Master Control Status Header */}
+          {isOwner ? (
+            <div className="bg-gradient-to-r from-amber-500/15 via-brand-500/15 to-emerald-500/15 border border-amber-300 dark:border-amber-800 rounded-3xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-amber-950 flex items-center justify-center text-2xl shadow-md font-black shrink-0">
+                  👑
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-black text-base sm:text-lg text-gray-900 dark:text-white tracking-tight">
+                      Admin(TanmayA) Master Authority Provisioning Console
+                    </h3>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-200 text-amber-950 uppercase tracking-wider">
+                      ROOT PRIVILEGES
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5 max-w-2xl">
+                    Select any farmer, buyer, demo admin, or FPO account to provision, elevate, or revoke specific operational powers. All changes require documented audit reasons and apply in real time.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 rounded-3xl p-5 flex items-start sm:items-center gap-3.5 text-purple-900 dark:text-purple-300 text-xs shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-purple-200 dark:bg-purple-900/60 text-purple-800 dark:text-purple-200 flex items-center justify-center text-lg shrink-0">
+                🔒
+              </div>
+              <div className="space-y-0.5">
+                <span className="font-bold text-sm block">Restricted Demo Admin Authority Inspector</span>
+                <p className="text-purple-700 dark:text-purple-400">
+                  You are viewing user privilege matrices in read-only mode. Modifying powers requires cryptographic authorization from <strong>Admin(TanmayA)</strong>.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* User Selection Strip */}
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
+              <div>
+                <h4 className="font-extrabold text-sm text-gray-900 dark:text-white flex items-center gap-2">
+                  <span>1. Select Target Account for Authority Assignment</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-semibold">
+                    {registeredUsers.length} Users Enrolled
+                  </span>
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Click on any user card below to configure their role-specific operational permissions.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {registeredUsers.map((u) => {
+                const isSelected = selectedUserForPowers?.email?.toLowerCase() === u.email?.toLowerCase()
+                const isTanmayaUser = u.username === 'TanmayA' || u.email === 'tanmayapradhan2322@gmail.com'
+                const roleColor =
+                  u.role === 'buyer'
+                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
+                    : u.role === 'admin'
+                    ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300'
+                    : u.role === 'fpo'
+                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                    : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+
+                return (
+                  <button
+                    key={u.email}
+                    onClick={() => {
+                      setSelectedUserForPowers(u)
+                      setCustomPowers(u.powers || [])
+                    }}
+                    className={`p-3.5 rounded-2xl text-left border transition-all flex flex-col justify-between gap-3 ${
+                      isSelected
+                        ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/20 ring-2 ring-brand-500 shadow-md scale-[1.01]'
+                        : 'border-gray-200 dark:border-gray-800 bg-gray-50/40 dark:bg-gray-800/40 hover:bg-gray-100/60 dark:hover:bg-gray-800/80'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2 w-full">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center font-bold text-xs text-gray-700 dark:text-gray-200 shrink-0">
+                          {u.full_name?.[0] || 'U'}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-xs text-gray-900 dark:text-white truncate">
+                            {u.full_name || u.name}
+                          </p>
+                          <p className="text-[10px] text-gray-400 font-mono truncate">
+                            {maskEmail(u.email)}
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider shrink-0 ${roleColor}`}>
+                        {u.role || 'farmer'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] pt-1 border-t border-gray-200/50 dark:border-gray-700/50 w-full">
+                      <span className="text-gray-500">Active Powers:</span>
+                      {isTanmayaUser ? (
+                        <span className="font-extrabold text-amber-600 dark:text-amber-400">👑 Root (All)</span>
+                      ) : (
+                        <span className="font-bold text-brand-600 dark:text-brand-400 flex items-center gap-1">
+                          <Zap size={12} />
+                          {u.powers?.length || 0} Enabled
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Configuration Panel for Selected Account */}
+          {selectedUserForPowers && (
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 sm:p-7 shadow-sm space-y-6">
+              {/* Account Meta Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-gray-100 dark:border-gray-800">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-brand-100 dark:bg-brand-950 text-brand-700 dark:text-brand-300 flex items-center justify-center font-black text-lg shadow-inner">
+                    {selectedUserForPowers.role === 'buyer' ? '🏢' : selectedUserForPowers.role === 'admin' ? '🛡️' : selectedUserForPowers.role === 'fpo' ? '🤝' : '🌾'}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-extrabold text-base text-gray-900 dark:text-white">
+                        {selectedUserForPowers.full_name || selectedUserForPowers.name}
+                      </h4>
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                        {selectedUserForPowers.role || 'farmer'}
+                      </span>
+                      {selectedUserForPowers.username === 'TanmayA' && (
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-200 text-amber-950">
+                          SUPREME ROOT
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-mono">
+                      {maskEmail(selectedUserForPowers.email)} · {selectedUserForPowers.district ? `${selectedUserForPowers.district}, ` : ''}{selectedUserForPowers.state || 'India'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Authority Level Counter Pill */}
+                <div className="flex items-center gap-2">
+                  <span className="px-3.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 shadow-sm">
+                    <Sparkles size={14} className="text-emerald-600 dark:text-emerald-400" />
+                    <span>
+                      {selectedUserForPowers.username === 'TanmayA'
+                        ? 'Master Authority Active'
+                        : `${customPowers.length} of ${(ROLE_AVAILABLE_POWERS[selectedUserForPowers.role || 'farmer'] || []).length} Powers Provisioned`}
+                    </span>
+                  </span>
+                </div>
+              </div>
+
+              {selectedUserForPowers.username === 'TanmayA' || selectedUserForPowers.email === 'tanmayapradhan2322@gmail.com' ? (
+                <div className="p-6 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-center space-y-2">
+                  <div className="text-3xl">👑</div>
+                  <h4 className="font-extrabold text-base text-amber-900 dark:text-amber-200">
+                    Supreme Root Platform Account: Admin(TanmayA)
+                  </h4>
+                  <p className="text-xs text-amber-800/80 dark:text-amber-300/80 max-w-md mx-auto">
+                    Admin(TanmayA) inherently commands unrestricted platform authority across Agmarknet price overrides, direct dispute arbitration, live user credential decryption, quality grading, and system governance.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* One-Click Authority Presets */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                        1-Click Authority Presets
+                      </label>
+                      <span className="text-[11px] text-gray-400">Quickly apply standard, pro, or VIP authority</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <button
+                        onClick={() => handleApplyPreset('standard')}
+                        className="p-3 rounded-2xl border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 bg-white dark:bg-gray-800/60 text-left transition-all group"
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="w-2 h-2 rounded-full bg-gray-400 group-hover:scale-125 transition-transform" />
+                          <span className="font-bold text-xs text-gray-900 dark:text-white">Standard Tier</span>
+                        </div>
+                        <p className="text-[11px] text-gray-500">Base APMC permissions with default platform rate limits.</p>
+                      </button>
+
+                      <button
+                        onClick={() => handleApplyPreset('pro')}
+                        className="p-3 rounded-2xl border border-brand-200 dark:border-brand-800 hover:border-brand-300 bg-brand-50/40 dark:bg-brand-950/20 text-left transition-all group"
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="w-2 h-2 rounded-full bg-brand-500 group-hover:scale-125 transition-transform" />
+                          <span className="font-bold text-xs text-brand-900 dark:text-brand-300">Elevated Pro Tier</span>
+                        </div>
+                        <p className="text-[11px] text-gray-500">Key operational boosters (AI grading, priority matching & fleets).</p>
+                      </button>
+
+                      <button
+                        onClick={() => handleApplyPreset('vip')}
+                        className="p-3 rounded-2xl border border-amber-200 dark:border-amber-800 hover:border-amber-300 bg-amber-50/40 dark:bg-amber-950/20 text-left transition-all group"
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="w-2 h-2 rounded-full bg-amber-500 group-hover:scale-125 transition-transform" />
+                          <span className="font-bold text-xs text-amber-900 dark:text-amber-300">👑 VIP / Full Authority</span>
+                        </div>
+                        <p className="text-[11px] text-gray-500">Unlock all available powers and exemptions for this role.</p>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Granular Role-Specific Powers Grid */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                        Granular Operational Privileges ({selectedUserForPowers.role?.toUpperCase() || 'FARMER'})
+                      </label>
+                      <span className="text-[11px] text-gray-400">
+                        Toggle specific switches to customize authorization
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                      {(ROLE_AVAILABLE_POWERS[selectedUserForPowers.role || 'farmer'] || []).map((p) => {
+                        const isActive = customPowers.includes(p.id)
+
+                        return (
+                          <div
+                            key={p.id}
+                            className={`p-4 rounded-2xl border transition-all flex items-start justify-between gap-3 ${
+                              isActive
+                                ? 'border-brand-500/60 bg-brand-50/30 dark:bg-brand-950/15 shadow-sm'
+                                : 'border-gray-200 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30 opacity-75'
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <span className="text-2xl shrink-0 p-1.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-xs">
+                                {p.icon}
+                              </span>
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-2">
+                                  <h5 className="font-bold text-xs text-gray-900 dark:text-white">
+                                    {p.label}
+                                  </h5>
+                                  <span
+                                    className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase ${
+                                      isActive
+                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                                        : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                                    }`}
+                                  >
+                                    {isActive ? 'ENABLED' : 'STANDARD'}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
+                                  {p.desc}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Toggle Switch */}
+                            <button
+                              type="button"
+                              onClick={() => handleTogglePower(p.id)}
+                              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                                isActive ? 'bg-brand-600' : 'bg-gray-300 dark:bg-gray-700'
+                              }`}
+                            >
+                              <span
+                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                                  isActive ? 'translate-x-5' : 'translate-x-0'
+                                }`}
+                              />
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Administrative Audit Justification */}
+                  <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300">
+                      Documented Reason for Authority Configuration <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={powerAuditReason}
+                      onChange={(e) => setPowerAuditReason(e.target.value)}
+                      placeholder="e.g. Cleared APMC mandi quality inspection, Gold buyer collateral verified, or emergency seasonal quota boost..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500"
+                    />
+                    <p className="text-[11px] text-gray-400">
+                      All granted or revoked powers are immutably logged into the MandiSetu Admin Audit Trail under Admin(TanmayA).
+                    </p>
+                  </div>
+
+                  {/* Commit Action Buttons */}
+                  <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-3">
+                    <button
+                      type="button"
+                      onClick={() => setCustomPowers(selectedUserForPowers.powers || [])}
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-gray-800"
+                    >
+                      Reset to Current
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleSavePowers}
+                      disabled={savingPowers}
+                      className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-extrabold shadow-md flex items-center justify-center gap-2 hover:scale-[1.01] transition-all"
+                    >
+                      <Zap size={14} className={savingPowers ? 'animate-spin' : ''} />
+                      <span>{savingPowers ? 'Provisioning...' : '⚡ Commit & Provision Powers (Certified by TanmayA)'}</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -417,7 +866,9 @@ export default function AdminDashboard() {
                   <th className="py-3 px-3">Email Address</th>
                   <th className="py-3 px-3">Phone</th>
                   <th className="py-3 px-3">State / District</th>
+                  <th className="py-3 px-3">⚡ Granted Powers</th>
                   <th className="py-3 px-3 text-center">Security Level</th>
+                  <th className="py-3 px-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -431,13 +882,13 @@ export default function AdminDashboard() {
                       <td className="py-3 px-3">
                         <div
                           className="relative inline-block"
-                          onMouseEnter={() => !isOwner && setHoveredEncryptedId(`id_${uid}`)}
+                          onMouseEnter={() => !canDecryptPII && setHoveredEncryptedId(`id_${uid}`)}
                           onMouseLeave={() => setHoveredEncryptedId(null)}
                         >
                           <span className="font-mono font-bold text-brand-700 dark:text-brand-400">
                             {maskId(uid)}
                           </span>
-                          {!isOwner && hoveredEncryptedId === `id_${uid}` && (
+                          {!canDecryptPII && hoveredEncryptedId === `id_${uid}` && (
                             <div className="absolute left-0 bottom-full mb-1 px-2.5 py-1 bg-gray-900 text-white text-[10px] font-bold rounded-lg shadow-xl z-50 whitespace-nowrap animate-fade-in border border-gray-700">
                               🔒 TanmayA approval required to view user credentials
                             </div>
@@ -462,14 +913,14 @@ export default function AdminDashboard() {
                       <td className="py-3 px-3">
                         <div
                           className="relative inline-block cursor-help"
-                          onMouseEnter={() => !isOwner && setHoveredEncryptedId(`mail_${uid}`)}
+                          onMouseEnter={() => !canDecryptPII && setHoveredEncryptedId(`mail_${uid}`)}
                           onMouseLeave={() => setHoveredEncryptedId(null)}
                         >
                           <div className="flex items-center gap-1.5 text-gray-800 dark:text-gray-200 font-mono text-[11px]">
                             <Mail size={12} className="text-gray-400" />
                             <span>{maskEmail(u.email)}</span>
                           </div>
-                          {!isOwner && hoveredEncryptedId === `mail_${uid}` && (
+                          {!canDecryptPII && hoveredEncryptedId === `mail_${uid}` && (
                             <div className="absolute left-0 bottom-full mb-1 px-2.5 py-1 bg-gray-900 text-white text-[10px] font-bold rounded-lg shadow-xl z-50 whitespace-nowrap animate-fade-in border border-gray-700">
                               🔒 TanmayA approval required to view user credentials
                             </div>
@@ -489,11 +940,57 @@ export default function AdminDashboard() {
                         {u.district ? `${u.district}, ` : ''}{u.state || 'India'}
                       </td>
 
+                      {/* Granted Powers Badges */}
+                      <td className="py-3 px-3">
+                        {isTanmayaUser ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-200 text-amber-950 inline-flex items-center gap-1">
+                            👑 ROOT (ALL)
+                          </span>
+                        ) : (
+                          <div className="flex flex-wrap items-center gap-1 max-w-[220px]">
+                            {u.powers && u.powers.length > 0 ? (
+                              <>
+                                {u.powers.slice(0, 2).map((pid) => (
+                                  <span
+                                    key={pid}
+                                    className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 dark:border-brand-800"
+                                  >
+                                    ⚡ {pid.replace(/_/g, ' ')}
+                                  </span>
+                                ))}
+                                {u.powers.length > 2 && (
+                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                    +{u.powers.length - 2}
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              <span className="text-[10px] text-gray-400 italic">Standard</span>
+                            )}
+                          </div>
+                        )}
+                      </td>
+
                       {/* Verification Badge */}
                       <td className="py-3 px-3 text-center">
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 inline-flex items-center gap-1">
                           <CheckCircle size={10} /> Verified
                         </span>
+                      </td>
+
+                      {/* Action Button */}
+                      <td className="py-3 px-3 text-right">
+                        <button
+                          onClick={() => {
+                            setSelectedUserForPowers(u)
+                            setCustomPowers(u.powers || [])
+                            setActiveTab('powers')
+                          }}
+                          className="px-2.5 py-1 rounded-xl bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 text-amber-900 dark:text-amber-300 font-bold text-[10px] flex items-center gap-1 shadow-xs transition-all ml-auto"
+                        >
+                          <Zap size={11} className="text-amber-600 dark:text-amber-400" />
+                          <span>Powers ({u.powers?.length || 0})</span>
+                        </button>
                       </td>
                     </tr>
                   )

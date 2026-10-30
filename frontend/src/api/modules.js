@@ -48,6 +48,39 @@ export const REAL_AGMARKNET_DATA = {
   ],
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// ROLE-BASED AUTHORITY & POWER PERMISSIONS DIRECTORY (OWNER: Admin(TanmayA))
+// ══════════════════════════════════════════════════════════════════════════════
+export const ROLE_AVAILABLE_POWERS = {
+  farmer: [
+    { id: 'instant_listing', label: 'Instant Lot Listing', desc: 'Publish produce lots without mandatory APMC inspection delay', icon: '🌾' },
+    { id: 'ai_grading_pro', label: 'AGMARK AI Pro Grading', desc: 'High-resolution computer vision moisture, blemish & size analysis', icon: '✨' },
+    { id: 'zero_commission', label: 'Zero APMC Mandi Cess', desc: '100% waiver on market cess & loading charges for verified harvest', icon: '💰' },
+    { id: 'priority_matching', label: 'Priority Buyer Matching', desc: 'Top placement on verified bulk buyer procurement boards', icon: '🚀' },
+    { id: 'direct_arbitration', label: 'Direct Priority Arbitration', desc: 'Direct 24-hr dispute escalation hotline directly to Admin(TanmayA)', icon: '⚖️' },
+  ],
+  buyer: [
+    { id: 'unlimited_bidding', label: 'Unlimited Procurement Cap', desc: 'Place procurement bids on unlimited metric tonnes without collateral ceiling', icon: '🏢' },
+    { id: 'fast_escrow', label: '1-Click Instant Escrow Release', desc: 'Autonomous escrow release upon logistics GPS delivery confirmation', icon: '⚡' },
+    { id: 'logistics_dispatch', label: 'Direct Fleet Booking', desc: 'Dedicated Tata 407 and refrigerated reefer truck dispatch access', icon: '🚚' },
+    { id: 'view_farmer_contacts', label: 'Unmasked Farmer Contact Access', desc: 'View decrypted farmer mobile numbers and village GPS coordinates', icon: '📞' },
+    { id: 'elite_buyer_badge', label: 'Verified Gold Buyer Badge', desc: 'Display prestigious Gold Reliability Badge on all public lot bids', icon: '🥇' },
+  ],
+  admin: [
+    { id: 'dispute_resolution', label: 'Independent Dispute Resolution', desc: 'Resolve or escalate grievances without TanmayA manual approval', icon: '🛡️' },
+    { id: 'csv_export', label: 'Full User CSV Export', desc: 'Download entire encrypted user registry to CSV spreadsheet', icon: '📥' },
+    { id: 'price_override', label: 'Mandi Benchmark Price Override', desc: 'Adjust official Agmarknet modal clearing benchmarks', icon: '📈' },
+    { id: 'quality_override', label: 'AGMARK Grade Modification', desc: 'Override automated computer vision produce quality ratings', icon: '🏅' },
+    { id: 'user_management', label: 'User Verification & Suspension', desc: 'Authorize or restrict user access permissions across state mandis', icon: '👤' },
+    { id: 'decrypt_pii', label: 'Unmask Encrypted Credentials', desc: 'View decrypted email addresses, user IDs, and phone numbers in audit', icon: '🔓' },
+  ],
+  fpo: [
+    { id: 'bulk_aggregation', label: 'Multi-Farmer Lot Aggregation', desc: 'Pool harvest lots from 50+ village farmers into single bulk contracts', icon: '🤝' },
+    { id: 'custom_floor_price', label: 'Custom Floor Price Lock', desc: 'Guaranteed minimum realization binding on institutional buyers', icon: '🔒' },
+    { id: 'direct_institutional_sales', label: 'Institutional Corporate Contracts', desc: 'Direct supply agreements with ITC, Reliance Retail, and BigBasket', icon: '🏬' },
+  ],
+}
+
 // Default verified accounts for resilient authentication
 export const DEMO_USERS = [
   {
@@ -61,6 +94,7 @@ export const DEMO_USERS = [
     district: 'Nashik',
     village: 'Lasalgaon',
     land_area_acres: 6.5,
+    powers: ['ai_grading_pro', 'priority_matching'],
   },
   {
     email: 'buyer@demo.com',
@@ -73,6 +107,7 @@ export const DEMO_USERS = [
     district: 'Navi Mumbai',
     business_name: 'AgriCorp Agro Commodities Ltd.',
     gst_number: '27AABCA1234D1ZM',
+    powers: ['logistics_dispatch', 'elite_buyer_badge'],
   },
   {
     email: 'admin@demo.com',
@@ -84,6 +119,7 @@ export const DEMO_USERS = [
     phone: '+91 98111 22233',
     state: 'Delhi',
     district: 'New Delhi',
+    powers: ['quality_override'],
   },
   {
     email: 'fpo@demo.com',
@@ -95,6 +131,7 @@ export const DEMO_USERS = [
     state: 'Maharashtra',
     district: 'Nashik',
     fpo_name: 'Sahyadri Farmers Producer Co. Ltd.',
+    powers: ['bulk_aggregation', 'custom_floor_price'],
   },
 ]
 
@@ -118,7 +155,15 @@ export function getLocalUsers() {
       localStorage.setItem('mandisetu_registered_users', JSON.stringify(DEMO_USERS))
       return DEMO_USERS
     }
-    return JSON.parse(raw)
+    const parsed = JSON.parse(raw)
+    // Ensure every user has a powers array
+    return parsed.map((u) => {
+      if (!Array.isArray(u.powers)) {
+        const demoMatch = DEMO_USERS.find((d) => d.email.toLowerCase() === u.email?.toLowerCase())
+        return { ...u, powers: demoMatch?.powers || [] }
+      }
+      return u
+    })
   } catch {
     return DEMO_USERS
   }
@@ -127,7 +172,11 @@ export function getLocalUsers() {
 export function saveLocalUser(user) {
   try {
     const existing = getLocalUsers()
-    const updated = [...existing.filter((u) => u.email.toLowerCase() !== user.email.toLowerCase()), user]
+    const userWithPowers = {
+      ...user,
+      powers: user.powers || [],
+    }
+    const updated = [...existing.filter((u) => u.email.toLowerCase() !== user.email.toLowerCase()), userWithPowers]
     localStorage.setItem('mandisetu_registered_users', JSON.stringify(updated))
   } catch (err) {
     console.error('Failed to save user locally', err)
@@ -137,7 +186,7 @@ export function saveLocalUser(user) {
 export function updateLocalUser(email, updates) {
   try {
     const existing = getLocalUsers()
-    const updated = existing.map(u => {
+    const updated = existing.map((u) => {
       if (u.email.toLowerCase() === email.toLowerCase()) {
         return { ...u, ...updates }
       }
@@ -149,6 +198,65 @@ export function updateLocalUser(email, updates) {
     console.error('Failed to update user locally', err)
     return false
   }
+}
+
+export function updateUserPowers(email, powers, reason = 'Administrative authority update by Admin(TanmayA)') {
+  try {
+    const existing = getLocalUsers()
+    const updated = existing.map((u) => {
+      if (u.email.toLowerCase() === email.toLowerCase()) {
+        return { ...u, powers }
+      }
+      return u
+    })
+    localStorage.setItem('mandisetu_registered_users', JSON.stringify(updated))
+
+    // Update active auth session if current user
+    try {
+      const authRaw = localStorage.getItem('mandisetu-auth')
+      if (authRaw) {
+        const parsed = JSON.parse(authRaw)
+        if (parsed?.state?.user?.email?.toLowerCase() === email.toLowerCase()) {
+          parsed.state.user.powers = powers
+          localStorage.setItem('mandisetu-auth', JSON.stringify(parsed))
+        }
+      }
+    } catch {}
+
+    // Record in admin audit log
+    try {
+      const rawAudit = localStorage.getItem('mandisetu_admin_audits')
+      const audits = rawAudit ? JSON.parse(rawAudit) : []
+      const newAudit = {
+        id: 'AUD-' + Date.now().toString().slice(-6),
+        timestamp: new Date().toISOString(),
+        admin: 'Admin(TanmayA)',
+        action: 'Authority & Powers Provisioned',
+        target: email,
+        reason: `${reason} [Powers: ${powers.join(', ') || 'Standard Tier'}]`,
+      }
+      localStorage.setItem('mandisetu_admin_audits', JSON.stringify([newAudit, ...audits]))
+    } catch {}
+
+    return true
+  } catch (err) {
+    console.error('Failed to update user powers', err)
+    return false
+  }
+}
+
+export function hasUserPower(user, powerId) {
+  if (!user) return false
+  if (
+    user.isAdminTanmaya ||
+    user.isOwner ||
+    user.username === 'TanmayA' ||
+    user.email === 'tanmayapradhan2322@gmail.com'
+  ) {
+    return true
+  }
+  if (user.powers?.includes('all')) return true
+  return Boolean(user.powers?.includes(powerId))
 }
 
 // ─── Module 1: Auth (with 100% resilient fallback) ───────────────────────────
@@ -198,13 +306,26 @@ export const authAPI = {
           state: 'Odisha',
           district: 'Cuttack',
           isAdminTanmaya: true,
+          isOwner: true,
           isDemo: false,
+          powers: ['all'],
         },
       }
     }
 
     try {
       const res = await api.post('/auth/login', data)
+      const users = getLocalUsers()
+      const match = users.find((u) => u.email?.toLowerCase() === enteredId)
+      if (res?.data) {
+        return {
+          ...res,
+          data: {
+            ...res.data,
+            powers: res.data.powers || match?.powers || [],
+          },
+        }
+      }
       return res
     } catch (err) {
       console.warn('[MandiSetu] Checking local registry for credentials.', err)
@@ -231,6 +352,7 @@ export const authAPI = {
             district: match.district,
             isAdminTanmaya: false,
             isDemo: match.isDemo ?? (match.role === 'admin'),
+            powers: match.powers || [],
           },
         }
       }

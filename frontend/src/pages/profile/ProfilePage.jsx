@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import {
   User, Mail, Phone, MapPin, KeyRound, Save, ShieldCheck,
-  CheckCircle2, Sparkles, AlertCircle, Building2, Eye, EyeOff
+  CheckCircle2, Sparkles, AlertCircle, Building2, Eye, EyeOff,
+  Zap, Crown
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../../store/authStore'
-import { updateLocalUser } from '../../api/modules'
+import { updateLocalUser, ROLE_AVAILABLE_POWERS } from '../../api/modules'
 
 export default function ProfilePage() {
   const { user, updateProfile } = useAuthStore()
@@ -99,6 +100,88 @@ export default function ProfilePage() {
             Account ID: <span className="font-mono text-emerald-200">{user?.user_id || user?.id || 'usr_active'}</span>
           </div>
         </div>
+      </div>
+
+      {/* ── Operational Authority & Powers Card ── */}
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 sm:p-7 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100 dark:border-gray-800">
+          <div>
+            <h2 className="text-base sm:text-lg font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
+              <Zap size={18} className="text-amber-500 fill-amber-500" />
+              <span>Platform Authority & Operational Privileges</span>
+            </h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              Verified operational powers certified and provisioned by <strong>Admin(TanmayA)</strong>.
+            </p>
+          </div>
+
+          {user?.isOwner || user?.isAdminTanmaya || user?.username === 'TanmayA' ? (
+            <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800 inline-flex items-center gap-1.5 self-start sm:self-auto">
+              👑 Master Root Authority
+            </span>
+          ) : (
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 dark:border-brand-800 inline-flex items-center gap-1.5 self-start sm:self-auto">
+              <CheckCircle2 size={13} />
+              {user?.powers?.length || 0} Powers Active
+            </span>
+          )}
+        </div>
+
+        {user?.isOwner || user?.isAdminTanmaya || user?.username === 'TanmayA' ? (
+          <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 flex items-center gap-3">
+            <span className="text-2xl">👑</span>
+            <div className="text-xs text-amber-900 dark:text-amber-200">
+              <p className="font-bold">Unrestricted Platform Root Clearance</p>
+              <p className="text-amber-800/80 dark:text-amber-300/80 mt-0.5">
+                You possess full governance authority: overriding market prices, settling grievances, decrypting credentials, and provisioning powers to any user.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {(ROLE_AVAILABLE_POWERS[user?.role || 'farmer'] || []).map((power) => {
+              const isGranted = user?.powers?.includes(power.id)
+              return (
+                <div
+                  key={power.id}
+                  className={`p-3.5 rounded-2xl border transition-all flex flex-col justify-between gap-2 ${
+                    isGranted
+                      ? 'border-brand-300 dark:border-brand-800 bg-brand-50/40 dark:bg-brand-950/20 shadow-xs'
+                      : 'border-gray-200 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/20 opacity-60'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-xl p-1 bg-white dark:bg-gray-800 rounded-lg shadow-xs">
+                      {power.icon}
+                    </span>
+                    <span
+                      className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
+                        isGranted
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                          : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                      }`}
+                    >
+                      {isGranted ? 'ACTIVE' : 'STANDARD'}
+                    </span>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xs text-gray-900 dark:text-white">
+                      {power.label}
+                    </h4>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
+                      {power.desc}
+                    </p>
+                  </div>
+                  {isGranted && (
+                    <div className="text-[9px] font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1 pt-1 border-t border-brand-100 dark:border-brand-900/50">
+                      <CheckCircle2 size={10} /> Certified by Admin(TanmayA)
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
