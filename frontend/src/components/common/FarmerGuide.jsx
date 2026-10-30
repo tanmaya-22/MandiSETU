@@ -198,17 +198,19 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pa
   const [isDismissed, setIsDismissed] = useState(false)
   const [tourStep, setTourStep] = useState(0)
 
-  // Drag and drop state with persistent coordinates
-  const [position, setPosition] = useState(() => {
-    try {
-      const saved = localStorage.getItem('mandisetu_chacha_pos')
-      if (saved) return JSON.parse(saved)
-    } catch {}
-    return { x: 24, y: window.innerHeight - 110 }
-  })
+  // Drag and drop state: always resets to original default on page reload
+  const getInitialPos = () => ({ x: 24, y: window.innerHeight - 110 })
+  const [position, setPosition] = useState(getInitialPos)
   const [isDragging, setIsDragging] = useState(false)
   const dragStartRef = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 })
   const hasMovedRef = useRef(false)
+
+  // Clear previous persisted storage so reload always returns to original position
+  useEffect(() => {
+    try {
+      localStorage.removeItem('mandisetu_chacha_pos')
+    } catch {}
+  }, [])
 
   // Get tour for current module
   const currentTour = MODULE_TOURS[location.pathname] || MODULE_TOURS['/dashboard']
@@ -256,10 +258,6 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pa
     const handleMouseUp = () => {
       if (isDragging) {
         setIsDragging(false)
-        // Persist exact drop position so it stays right where released
-        try {
-          localStorage.setItem('mandisetu_chacha_pos', JSON.stringify(position))
-        } catch {}
       }
     }
 
@@ -282,6 +280,25 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pa
   }
   const l = labels[language] || labels.en
 
+  // Calculate dynamic walkthrough box position anchored to Chacha avatar wherever dragged
+  const boxWidth = typeof window !== 'undefined' ? Math.min(420, window.innerWidth - 24) : 420
+  const boxHeight = 440
+
+  let boxLeft = position.x
+  if (typeof window !== 'undefined') {
+    if (boxLeft + boxWidth > window.innerWidth - 16) {
+      boxLeft = Math.max(12, window.innerWidth - boxWidth - 16)
+    }
+    if (boxLeft < 12) boxLeft = 12
+  }
+
+  let boxTop = position.y - boxHeight - 12
+  if (typeof window !== 'undefined') {
+    if (boxTop < 20) {
+      boxTop = Math.min(window.innerHeight - boxHeight - 20, position.y + 72)
+    }
+  }
+
   if (isDismissed) {
     return (
       <button
@@ -297,7 +314,7 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pa
 
   return (
     <>
-      {/* ── Draggable Floating Chacha Avatar (Drops exactly where released) ── */}
+      {/* ── Draggable Floating Chacha Avatar (Resets on reload, moveable anywhere) ── */}
       <div
         style={{ left: `${position.x}px`, top: `${position.y}px` }}
         className="fixed z-50 select-none touch-none"
@@ -333,6 +350,18 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pa
             ✕
           </button>
 
+          {/* Reset position button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setPosition(getInitialPos())
+            }}
+            className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-gray-800 text-gray-200 hover:text-white flex items-center justify-center text-[10px] shadow"
+            title="Reset to original corner position"
+          >
+            <RotateCcw size={10} />
+          </button>
+
           {/* Drag me hint */}
           <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold text-gray-500 dark:text-gray-400 whitespace-nowrap pointer-events-none">
             ⠿ Drag & Drop me
@@ -340,9 +369,12 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pa
         </div>
       </div>
 
-      {/* ── Interactive Compiler-Style Walkthrough Box ── */}
+      {/* ── Interactive Compiler-Style Walkthrough Box (Directly follows dragged avatar) ── */}
       {isOpen && (
-        <div className="fixed bottom-24 left-4 sm:left-6 z-50 w-[420px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border-2 border-amber-400 dark:border-amber-500 rounded-3xl shadow-2xl overflow-hidden animate-fade-in-up">
+        <div
+          style={{ left: `${boxLeft}px`, top: `${boxTop}px` }}
+          className="fixed z-50 w-[420px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border-2 border-amber-400 dark:border-amber-500 rounded-3xl shadow-2xl overflow-hidden animate-fade-in-up"
+        >
           {/* Header */}
           <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 p-4 text-white flex items-center justify-between shadow">
             <div className="flex items-center gap-2.5">

@@ -4,7 +4,7 @@ Endpoints: register, login, profile, list-users (admin)
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, or_, func
 from typing import List
 
 from app.core.database import get_db
@@ -50,7 +50,16 @@ async def register(payload: UserRegisterRequest, db: AsyncSession = Depends(get_
 
 @router.post("/login", response_model=TokenResponse)
 async def login(payload: UserLoginRequest, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User).where(User.email == payload.email))
+    entered = payload.email.strip().lower()
+    result = await db.execute(
+        select(User).where(
+            or_(
+                func.lower(User.email) == entered,
+                func.lower(User.full_name) == entered,
+                func.lower(User.phone) == entered,
+            )
+        )
+    )
     user = result.scalar_one_or_none()
 
     if not user or not verify_password(payload.password, user.hashed_password):

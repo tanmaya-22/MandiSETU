@@ -26,7 +26,7 @@ class UserRegisterRequest(BaseModel):
 
 
 class UserLoginRequest(BaseModel):
-    email: EmailStr
+    email: str = Field(..., description="Username or Email address")
     password: str
 
 

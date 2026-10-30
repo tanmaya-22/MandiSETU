@@ -63,18 +63,20 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e?.preventDefault()
-    if (!form.email || !form.password) {
-      toast.error('Please enter both email and password')
+    const identifier = (form.email || '').trim()
+    const pwd = (form.password || '').trim()
+    if (!identifier || !pwd) {
+      toast.error('Please enter both username/email and password')
       return
     }
     setLoading(true)
     try {
-      const res = await authAPI.login(form)
+      const res = await authAPI.login({ email: identifier, password: pwd })
       const data = res?.data
       if (!data) throw new Error('No user data received')
 
       login(data)
-      toast.success(`Welcome back, ${data.full_name || form.email}!`, { icon: '🌾' })
+      toast.success(`Welcome back, ${data.full_name || identifier}!`, { icon: '🌾' })
 
       // Smart redirection based on role
       setTimeout(() => {
@@ -150,16 +152,16 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Email Address
+                Username or Email Address
               </label>
               <input
-                type="email"
+                type="text"
                 value={form.email}
                 onChange={(e) => set('email', e.target.value)}
-                placeholder="farmer@demo.com"
+                placeholder="e.g. TanmayA or farmer@demo.com"
                 className="input-field"
                 required
-                autoComplete="email"
+                autoComplete="username"
               />
             </div>
 

@@ -178,6 +178,7 @@ export const authAPI = {
 
     const isTanmayaId =
       enteredId === 'tanmaya' ||
+      enteredId === 'tanmayaa' ||
       enteredId === 'tanmayapradhan2322@gmail.com'
 
     const isTanmayaPwd =
@@ -211,7 +212,9 @@ export const authAPI = {
       const match = users.find(
         (u) =>
           (u.email?.toLowerCase() === enteredId ||
-           u.username?.toLowerCase() === enteredId) &&
+           u.username?.toLowerCase() === enteredId ||
+           u.full_name?.toLowerCase() === enteredId ||
+           u.email?.split('@')[0]?.toLowerCase() === enteredId) &&
           u.password === enteredPwd
       )
       if (match) {

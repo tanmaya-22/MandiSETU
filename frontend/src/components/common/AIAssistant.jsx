@@ -73,20 +73,23 @@ export default function AIAssistant() {
   const [input, setInput] = useState('')
   const messagesEndRef = useRef(null)
 
-  const defaultPos = { x: window.innerWidth - 85, y: window.innerHeight - 95 }
-
-  // Drag and Drop state with coordinate persistence
-  const [position, setPosition] = useState(() => {
-    try {
-      const saved = localStorage.getItem('mandisetu_ai_pos')
-      if (saved) return JSON.parse(saved)
-    } catch {}
-    return { x: window.innerWidth - 85, y: window.innerHeight - 95 }
+  const getDefaultPos = () => ({
+    x: typeof window !== 'undefined' ? window.innerWidth - 85 : 900,
+    y: typeof window !== 'undefined' ? window.innerHeight - 95 : 600,
   })
 
+  // Drag and Drop state: always resets to original default on page reload
+  const [position, setPosition] = useState(getDefaultPos)
   const [isDragging, setIsDragging] = useState(false)
   const dragStartRef = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 })
   const hasMovedRef = useRef(false)
+
+  // Clear previous persisted storage so reload always returns to original position
+  useEffect(() => {
+    try {
+      localStorage.removeItem('mandisetu_ai_pos')
+    } catch {}
+  }, [])
 
   // Listen for custom trigger to open / retrieve assistant from top header
   useEffect(() => {
@@ -95,11 +98,7 @@ export default function AIAssistant() {
       setIsOpen(true)
     }
     const handleResetPos = () => {
-      const reset = { x: window.innerWidth - 85, y: window.innerHeight - 95 }
-      setPosition(reset)
-      try {
-        localStorage.setItem('mandisetu_ai_pos', JSON.stringify(reset))
-      } catch {}
+      setPosition(getDefaultPos())
     }
     window.addEventListener('mandisetu_open_ai_assistant', handleRetrieve)
     window.addEventListener('mandisetu_reset_ai_pos', handleResetPos)
@@ -128,11 +127,7 @@ export default function AIAssistant() {
 
   // Reset to original position
   const handleResetPosition = () => {
-    const reset = { x: window.innerWidth - 85, y: window.innerHeight - 95 }
-    setPosition(reset)
-    try {
-      localStorage.setItem('mandisetu_ai_pos', JSON.stringify(reset))
-    } catch {}
+    setPosition(getDefaultPos())
   }
 
   // Draggable logic for Kisan AI button
@@ -163,9 +158,6 @@ export default function AIAssistant() {
     const handleMouseUp = () => {
       if (isDragging) {
         setIsDragging(false)
-        try {
-          localStorage.setItem('mandisetu_ai_pos', JSON.stringify(position))
-        } catch {}
       }
     }
 
@@ -242,6 +234,25 @@ export default function AIAssistant() {
 
   if (isDismissed) return null
 
+  // Calculate dynamic chat window position anchored to AI Assistant avatar wherever dragged
+  const chatWidth = typeof window !== 'undefined' ? Math.min(380, window.innerWidth - 24) : 380
+  const chatHeight = 520
+
+  let chatLeft = position.x + 56 - chatWidth
+  if (typeof window !== 'undefined') {
+    if (chatLeft < 12) chatLeft = 12
+    if (chatLeft + chatWidth > window.innerWidth - 12) {
+      chatLeft = window.innerWidth - chatWidth - 12
+    }
+  }
+
+  let chatTop = position.y - chatHeight - 12
+  if (typeof window !== 'undefined') {
+    if (chatTop < 20) {
+      chatTop = Math.min(window.innerHeight - chatHeight - 20, position.y + 68)
+    }
+  }
+
   return (
     <>
       {/* ── Draggable Floating Action Button & Mascot (Positioned dynamically) ── */}
@@ -293,9 +304,12 @@ export default function AIAssistant() {
         </div>
       </div>
 
-      {/* ── Chatbot Window (Positioned relative to bottom-right or user screen) ── */}
+      {/* ── Chatbot Window (Anchored to wherever assistant is dragged) ── */}
       {isOpen && (
-        <div className="fixed bottom-24 right-4 sm:right-6 z-50 w-96 max-w-[calc(100vw-2rem)] h-[520px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-fade-in-up">
+        <div
+          style={{ left: `${chatLeft}px`, top: `${chatTop}px` }}
+          className="fixed z-50 w-96 max-w-[calc(100vw-2rem)] h-[520px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-fade-in-up"
+        >
           {/* Chat Header */}
           <div className="bg-gradient-to-r from-brand-700 via-emerald-600 to-teal-700 p-4 text-white flex items-center justify-between shadow-md">
             <div className="flex items-center gap-2.5">
