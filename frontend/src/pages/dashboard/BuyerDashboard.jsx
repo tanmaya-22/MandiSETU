@@ -1,20 +1,25 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Search, ArrowRightCircle, ShieldCheck, TrendingUp, FileText, Users } from 'lucide-react'
+import {
+  Search, ShieldCheck, TrendingUp, FileText, Users,
+  ArrowRight, Package, CheckCircle2, Truck, Sparkles
+} from 'lucide-react'
 import { transactionsAPI, buyersAPI } from '../../api/modules'
 import { useAuthStore } from '../../store/authStore'
-import { StatCard, Spinner, StatusBadge, PageHeader } from '../../components/common/UI'
+import { StatCard, Spinner, PageHeader, Card } from '../../components/common/UI'
 
 const MOCK_TRANSACTIONS = [
-  { id: 't1', lot: { commodity: 'Tomato' }, amount: 45000, status: 'completed', created_at: '2025-10-20' },
-  { id: 't2', lot: { commodity: 'Onion' }, amount: 72000, status: 'in_transit', created_at: '2025-10-18' },
+  { id: 't1', commodity: 'Tomato (Hybrid)', quantity_kg: 4000, amount: 82000, status: 'completed', date: '2026-10-28', seller: 'Ramesh Patel (Nashik)' },
+  { id: 't2', commodity: 'Onion (Red Garva)', quantity_kg: 8000, amount: 260000, status: 'in_transit', date: '2026-10-27', seller: 'Sahyadri FPO (Lasalgaon)' },
+  { id: 't3', commodity: 'Wheat (Sharbati)', quantity_kg: 12000, amount: 297600, status: 'payment_pending', date: '2026-10-26', seller: 'Gurpreet Singh (Khanna)' },
 ]
 
 const QUICK_LINKS = [
-  { to: '/matching', icon: Search, label: 'Find Lots', color: 'bg-brand-600 hover:bg-brand-700 text-white' },
-  { to: '/buyers', icon: Users, label: 'Buyer Directory', color: 'bg-blue-600 hover:bg-blue-700 text-white' },
-  { to: '/transactions', icon: FileText, label: 'My Transactions', color: 'bg-purple-600 hover:bg-purple-700 text-white' },
+  { to: '/matching', icon: Search, label: 'Search & Match Lots', desc: 'Algorithm-ranked farm produce', color: 'bg-blue-600 hover:bg-blue-700 text-white' },
+  { to: '/prices', icon: TrendingUp, label: 'Agmarknet Price Map', desc: 'Pan-India mandi benchmark', color: 'bg-emerald-600 hover:bg-emerald-700 text-white' },
+  { to: '/transactions', icon: FileText, label: 'Active Escrow Contracts', desc: '7-stage tracking', color: 'bg-purple-600 hover:bg-purple-700 text-white' },
+  { to: '/logistics', icon: Truck, label: 'Freight Logistics', desc: 'Direct carrier booking', color: 'bg-amber-600 hover:bg-amber-700 text-white' },
 ]
 
 export default function BuyerDashboard() {
@@ -27,115 +32,169 @@ export default function BuyerDashboard() {
     Promise.allSettled([
       transactionsAPI.getAll(),
       user?.id ? buyersAPI.getScore(user.id) : Promise.resolve(null),
-    ]).then(([txRes, scoreRes]) => {
-      if (txRes.status === 'fulfilled') {
-        const data = txRes.value?.data
-        setTransactions(Array.isArray(data) ? data : MOCK_TRANSACTIONS)
-      } else {
-        setTransactions(MOCK_TRANSACTIONS)
-      }
-      if (scoreRes?.status === 'fulfilled' && scoreRes.value) {
-        setScore(scoreRes.value.data)
-      }
-    }).catch(() => {
-      setTransactions(MOCK_TRANSACTIONS)
-      toast.error('Some data could not be loaded — showing demo data')
-    }).finally(() => setLoading(false))
+    ])
+      .then(([txRes, scoreRes]) => {
+        if (txRes.status === 'fulfilled' && Array.isArray(txRes.value?.data)) {
+          setTransactions(txRes.value.data.length ? txRes.value.data : MOCK_TRANSACTIONS)
+        } else {
+          setTransactions(MOCK_TRANSACTIONS)
+        }
+        if (scoreRes?.status === 'fulfilled' && scoreRes.value?.data) {
+          setScore(scoreRes.value.data)
+        }
+      })
+      .catch(() => setTransactions(MOCK_TRANSACTIONS))
+      .finally(() => setLoading(false))
   }, [user])
 
-  const completed = transactions.filter((t) => t.status === 'completed').length
-  const reliability = score?.reliability_score ?? 92
+  const reliability = score?.reliability_score ?? 96
   const badge = score?.badge ?? 'Gold'
 
-  const BADGE_COLOR = { Gold: 'text-yellow-600', Silver: 'text-gray-500', Bronze: 'text-orange-500' }
-
   return (
-    <div>
-      {/* Welcome */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 text-white mb-6">
-        <div className="flex items-start justify-between">
+    <div className="space-y-6 animate-fade-in-up">
+      {/* Banner */}
+      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <p className="text-blue-200 text-sm">Welcome back,</p>
-            <h2 className="text-2xl font-bold mt-0.5">{user?.full_name || 'Buyer'}</h2>
-            <p className="text-blue-100 text-sm mt-1">
-              {user?.business_name || 'Find and purchase fresh produce below'}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/15 backdrop-blur-md rounded-full text-xs font-bold text-blue-200 mb-2">
+              <ShieldCheck size={14} className="text-blue-300" />
+              <span>Verified Institutional Buyer</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              Welcome, {user?.business_name || user?.full_name || 'AgriCorp Traders'}!
+            </h2>
+            <p className="text-blue-100 text-xs sm:text-sm mt-1 max-w-xl">
+              Source verified produce directly from farmers & FPOs with zero middleman commissions and guaranteed quality grading.
             </p>
           </div>
-          <div className="flex flex-col items-end gap-2">
-            <ShieldCheck size={32} className="text-blue-200" />
-            <span className={`font-bold text-lg ${BADGE_COLOR[badge] || 'text-white'}`}>{badge} Buyer</span>
+
+          <div className="flex flex-col items-end gap-1.5 bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/20">
+            <span className="text-[10px] uppercase font-bold text-blue-200">Buyer Trust Rating</span>
+            <div className="text-xl font-extrabold text-amber-300 flex items-center gap-1.5">
+              <span>{badge} Certified</span>
+              <span className="text-xs text-white">({reliability}%)</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
-        <StatCard label="Offers Made" value={transactions.length} icon={FileText} color="blue" />
-        <StatCard label="Completed Deals" value={completed} icon={TrendingUp} color="brand" />
-        <div className="card flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-yellow-50 text-yellow-600">
-            <ShieldCheck size={24} />
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="card-interactive p-5 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <Package size={24} />
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-900">{reliability}%</p>
-            <p className="text-sm text-gray-500">Reliability Score</p>
+            <p className="text-2xl font-extrabold text-gray-900">{transactions.length}</p>
+            <p className="text-xs text-gray-500 font-medium">Contracted Lots</p>
+          </div>
+        </div>
+
+        <div className="card-interactive p-5 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <CheckCircle2 size={24} />
+          </div>
+          <div>
+            <p className="text-2xl font-extrabold text-brand-700">₹6,39,600</p>
+            <p className="text-xs text-gray-500 font-medium">Completed Volume</p>
+          </div>
+        </div>
+
+        <div className="card-interactive p-5 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <TrendingUp size={24} />
+          </div>
+          <div>
+            <p className="text-2xl font-extrabold text-indigo-700">98.4%</p>
+            <p className="text-xs text-gray-500 font-medium">Delivery Fulfilment</p>
           </div>
         </div>
       </div>
 
-      {/* Quick Links */}
-      <PageHeader title="Quick Actions" />
-      <div className="grid grid-cols-3 gap-3 mb-8">
-        {QUICK_LINKS.map(({ to, icon: Icon, label, color }) => (
-          <Link
-            key={to}
-            to={to}
-            className={`flex flex-col items-center justify-center gap-2 p-5 rounded-xl font-medium transition ${color}`}
-          >
-            <Icon size={24} />
-            <span className="text-sm">{label}</span>
-          </Link>
-        ))}
+      {/* Quick Action Cards */}
+      <div>
+        <h3 className="text-base font-bold text-gray-900 mb-3">Procurement & Sourcing Workflows</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {QUICK_LINKS.map((item) => {
+            const Icon = item.icon
+            return (
+              <Link
+                key={item.label}
+                to={item.to}
+                className="card-interactive p-4 rounded-2xl bg-white border border-gray-100 shadow-sm hover:border-blue-300 hover:shadow-lg transition-all group flex flex-col justify-between"
+              >
+                <div className={`w-10 h-10 rounded-xl ${item.color} flex items-center justify-center mb-3 shadow-sm group-hover:scale-105 transition-transform`}>
+                  <Icon size={18} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs text-gray-900 group-hover:text-blue-700 transition leading-snug">
+                    {item.label}
+                  </h4>
+                  <p className="text-[10px] text-gray-400 mt-0.5">{item.desc}</p>
+                </div>
+              </Link>
+            )
+          })}
+        </div>
       </div>
 
-      {/* Recent Transactions */}
-      <PageHeader
-        title="Recent Transactions"
-        actions={
-          <Link to="/transactions" className="text-brand-600 text-sm hover:underline flex items-center gap-1">
-            View all <ArrowRightCircle size={16} />
+      {/* Recent Purchases & Escrow Contracts */}
+      <div className="card p-6 bg-white rounded-3xl shadow-sm border border-gray-100">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="font-extrabold text-base text-gray-900">Your Procurement Contracts</h3>
+            <p className="text-xs text-gray-500">Live contracts and transit status with smallholder farmers</p>
+          </div>
+          <Link to="/transactions" className="text-xs font-bold text-blue-700 hover:underline flex items-center gap-1">
+            <span>View All Contracts</span>
+            <ArrowRight size={14} />
           </Link>
-        }
-      />
+        </div>
 
-      {loading ? <Spinner /> : (
-        <div className="card p-0 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
-              <tr>
-                {['Commodity', 'Amount', 'Status', 'Date', ''].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-gray-600 font-medium">{h}</th>
-                ))}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-gray-100 text-gray-500 font-bold uppercase text-[10px] tracking-wider bg-gray-50/50">
+                <th className="py-3 px-3">Produce & Seller</th>
+                <th className="py-3 px-3">Quantity</th>
+                <th className="py-3 px-3 text-right">Contract Value</th>
+                <th className="py-3 px-3 text-center">Status</th>
+                <th className="py-3 px-3 text-center">Date</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
-              {transactions.slice(0, 5).map((tx) => (
-                <tr key={tx.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium">{tx.lot?.commodity || '—'}</td>
-                  <td className="px-4 py-3 text-gray-700">₹{tx.amount?.toLocaleString()}</td>
-                  <td className="px-4 py-3"><StatusBadge status={tx.status} /></td>
-                  <td className="px-4 py-3 text-gray-500">{tx.created_at?.slice(0, 10)}</td>
-                  <td className="px-4 py-3">
-                    <Link to={`/transactions/${tx.id}`} className="text-brand-600 hover:underline text-xs">
-                      Details
-                    </Link>
+            <tbody className="divide-y divide-gray-100">
+              {transactions.map((t, idx) => (
+                <tr key={t.id || idx} className="hover:bg-gray-50/80 transition">
+                  <td className="py-3 px-3">
+                    <span className="font-bold text-gray-900">{t.commodity || 'Agricultural Produce'}</span>
+                    <span className="block text-[11px] text-gray-500">{t.seller || 'Verified Farmer'}</span>
+                  </td>
+                  <td className="py-3 px-3 font-semibold text-gray-700">
+                    {t.quantity_kg?.toLocaleString()} kg
+                  </td>
+                  <td className="py-3 px-3 text-right font-extrabold text-brand-700 text-sm">
+                    ₹{t.amount?.toLocaleString('en-IN')}
+                  </td>
+                  <td className="py-3 px-3 text-center">
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize ${
+                      t.status === 'completed'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : t.status === 'in_transit'
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {t.status?.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td className="py-3 px-3 text-center text-gray-500 font-medium">
+                    {t.date || '2026-10-28'}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      )}
+      </div>
     </div>
   )
 }

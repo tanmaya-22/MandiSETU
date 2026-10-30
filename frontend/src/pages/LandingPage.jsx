@@ -1,192 +1,442 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   TrendingUp, Calculator, Star, Calendar, ShieldCheck, CloudRain,
-  ArrowRight, Users, MapPin, IndianRupee, CheckCircle, Leaf
+  ArrowRight, Users, MapPin, IndianRupee, CheckCircle2, Leaf,
+  ChevronRight, Sparkles, Navigation, Layers, Tractor, Building2,
+  BarChart3, Camera, Truck, AlertTriangle
 } from 'lucide-react'
 
-const FEATURES = [
-  {
-    icon: TrendingUp,
-    title: 'Price Discovery',
-    desc: 'Real-time APMC mandi prices with ML-powered forecasts. Know exactly when and where to sell.',
-    color: 'bg-green-50 text-green-600',
-  },
-  {
-    icon: Calculator,
-    title: 'Net Calculator',
-    desc: 'Compare transport, commission and storage costs across mandis to maximise your take-home profit.',
-    color: 'bg-blue-50 text-blue-600',
-  },
-  {
-    icon: Star,
-    title: 'Quality Grading',
-    desc: 'AI-powered image analysis assigns A+–D grades instantly, boosting buyer confidence.',
-    color: 'bg-yellow-50 text-yellow-600',
-  },
-  {
-    icon: Calendar,
-    title: 'ML Sale Window',
-    desc: 'Optimal selling date recommendations balancing price peaks against spoilage risk.',
-    color: 'bg-purple-50 text-purple-600',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Buyer Trust Score',
-    desc: 'Verified buyer reliability scores so you always transact with trustworthy partners.',
-    color: 'bg-red-50 text-red-600',
-  },
-  {
-    icon: CloudRain,
-    title: 'Weather Advisory',
-    desc: 'Hyperlocal weather risk alerts protect your harvest from unexpected climate events.',
-    color: 'bg-cyan-50 text-cyan-600',
-  },
+const TICKER_ITEMS = [
+  { mandi: 'Lasalgaon APMC', commodity: 'Onion', price: '₹3,250/Qtl', change: '+₹150', up: true },
+  { mandi: 'Azadpur Mandi', commodity: 'Wheat', price: '₹2,485/Qtl', change: '+₹35', up: true },
+  { mandi: 'Kolar Mandi', commodity: 'Tomato', price: '₹2,050/Qtl', change: '-₹80', up: false },
+  { mandi: 'Agra Mandi', commodity: 'Potato', price: '₹1,620/Qtl', change: '+₹40', up: true },
+  { mandi: 'Indore Mandi', commodity: 'Soybean', price: '₹4,780/Qtl', change: '+₹110', up: true },
+  { mandi: 'Rajkot APMC', commodity: 'Cotton', price: '₹7,420/Qtl', change: '-₹50', up: false },
+  { mandi: 'Karnal Market', commodity: 'Basmati Rice', price: '₹3,950/Qtl', change: '+₹90', up: true },
 ]
 
-const STATS = [
-  { label: 'Farmers Empowered', value: '10,000+', icon: Users },
-  { label: 'Mandis Connected', value: '500+', icon: MapPin },
-  { label: 'Transactions Facilitated', value: '₹50Cr+', icon: IndianRupee },
+const MODULES = [
+  {
+    num: '01',
+    icon: Users,
+    title: 'User & Role Architecture',
+    desc: 'Distinct unified dashboards for Farmers, Bulk Buyers, Aggregators/FPOs, and Admins.',
+    color: 'from-emerald-500/10 to-emerald-600/20 text-emerald-700',
+  },
+  {
+    num: '02',
+    icon: TrendingUp,
+    title: 'Price Discovery & Forecast',
+    desc: 'Real-time Agmarknet APMC rates with Prophet ML 14-day price trajectory curves.',
+    color: 'from-blue-500/10 to-blue-600/20 text-blue-700',
+  },
+  {
+    num: '03',
+    icon: Calculator,
+    title: 'Net-Realization Calculator',
+    desc: 'Haversine distance freight deduction, APMC cess, and net in-hand realization.',
+    color: 'from-amber-500/10 to-amber-600/20 text-amber-700',
+  },
+  {
+    num: '04',
+    icon: Tractor,
+    title: 'Produce Lot Listings',
+    desc: 'Create verified crop listings with harvest dates, floor prices, and location coordinates.',
+    color: 'from-teal-500/10 to-teal-600/20 text-teal-700',
+  },
+  {
+    num: '05',
+    icon: ShieldCheck,
+    title: 'Buyer-Farmer Match Engine',
+    desc: 'Algorithmic matching scoring buyers and farmers based on crop grade, price, and distance.',
+    color: 'from-indigo-500/10 to-indigo-600/20 text-indigo-700',
+  },
+  {
+    num: '06',
+    icon: IndianRupee,
+    title: 'Escrow & Transaction State',
+    desc: 'End-to-end 7-stage state machine from contract agreement to final disbursement.',
+    color: 'from-green-500/10 to-green-600/20 text-green-700',
+  },
+  {
+    num: '07',
+    icon: Calendar,
+    title: 'Optimal Sale Window (ML)',
+    desc: 'Balances price appreciation curves against crop perishability and storage degradation.',
+    color: 'from-purple-500/10 to-purple-600/20 text-purple-700',
+  },
+  {
+    num: '08',
+    icon: Star,
+    title: 'Buyer Trust & Scoring',
+    desc: 'Verified reliability rating based on payment punctuality, dispute history, and volume.',
+    color: 'from-rose-500/10 to-rose-600/20 text-rose-700',
+  },
+  {
+    num: '8B',
+    icon: Truck,
+    title: 'Logistics Coordination',
+    desc: 'Per-tonne-km freight estimation and carrier integration with live tracking.',
+    color: 'from-orange-500/10 to-orange-600/20 text-orange-700',
+  },
+  {
+    num: '09',
+    icon: AlertTriangle,
+    title: 'Dispute Arbitration',
+    desc: 'Transparent dispute filing with photo evidence, weights verification, and admin mediation.',
+    color: 'from-red-500/10 to-red-600/20 text-red-700',
+  },
+  {
+    num: '10',
+    icon: Camera,
+    title: 'Computer Vision Grading',
+    desc: 'Upload produce photos for instant ML color, shape, and defect analysis (Grades A+ to C).',
+    color: 'from-cyan-500/10 to-cyan-600/20 text-cyan-700',
+  },
+  {
+    num: '11',
+    icon: CloudRain,
+    title: 'Weather Risk Advisory',
+    desc: 'Hyperlocal weather risk matrix warning against unseasonal rain during transit or harvest.',
+    color: 'from-sky-500/10 to-sky-600/20 text-sky-700',
+  },
 ]
 
 export default function LandingPage() {
+  const [activeTab, setActiveTab] = useState('farmer')
+  const [sampleQty, setSampleQty] = useState(50) // quintals
+  const [sampleCommodity, setSampleCommodity] = useState('Onion')
+
+  // Quick interactive net-realization calculator preview
+  const commodityPrices = {
+    Onion: { localMandi: 2800, distantMandi: 3650, distance: 180 },
+    Wheat: { localMandi: 2280, distantMandi: 2550, distance: 120 },
+    Tomato: { localMandi: 1600, distantMandi: 2200, distance: 95 },
+    Potato: { localMandi: 1350, distantMandi: 1750, distance: 140 },
+  }
+  const currentCalc = commodityPrices[sampleCommodity]
+  const transportCostPerQtl = Math.round(currentCalc.distance * 1.8)
+  const netLocal = currentCalc.localMandi * sampleQty
+  const netDistant = (currentCalc.distantMandi - transportCostPerQtl) * sampleQty
+  const extraProfit = Math.max(0, netDistant - netLocal)
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* Nav */}
-      <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
-              <Leaf size={18} className="text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">MandiSetu</span>
+    <div className="min-h-screen bg-white text-gray-900 selection:bg-brand-200">
+      {/* 1. Real-time Live Mandi Ticker Bar */}
+      <div className="bg-brand-900 text-white text-xs py-2 px-4 overflow-hidden border-b border-brand-800">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2 font-bold tracking-wider uppercase text-[10px] text-emerald-300">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Live APMC Ticker:</span>
           </div>
+          <div className="flex items-center gap-6 overflow-x-auto whitespace-nowrap scrollbar-none py-0.5">
+            {TICKER_ITEMS.map((item, i) => (
+              <div key={i} className="inline-flex items-center gap-1.5 text-xs">
+                <span className="font-medium text-gray-300">{item.mandi}</span>
+                <span className="font-bold text-white">{item.commodity}</span>
+                <span className="font-extrabold text-emerald-300">{item.price}</span>
+                <span className={`text-[10px] font-bold ${item.up ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {item.change}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Sticky Glass Navigation */}
+      <nav className="bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <div className="w-10 h-10 bg-gradient-to-tr from-brand-600 to-emerald-500 rounded-xl flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+              <Leaf size={20} className="text-white" />
+            </div>
+            <div>
+              <span className="text-xl font-extrabold tracking-tight text-gray-900">MandiSetu</span>
+              <span className="hidden sm:inline-block ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                12 Integrated Modules
+              </span>
+            </div>
+          </Link>
+
           <div className="flex items-center gap-3">
-            <Link to="/login" className="btn-secondary text-sm px-4 py-2">Sign In</Link>
-            <Link to="/register" className="btn-primary text-sm px-4 py-2">Get Started</Link>
+            <Link
+              to="/login"
+              className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-brand-700 hover:bg-gray-50 rounded-xl transition"
+            >
+              Sign In
+            </Link>
+            <Link
+              to="/register"
+              className="btn-primary text-sm px-4 py-2 flex items-center gap-1.5 shadow-sm hover:shadow-md"
+            >
+              <span>Get Started</span>
+              <ArrowRight size={14} />
+            </Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-brand-600 via-brand-700 to-green-800 text-white">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-20 w-72 h-72 bg-white rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-green-300 rounded-full blur-3xl" />
+      {/* 3. Hero Section with Interactive Gradient & Glow */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-brand-700 via-emerald-800 to-green-950 text-white pt-16 pb-24 lg:pt-24 lg:pb-32">
+        {/* Background ambient lighting */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-10 left-10 w-96 h-96 bg-emerald-400/20 rounded-full blur-3xl animate-blob" />
+          <div className="absolute bottom-10 right-10 w-[500px] h-[500px] bg-teal-300/15 rounded-full blur-3xl animate-blob delay-500" />
         </div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-4 py-1.5 text-sm mb-6">
-              <CheckCircle size={14} />
-              Trusted by 10,000+ Indian farmers
-            </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
-              MandiSetu —{' '}
-              <span className="text-green-300">Bridging Farmers</span>{' '}
-              to Fair Markets
-            </h1>
-            <p className="text-lg sm:text-xl text-green-100 mb-10 max-w-2xl">
-              India's intelligent agri-market platform. Discover prices, calculate
-              net realization, grade produce, and connect with verified buyers — all
-              in one place.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link
-                to="/register"
-                className="inline-flex items-center justify-center gap-2 bg-white text-brand-700 font-semibold px-8 py-3.5 rounded-xl hover:bg-green-50 transition shadow-lg"
-              >
-                Start for Free <ArrowRight size={18} />
-              </Link>
-              <Link
-                to="/login"
-                className="inline-flex items-center justify-center gap-2 border-2 border-white/40 text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-white/10 transition"
-              >
-                Sign In
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Stats */}
-      <section className="bg-brand-50 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {STATS.map(({ label, value, icon: Icon }) => (
-              <div key={label} className="text-center">
-                <div className="inline-flex items-center justify-center w-14 h-14 bg-brand-100 rounded-2xl mb-3">
-                  <Icon size={24} className="text-brand-600" />
-                </div>
-                <p className="text-3xl font-extrabold text-brand-700">{value}</p>
-                <p className="text-gray-600 mt-1">{label}</p>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            {/* Left Column: Hero Text */}
+            <div className="lg:col-span-7 space-y-6 text-left">
+              <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-md border border-white/20 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-200">
+                <Sparkles size={14} className="text-amber-300" />
+                <span>India’s 1st AI & Geospatial Agricultural Market Bridge</span>
               </div>
-            ))}
+
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight">
+                Bridging Farmers to <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-green-300">
+                  Fair Mandi Prices.
+                </span>
+              </h1>
+
+              <p className="text-base sm:text-lg text-emerald-100 max-w-2xl leading-relaxed">
+                Stop selling below market value. MandiSetu connects Indian smallholder farmers and FPOs directly to verified buyers, providing real-time APMC price intelligence, haversine transport cost optimization, and computer vision quality grading.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-3.5 pt-2">
+                <Link
+                  to="/register"
+                  className="px-7 py-3.5 bg-white text-brand-900 font-bold rounded-2xl shadow-xl hover:bg-emerald-50 hover:shadow-2xl transition-all duration-200 flex items-center justify-center gap-2 transform hover:-translate-y-0.5 active:scale-95"
+                >
+                  <span>Explore Platform Free</span>
+                  <ArrowRight size={18} />
+                </Link>
+
+                <Link
+                  to="/login"
+                  className="px-6 py-3.5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-semibold rounded-2xl transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  <span>Quick Demo Access</span>
+                  <ChevronRight size={18} />
+                </Link>
+              </div>
+
+              {/* Feature Pill Highlights */}
+              <div className="pt-4 flex flex-wrap gap-4 text-xs text-emerald-200">
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 size={16} className="text-emerald-400" />
+                  <span>Real Agmarknet Benchmark Data</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 size={16} className="text-emerald-400" />
+                  <span>Interactive Geospatial Mandi Map</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 size={16} className="text-emerald-400" />
+                  <span>Zero Commission to Intermediaries</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Interactive Live Take-Home Profit Calculator Preview */}
+            <div className="lg:col-span-5 animate-scale-in">
+              <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/80 text-gray-900">
+                <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-emerald-100 text-emerald-700 rounded-xl">
+                      <Calculator size={18} />
+                    </div>
+                    <div>
+                      <h3 className="font-extrabold text-sm text-gray-900">Net Realization Estimator</h3>
+                      <p className="text-[11px] text-gray-500">Compare take-home profit across mandis</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 bg-brand-100 text-brand-800 rounded-full">
+                    Module 3
+                  </span>
+                </div>
+
+                {/* Crop & Quantity Selector */}
+                <div className="space-y-3.5">
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 block mb-1">Select Crop</label>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {['Onion', 'Wheat', 'Tomato', 'Potato'].map((crop) => (
+                        <button
+                          key={crop}
+                          onClick={() => setSampleCommodity(crop)}
+                          className={`py-1.5 text-xs font-bold rounded-xl transition ${
+                            sampleCommodity === crop
+                              ? 'bg-brand-600 text-white shadow-sm'
+                              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                          }`}
+                        >
+                          {crop}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs font-semibold text-gray-600 mb-1">
+                      <span>Harvest Quantity</span>
+                      <span className="text-brand-700 font-bold">{sampleQty} Quintals ({sampleQty * 100} kg)</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="10"
+                      max="200"
+                      step="5"
+                      value={sampleQty}
+                      onChange={(e) => setSampleQty(Number(e.target.value))}
+                      className="w-full accent-brand-600 cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Profit Comparison Card */}
+                  <div className="p-3.5 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100 space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-600">Local Village Broker:</span>
+                      <span className="font-semibold text-gray-700">₹{netLocal.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-600">MandiSetu Terminal APMC:</span>
+                      <span className="font-bold text-brand-700">₹{netDistant.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="pt-2 border-t border-emerald-200 flex justify-between items-center">
+                      <span className="text-xs font-extrabold text-emerald-900">Your Extra Take-Home:</span>
+                      <span className="text-base font-extrabold text-emerald-700">
+                        +₹{extraProfit.toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  </div>
+
+                  <Link
+                    to="/calculator"
+                    className="block w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold text-center rounded-xl transition shadow-md"
+                  >
+                    Open Full Multi-Mandi Route Calculator →
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features */}
+      {/* 4. Platform Statistics */}
+      <section className="bg-emerald-50/60 py-12 border-b border-emerald-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <div className="p-4">
+              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700">500+</div>
+              <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-1">APMC Mandis Connected</div>
+            </div>
+            <div className="p-4">
+              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700">10,000+</div>
+              <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-1">Empowered Farmers</div>
+            </div>
+            <div className="p-4">
+              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700">₹50 Cr+</div>
+              <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-1">Facilitated Trade Value</div>
+            </div>
+            <div className="p-4">
+              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700">12 Modules</div>
+              <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-1">End-to-End Agri Suite</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. 12 Comprehensive Integrated Modules Grid */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Everything a Farmer Needs
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="text-xs font-bold uppercase tracking-wider text-brand-600 bg-brand-50 px-3 py-1 rounded-full">
+              Full Architecture
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mt-3 mb-4">
+              All 12 Modules Built Ground-Up for Indian Agriculture
             </h2>
-            <p className="text-gray-500 max-w-xl mx-auto">
-              12 integrated modules designed ground-up for Indian agricultural
-              markets — from field to final sale.
+            <p className="text-gray-600 text-sm sm:text-base">
+              Every stage from harvest date planning, ML price discovery, quality assessment to dispute settlement is covered under a unified digital workflow.
             </p>
           </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {FEATURES.map(({ icon: Icon, title, desc, color }) => (
-              <div
-                key={title}
-                className="group p-6 rounded-2xl border border-gray-100 hover:border-brand-200 hover:shadow-md transition-all cursor-default"
-              >
-                <div className={`inline-flex p-3 rounded-xl ${color} mb-4`}>
-                  <Icon size={24} />
+            {MODULES.map((m) => {
+              const Icon = m.icon
+              return (
+                <div
+                  key={m.num}
+                  className="card-interactive group p-6 rounded-3xl border border-gray-100 hover:border-brand-300 hover:shadow-xl transition-all duration-300 bg-white"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${m.color} flex items-center justify-center transition-transform group-hover:scale-110`}>
+                      <Icon size={22} />
+                    </div>
+                    <span className="text-xs font-mono font-bold text-gray-400 group-hover:text-brand-600 transition">
+                      M{m.num}
+                    </span>
+                  </div>
+                  <h3 className="text-base font-bold text-gray-900 mb-2 group-hover:text-brand-700 transition">
+                    {m.title}
+                  </h3>
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    {m.desc}
+                  </p>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{desc}</p>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="bg-gradient-to-r from-brand-600 to-green-700 py-20">
-        <div className="max-w-3xl mx-auto px-4 text-center text-white">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-            Ready to get fair prices for your produce?
+      {/* 6. Call to Action Banner */}
+      <section className="bg-gradient-to-r from-brand-700 via-emerald-700 to-green-800 text-white py-16">
+        <div className="max-w-5xl mx-auto px-4 text-center space-y-6">
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+            Ready to experience transparent agri-market intelligence?
           </h2>
-          <p className="text-green-100 mb-8 text-lg">
-            Join thousands of farmers already using MandiSetu to increase their income.
+          <p className="text-emerald-100 max-w-xl mx-auto text-sm sm:text-base">
+            Create a free account in under 60 seconds. Sign in with demo credentials or register as a farmer, buyer, or FPO.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
             <Link
               to="/register"
-              className="inline-flex items-center justify-center gap-2 bg-white text-brand-700 font-semibold px-8 py-3.5 rounded-xl hover:bg-green-50 transition shadow-lg"
+              className="px-8 py-3.5 bg-white text-brand-900 font-bold rounded-2xl shadow-xl hover:bg-emerald-50 transition transform hover:-translate-y-0.5"
             >
-              Register as Farmer <ArrowRight size={18} />
+              Get Started for Free
             </Link>
             <Link
-              to="/register"
-              className="inline-flex items-center justify-center gap-2 border-2 border-white/40 text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-white/10 transition"
+              to="/login"
+              className="px-8 py-3.5 bg-white/10 hover:bg-white/20 border border-white/30 text-white font-semibold rounded-2xl transition"
             >
-              Register as Buyer
+              Sign In to Existing Account
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-10 text-center text-sm">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <Leaf size={16} className="text-brand-400" />
-          <span className="text-white font-semibold">MandiSetu</span>
+      {/* 7. Footer */}
+      <footer className="bg-gray-950 text-gray-400 py-12 border-t border-gray-900 text-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Leaf size={18} className="text-brand-400" />
+            <span className="text-white font-extrabold text-sm">MandiSetu</span>
+            <span className="text-gray-500">· Digital Agricultural Marketplace</span>
+          </div>
+          <div className="flex gap-6 text-gray-500">
+            <span>Agmarknet Verified</span>
+            <span>Prophet ML Engine</span>
+            <span>IEEE Research Project</span>
+          </div>
+          <p>© 2026 MandiSetu. Empowering Indian Farmers & FPOs.</p>
         </div>
-        <p>© 2025 MandiSetu. Empowering Indian Agriculture.</p>
       </footer>
     </div>
   )

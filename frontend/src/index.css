@@ -1,31 +1,135 @@
+/* ─── Google Font Import (Must be at the very top of CSS file) ───────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  html { font-family: 'Inter', system-ui, sans-serif; }
-  body { @apply bg-gray-50 text-gray-900; }
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+  ::selection {
+    @apply bg-brand-200 text-brand-900;
+  }
 }
 
 @layer components {
+  /* ── Buttons ─────────────────────────────────────────────────────────── */
   .btn-primary {
-    @apply bg-brand-600 hover:bg-brand-700 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-150;
+    @apply bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-medium
+           px-5 py-2.5 rounded-xl transition-all duration-200
+           shadow-sm hover:shadow-md active:scale-[0.98]
+           focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2;
   }
   .btn-secondary {
-    @apply bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 font-medium px-4 py-2 rounded-lg transition-colors duration-150;
+    @apply bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-700
+           border border-gray-300 font-medium px-5 py-2.5 rounded-xl
+           transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98]
+           focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2;
   }
+  .btn-danger {
+    @apply bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-medium
+           px-5 py-2.5 rounded-xl transition-all duration-200
+           shadow-sm hover:shadow-md active:scale-[0.98];
+  }
+
+  /* ── Cards ───────────────────────────────────────────────────────────── */
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6;
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6
+           transition-all duration-300 hover:shadow-lg hover:border-gray-200;
   }
+  .card-static {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6;
+  }
+  .card-interactive {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6
+           transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-brand-200
+           cursor-pointer;
+  }
+
+  /* ── Inputs ──────────────────────────────────────────────────────────── */
   .input {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent;
+    @apply w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm bg-white
+           transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
+           hover:border-gray-400
+           placeholder:text-gray-400;
   }
+  .input-field {
+    @apply w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm bg-white
+           transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
+           hover:border-gray-400
+           placeholder:text-gray-400;
+  }
+
+  /* ── Badges ──────────────────────────────────────────────────────────── */
   .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-wide;
   }
-  .badge-green  { @apply badge bg-green-100 text-green-800; }
-  .badge-yellow { @apply badge bg-yellow-100 text-yellow-800; }
+  .badge-green  { @apply badge bg-emerald-100 text-emerald-800; }
+  .badge-yellow { @apply badge bg-amber-100 text-amber-800; }
   .badge-red    { @apply badge bg-red-100 text-red-800; }
   .badge-blue   { @apply badge bg-blue-100 text-blue-800; }
   .badge-gray   { @apply badge bg-gray-100 text-gray-700; }
+  .badge-purple { @apply badge bg-purple-100 text-purple-800; }
+
+  /* ── Glass effect ────────────────────────────────────────────────────── */
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/30 shadow-lg;
+  }
 }
+
+@layer utilities {
+  /* ── Gradient text ───────────────────────────────────────────────────── */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-emerald-500;
+  }
+
+  /* ── Glow effects ────────────────────────────────────────────────────── */
+  .glow-brand {
+    box-shadow: 0 0 20px rgba(22, 163, 74, 0.3), 0 0 60px rgba(22, 163, 74, 0.1);
+  }
+  .glow-white {
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* ─── Custom Animations ─────────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%      { transform: translateY(-8px); }
+}
+@keyframes blob {
+  0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  50%      { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+}
+
+.animate-fade-in-up    { animation: fadeInUp 0.6s ease-out both; }
+.animate-fade-in-down  { animation: fadeInDown 0.5s ease-out both; }
+.animate-scale-in      { animation: scaleIn 0.4s ease-out both; }
+.animate-float         { animation: float 3s ease-in-out infinite; }
+.animate-blob          { animation: blob 7s ease-in-out infinite; }
+
+/* ─── Scrollbar styling ─────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }

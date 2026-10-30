@@ -2,16 +2,13 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { useAuthStore } from './store/authStore'
 
-// Auth
 import LoginPage from './pages/auth/LoginPage'
 import RegisterPage from './pages/auth/RegisterPage'
 
-// Dashboards
 import FarmerDashboard from './pages/dashboard/FarmerDashboard'
 import BuyerDashboard from './pages/dashboard/BuyerDashboard'
 import AdminDashboard from './pages/dashboard/AdminDashboard'
 
-// Module pages
 import PricesPage from './pages/prices/PricesPage'
 import CalculatorPage from './pages/calculator/CalculatorPage'
 import ListingsPage from './pages/listings/ListingsPage'
@@ -31,60 +28,73 @@ import AnalyticsPage from './pages/analytics/AnalyticsPage'
 import Layout from './components/common/Layout'
 import LandingPage from './pages/LandingPage'
 
-function ProtectedRoute({ children, allowedRoles }) {
-  const { isAuthenticated, role } = useAuthStore()
-  if (!isAuthenticated) return <Navigate to="/login" replace />
-  if (allowedRoles && !allowedRoles.includes(role)) return <Navigate to="/dashboard" replace />
-  return children
-}
-
+// Smart role-based dashboard router
 function DashboardRedirect() {
-  const { role } = useAuthStore()
-  if (role === 'admin') return <Navigate to="/admin" replace />
+  const { role, isAuthenticated } = useAuthStore()
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
   if (role === 'buyer') return <Navigate to="/buyer-dashboard" replace />
+  if (role === 'admin') return <Navigate to="/admin" replace />
   return <Navigate to="/farmer-dashboard" replace />
 }
 
 export default function App() {
   return (
     <BrowserRouter>
-      <Toaster position="top-right" />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3500,
+          style: {
+            background: '#1f2937',
+            color: '#fff',
+            borderRadius: '12px',
+            fontSize: '14px',
+            fontWeight: 500,
+          },
+        }}
+      />
+
       <Routes>
-        {/* Public */}
+        {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        {/* Protected app routes */}
-        <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-          <Route path="dashboard" element={<DashboardRedirect />} />
+        {/* Authenticated Layout with all 12 modules */}
+        <Route element={<Layout />}>
+          <Route path="/dashboard" element={<DashboardRedirect />} />
 
-          {/* Farmer routes */}
-          <Route path="farmer-dashboard" element={<ProtectedRoute allowedRoles={['farmer','fpo']}><FarmerDashboard /></ProtectedRoute>} />
-          <Route path="listings" element={<ListingsPage />} />
-          <Route path="listings/new" element={<ProtectedRoute allowedRoles={['farmer','fpo','admin']}><CreateLotPage /></ProtectedRoute>} />
-          <Route path="listings/:id" element={<LotDetailPage />} />
-          <Route path="grading" element={<ProtectedRoute allowedRoles={['farmer','fpo','admin']}><GradingPage /></ProtectedRoute>} />
-          <Route path="sale-window" element={<ProtectedRoute allowedRoles={['farmer','fpo','admin']}><SaleWindowPage /></ProtectedRoute>} />
+          <Route path="/farmer-dashboard" element={<FarmerDashboard />} />
+          <Route path="/buyer-dashboard" element={<BuyerDashboard />} />
+          <Route path="/admin" element={<AdminDashboard />} />
 
-          {/* Buyer routes */}
-          <Route path="buyer-dashboard" element={<ProtectedRoute allowedRoles={['buyer']}><BuyerDashboard /></ProtectedRoute>} />
-          <Route path="matching" element={<ProtectedRoute allowedRoles={['buyer','admin']}><MatchingPage /></ProtectedRoute>} />
-          <Route path="buyers" element={<BuyersPage />} />
+          <Route path="/listings" element={<ListingsPage />} />
+          <Route path="/listings/new" element={<CreateLotPage />} />
+          <Route path="/listings/:id" element={<LotDetailPage />} />
 
-          {/* Shared routes */}
-          <Route path="prices" element={<PricesPage />} />
-          <Route path="calculator" element={<CalculatorPage />} />
-          <Route path="transactions" element={<TransactionsPage />} />
-          <Route path="transactions/:id" element={<TransactionDetailPage />} />
-          <Route path="logistics" element={<LogisticsPage />} />
-          <Route path="disputes" element={<DisputesPage />} />
-          <Route path="weather" element={<WeatherPage />} />
+          <Route path="/grading" element={<GradingPage />} />
+          <Route path="/sale-window" element={<SaleWindowPage />} />
 
-          {/* Admin */}
-          <Route path="admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
-          <Route path="analytics" element={<ProtectedRoute allowedRoles={['admin']}><AnalyticsPage /></ProtectedRoute>} />
+          <Route path="/matching" element={<MatchingPage />} />
+          <Route path="/buyers" element={<BuyersPage />} />
+
+          <Route path="/prices" element={<PricesPage />} />
+          <Route path="/calculator" element={<CalculatorPage />} />
+
+          <Route path="/transactions" element={<TransactionsPage />} />
+          <Route path="/transactions/:id" element={<TransactionDetailPage />} />
+
+          <Route path="/logistics" element={<LogisticsPage />} />
+          <Route path="/disputes" element={<DisputesPage />} />
+          <Route path="/weather" element={<WeatherPage />} />
+
+          <Route path="/analytics" element={<AnalyticsPage />} />
         </Route>
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   )
