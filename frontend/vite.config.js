@@ -12,6 +12,15 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: env.VITE_API_URL || 'http://localhost:8000',
           changeOrigin: true,
+          configure: (proxy, _options) => {
+            proxy.on('error', (err, req, res) => {
+              // Gracefully handle backend offline without triggering Vite HMR / reload loop
+              if (res && res.writeHead && !res.headersSent) {
+                res.writeHead(503, { 'Content-Type': 'application/json' })
+                res.end(JSON.stringify({ offline: true, message: 'Backend service offline, fallback to mock data' }))
+              }
+            })
+          },
         },
       },
     },

@@ -119,14 +119,18 @@ export default function App() {
       />
 
       {/* Global Interactive Animated Indian Farmer Guide */}
-      <FarmerGuide
-        isOpen={guideOpen}
-        onClose={() => setGuideOpen(false)}
-        pageMode={guidePageMode}
-      />
+      <PageErrorBoundary>
+        <FarmerGuide
+          isOpen={guideOpen}
+          onClose={() => setGuideOpen(false)}
+          pageMode={guidePageMode}
+        />
+      </PageErrorBoundary>
 
       {/* Global Floating AI Assistant */}
-      <AIAssistant />
+      <PageErrorBoundary>
+        <AIAssistant />
+      </PageErrorBoundary>
 
       <Routes>
         {/* Public routes */}

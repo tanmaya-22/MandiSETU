@@ -15,11 +15,16 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Auto-logout on 401
+// Auto-logout on 401 only if user was actually logged in and not already on /login
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    if (
+      err.response?.status === 401 &&
+      typeof window !== 'undefined' &&
+      window.location.pathname !== '/login' &&
+      useAuthStore.getState().isAuthenticated
+    ) {
       useAuthStore.getState().logout()
       window.location.href = '/login'
     }
