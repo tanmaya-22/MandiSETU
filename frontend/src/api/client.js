@@ -1,16 +1,43 @@
 import axios from 'axios'
 import { useAuthStore } from '../store/authStore'
 
+export const cleanBackendUrl = (input) => {
+  if (!input || !input.trim()) return ''
+  let cleaned = input.trim()
+  // Strip accidental quotes, brackets, parentheses or trailing punctuation from copy-pasting
+  cleaned = cleaned.replace(/^[<"'\(\[\s]+|[>"'\)\];\s,]+$/g, '').trim()
+  // Strip trailing slashes
+  cleaned = cleaned.replace(/\/+$/, '')
+  // If user pasted with /health, strip it
+  if (cleaned.endsWith('/health')) {
+    cleaned = cleaned.substring(0, cleaned.length - 7)
+  }
+  // If user pasted with /docs, strip it
+  if (cleaned.endsWith('/docs')) {
+    cleaned = cleaned.substring(0, cleaned.length - 5)
+  }
+  cleaned = cleaned.replace(/\/+$/, '')
+  // Ensure valid HTTP protocol
+  if (!cleaned.startsWith('http://') && !cleaned.startsWith('https://')) {
+    cleaned = `https://${cleaned}`
+  }
+  // Ensure it points to the API route prefix
+  if (!cleaned.endsWith('/api/v1')) {
+    cleaned = `${cleaned}/api/v1`
+  }
+  return cleaned
+}
+
 export const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
     const customUrl = localStorage.getItem('mandisetu_api_base_url')
     if (customUrl && customUrl.trim()) {
-      return customUrl.trim().replace(/\/+$/, '')
+      return cleanBackendUrl(customUrl)
     }
   }
   const envUrl = import.meta.env.VITE_API_URL
   if (envUrl && envUrl.trim()) {
-    return envUrl.trim().replace(/\/+$/, '')
+    return cleanBackendUrl(envUrl)
   }
   // Default to standard Render backend URL if running on Vercel or any cloud domain
   if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
@@ -24,10 +51,7 @@ export const setApiBaseUrl = (url) => {
     if (!url || !url.trim()) {
       localStorage.removeItem('mandisetu_api_base_url')
     } else {
-      let cleaned = url.trim().replace(/\/+$/, '')
-      if (!cleaned.endsWith('/api/v1')) {
-        cleaned = `${cleaned}/api/v1`
-      }
+      const cleaned = cleanBackendUrl(url)
       localStorage.setItem('mandisetu_api_base_url', cleaned)
     }
   }

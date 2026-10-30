@@ -670,20 +670,40 @@ export const analyticsAPI = {
 export const systemAPI = {
   checkBackendHealth: async () => {
     const start = Date.now()
+    const currentBase = getApiBaseUrl()
+    let rootDomain = currentBase
     try {
-      const res = await api.get('/health', { timeout: 45000 })
+      const u = new URL(currentBase)
+      rootDomain = `${u.protocol}//${u.host}`
+    } catch {}
+
+    // 1. Try root /health endpoint directly
+    try {
+      const res = await api.get('/health', { timeout: 35000 })
       const latency = Date.now() - start
-      return {
-        ok: true,
-        data: res?.data,
-        latency,
-        url: getApiBaseUrl(),
+      return { ok: true, data: res?.data, latency, url: currentBase }
+    } catch {}
+
+    // 2. Try root domain /health without /api/v1 prefix
+    try {
+      const res = await fetch(`${rootDomain}/health`, { method: 'GET', mode: 'cors' })
+      if (res.ok) {
+        const data = await res.json()
+        const latency = Date.now() - start
+        return { ok: true, data, latency, url: currentBase }
       }
+    } catch {}
+
+    // 3. Try /auth/users/public endpoint
+    try {
+      const res = await api.get('/auth/users/public', { timeout: 35000 })
+      const latency = Date.now() - start
+      return { ok: true, data: { status: 'ok', users: res?.data?.length }, latency, url: currentBase }
     } catch (err) {
       return {
         ok: false,
         error: err?.message || 'Server unreachable or spinning up',
-        url: getApiBaseUrl(),
+        url: currentBase,
       }
     }
   },

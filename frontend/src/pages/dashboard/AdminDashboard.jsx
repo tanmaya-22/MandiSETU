@@ -123,12 +123,14 @@ export default function AdminDashboard() {
     return res
   }
 
-  const handleSaveApiUrl = () => {
+  const handleSaveApiUrl = async () => {
     setApiBaseUrl(customApiUrlInput)
-    toast.success('Backend API URL saved! Reconnecting across devices...', { icon: '🔌' })
+    const cleaned = getApiBaseUrl()
+    setCustomApiUrlInput(cleaned)
+    toast.success(`Backend URL updated to: ${cleaned}`, { icon: '🔌' })
     setShowApiSettings(false)
-    loadAllData()
-    checkBackendStatus(true)
+    await checkBackendStatus(true)
+    await loadAllData()
   }
 
   const loadAllData = async () => {

@@ -96,6 +96,8 @@ app.include_router(analytics_router,     prefix=API_PREFIX)  # Module 12
 
 
 @app.get("/")
+@app.get("/api/v1")
+@app.get("/api/v1/")
 async def root():
     return {
         "app": settings.APP_NAME,
@@ -107,5 +109,6 @@ async def root():
 
 
 @app.get("/health")
+@app.get("/api/v1/health")
 async def health():
     return {"status": "ok", "app": settings.APP_NAME}
