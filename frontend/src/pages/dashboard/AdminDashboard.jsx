@@ -5,7 +5,7 @@ import {
   ShieldCheck, AlertTriangle, Activity, Download, Mail, Phone,
   Calendar, CheckCircle, RefreshCw, UserCheck, Lock, Unlock,
   Sliders, Award, MessageSquare, FileText, CheckCircle2, XCircle, ChevronRight,
-  Zap, Sparkles, Check, Crown
+  Zap, Sparkles, Check, Crown, Server, Globe, Wifi, WifiOff
 } from 'lucide-react'
 import {
   analyticsAPI,
@@ -14,7 +14,10 @@ import {
   saveLocalUser,
   ROLE_AVAILABLE_POWERS,
   updateUserPowers,
-  hasUserPower
+  hasUserPower,
+  getApiBaseUrl,
+  setApiBaseUrl,
+  systemAPI
 } from '../../api/modules'
 import { useAuthStore } from '../../store/authStore'
 import { StatCard, PageHeader } from '../../components/common/UI'
@@ -96,6 +99,38 @@ export default function AdminDashboard() {
   // Hover Tooltip for demo encrypted mode
   const [hoveredEncryptedId, setHoveredEncryptedId] = useState(null)
 
+  // Cloud Backend / Cross-Device Sync State
+  const [backendHealth, setBackendHealth] = useState({ checked: false, ok: false, latency: 0, url: getApiBaseUrl() })
+  const [checkingHealth, setCheckingHealth] = useState(false)
+  const [customApiUrlInput, setCustomApiUrlInput] = useState(getApiBaseUrl())
+  const [showApiSettings, setShowApiSettings] = useState(false)
+
+  const checkBackendStatus = async (showToast = false) => {
+    setCheckingHealth(true)
+    if (showToast) {
+      toast.loading('Checking Render PostgreSQL backend connection (waking server if asleep)...', { id: 'health-check' })
+    }
+    const res = await systemAPI.checkBackendHealth()
+    setBackendHealth({ checked: true, ok: res.ok, latency: res.latency || 0, url: res.url, error: res.error })
+    setCheckingHealth(false)
+    if (showToast) {
+      if (res.ok) {
+        toast.success(`Connected! Render backend online (${res.latency}ms latency).`, { id: 'health-check' })
+      } else {
+        toast.error(`Backend unreachable: ${res.error}. Check your Render URL.`, { id: 'health-check', duration: 8000 })
+      }
+    }
+    return res
+  }
+
+  const handleSaveApiUrl = () => {
+    setApiBaseUrl(customApiUrlInput)
+    toast.success('Backend API URL saved! Reconnecting across devices...', { icon: '🔌' })
+    setShowApiSettings(false)
+    loadAllData()
+    checkBackendStatus(true)
+  }
+
   const loadAllData = async () => {
     setLoading(true)
     try {
@@ -146,6 +181,7 @@ export default function AdminDashboard() {
   // Real-time synchronization across events
   useEffect(() => {
     loadAllData()
+    checkBackendStatus(false)
     const handlePowersUpdated = () => {
       loadAllData()
     }
@@ -548,6 +584,92 @@ export default function AdminDashboard() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* ── Multi-Computer Cross-Device Integration Status Banner ── */}
+      <div className={`p-4 rounded-3xl border transition-all ${
+        backendHealth.ok
+          ? 'bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800'
+          : 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800'
+      }`}>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+              backendHealth.ok
+                ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300'
+                : 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300'
+            }`}>
+              {backendHealth.ok ? <Wifi size={20} /> : <WifiOff size={20} />}
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-extrabold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
+                  <span>Cross-Device Cloud Sync:</span>
+                  {backendHealth.ok ? (
+                    <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
+                      🟢 PostgreSQL Connected ({backendHealth.latency}ms)
+                    </span>
+                  ) : (
+                    <span className="text-amber-600 dark:text-amber-400">
+                      🟡 Server Idle / Cold Start or URL Check Needed
+                    </span>
+                  )}
+                </span>
+                <span className="text-[11px] px-2 py-0.5 rounded-full font-mono font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                  Target: {backendHealth.url || getApiBaseUrl()}
+                </span>
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                {backendHealth.ok
+                  ? `Active real-time synchronization across all computers. Total accounts in directory: ${registeredUsers.length} (${registeredUsers.filter(u => u.source === 'database').length} live from server, ${registeredUsers.filter(u => u.source !== 'database').length} demo).`
+                  : 'Render Free Tier servers enter sleep mode after 15 mins of inactivity. Click "Wake Server" below to connect, or enter your custom Render URL.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              onClick={() => checkBackendStatus(true)}
+              disabled={checkingHealth}
+              className="px-3 py-1.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 text-xs font-bold text-gray-700 dark:text-gray-200 flex items-center gap-1.5 shadow-sm transition"
+            >
+              <RefreshCw size={13} className={checkingHealth ? 'animate-spin text-brand-600' : ''} />
+              <span>{checkingHealth ? 'Testing...' : 'Test & Wake Server'}</span>
+            </button>
+            <button
+              onClick={() => setShowApiSettings(!showApiSettings)}
+              className="px-3 py-1.5 rounded-xl bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/60 dark:hover:bg-brand-900/60 text-brand-700 dark:text-brand-300 text-xs font-bold flex items-center gap-1.5 transition"
+            >
+              <Server size={13} />
+              <span>{showApiSettings ? 'Close Config' : 'Change Backend URL'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Expandable Backend URL Setting Input */}
+        {showApiSettings && (
+          <div className="mt-3.5 pt-3.5 border-t border-gray-200/60 dark:border-gray-700/60 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <div className="flex-1">
+              <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 block mb-1">
+                Enter your Render Web Service URL (e.g. from Render dashboard: https://mandisetu-api.onrender.com):
+              </label>
+              <input
+                type="text"
+                value={customApiUrlInput}
+                onChange={(e) => setCustomApiUrlInput(e.target.value)}
+                placeholder="https://mandisetu-api.onrender.com"
+                className="w-full px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+            <button
+              onClick={handleSaveApiUrl}
+              className="sm:self-end px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md transition"
+            >
+              Save & Reconnect
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}

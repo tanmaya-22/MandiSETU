@@ -1,4 +1,5 @@
-import api from './client'
+import api, { getApiBaseUrl, setApiBaseUrl } from './client'
+export { getApiBaseUrl, setApiBaseUrl }
 
 // ══════════════════════════════════════════════════════════════════════════════
 // OFFICIAL PUBLIC DOMAIN AGMARKNET BENCHMARK DATA (GOVT. OF INDIA)
@@ -663,4 +664,27 @@ export const weatherAPI = {
 // ─── Module 12: Analytics ─────────────────────────────────────────────────────
 export const analyticsAPI = {
   getDashboard: () => api.get('/analytics/dashboard'),
+}
+
+// ─── System / Diagnostics / Cross-Device Synchronization ─────────────────────
+export const systemAPI = {
+  checkBackendHealth: async () => {
+    const start = Date.now()
+    try {
+      const res = await api.get('/health', { timeout: 45000 })
+      const latency = Date.now() - start
+      return {
+        ok: true,
+        data: res?.data,
+        latency,
+        url: getApiBaseUrl(),
+      }
+    } catch (err) {
+      return {
+        ok: false,
+        error: err?.message || 'Server unreachable or spinning up',
+        url: getApiBaseUrl(),
+      }
+    }
+  },
 }

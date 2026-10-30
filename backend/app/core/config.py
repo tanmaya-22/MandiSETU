@@ -33,7 +33,7 @@ class Settings(BaseSettings):
         "https://mandisetu-tanmaya.vercel.app",
     ]
     # Set ALLOW_ALL_ORIGINS=True in Render env for wildcard Vercel preview URLs
-    ALLOW_ALL_ORIGINS: bool = False
+    ALLOW_ALL_ORIGINS: bool = True
 
     # ── External APIs ────────────────────────────────────────────────────────
     OPENWEATHER_API_KEY: str = "YOUR_OPENWEATHER_API_KEY"
