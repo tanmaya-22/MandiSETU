@@ -7,11 +7,25 @@ from app.core.config import settings
 
 # ── Async engine ──────────────────────────────────────────────────────────────
 # Safely normalize connection strings from Render / cloud providers (postgres:// -> postgresql+asyncpg://)
+import re
+
 raw_url = settings.DATABASE_URL
 if raw_url.startswith("postgres://"):
     raw_url = raw_url.replace("postgres://", "postgresql+asyncpg://", 1)
 elif raw_url.startswith("postgresql://") and not raw_url.startswith("postgresql+asyncpg://"):
     raw_url = raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+# Asyncpg does not accept 'sslmode' in query params; strip it so it doesn't fail with TypeError
+is_remote_host = "localhost" not in raw_url and "127.0.0.1" not in raw_url
+if "sslmode=" in raw_url:
+    raw_url = re.sub(r'[\?\&]sslmode=[^&]+', '', raw_url)
+    if "&" in raw_url and "?" not in raw_url:
+        raw_url = raw_url.replace("&", "?", 1)
+
+connect_args = {}
+# For remote cloud PostgreSQL (Render / Supabase / Neon / AWS), ensure SSL is enabled for asyncpg
+if is_remote_host:
+    connect_args["ssl"] = "require"
 
 engine = create_async_engine(
     raw_url,
@@ -19,6 +33,7 @@ engine = create_async_engine(
     pool_size=10,
     max_overflow=20,
     pool_pre_ping=True,
+    connect_args=connect_args,
 )
 
 AsyncSessionLocal = async_sessionmaker(

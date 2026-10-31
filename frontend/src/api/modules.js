@@ -679,27 +679,31 @@ export const systemAPI = {
   checkBackendHealth: async () => {
     const start = Date.now()
     const currentBase = getApiBaseUrl()
-    let rootDomain = currentBase
+
+    // 1. Try /debug/db to get live PostgreSQL connection status & count
     try {
-      const u = new URL(currentBase)
-      rootDomain = `${u.protocol}//${u.host}`
+      const res = await api.get('/debug/db', { timeout: 35000 })
+      const latency = Date.now() - start
+      if (res?.data) {
+        return {
+          ok: res.data.status === 'connected',
+          data: res.data,
+          latency,
+          url: currentBase,
+          dbStatus: res.data.status,
+          usersCount: res.data.users_count,
+          isLocalhost: res.data.is_localhost,
+          warning: res.data.warning,
+          dbError: res.data.error,
+        }
+      }
     } catch {}
 
-    // 1. Try root /health endpoint directly
+    // 2. Try /health endpoint
     try {
       const res = await api.get('/health', { timeout: 35000 })
       const latency = Date.now() - start
       return { ok: true, data: res?.data, latency, url: currentBase }
-    } catch {}
-
-    // 2. Try root domain /health without /api/v1 prefix
-    try {
-      const res = await fetch(`${rootDomain}/health`, { method: 'GET', mode: 'cors' })
-      if (res.ok) {
-        const data = await res.json()
-        const latency = Date.now() - start
-        return { ok: true, data, latency, url: currentBase }
-      }
     } catch {}
 
     // 3. Try /auth/users/public endpoint

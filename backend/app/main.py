@@ -31,9 +31,10 @@ from app.routers.misc_modules import (
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup / shutdown lifecycle."""
-    # Create tables on startup (dev mode)
+    # Create tables on startup
     try:
         await create_all_tables()
+        print(f"[MandiSetu] ✅ Database connected and all tables verified.")
         from app.core.database import AsyncSessionLocal
         from app.services.price_service import seed_database_from_csv
         async with AsyncSessionLocal() as db:
@@ -41,7 +42,9 @@ async def lifespan(app: FastAPI):
             if seeded:
                 print(f"[MandiSetu] Seeded {seeded} price records from CSV")
     except Exception as e:
-        print(f"[MandiSetu] Notice: Database connection skipped on startup ({e}). Ready in lightweight mode.")
+        import traceback
+        print(f"[MandiSetu] ⚠️ Database connection failed on startup: {e}")
+        traceback.print_exc()
 
     # Create uploads directory
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
@@ -112,3 +115,39 @@ async def root():
 @app.get("/api/v1/health")
 async def health():
     return {"status": "ok", "app": settings.APP_NAME}
+
+
+@app.get("/debug/db")
+@app.get("/api/v1/debug/db")
+async def debug_db():
+    from app.core.config import settings
+    import re
+    raw = settings.DATABASE_URL
+    masked = re.sub(r"://([^:]+):([^@]+)@", r"://\1:****@", raw)
+    is_local = "localhost" in raw or "127.0.0.1" in raw
+    res = {
+        "configured_database_url": masked,
+        "is_localhost": is_local,
+        "warning": "DATABASE_URL is pointing to localhost! Add DATABASE_URL to your Render Web Service environment variables with your Render PostgreSQL Internal Connection String." if is_local else None,
+    }
+    try:
+        from app.core.database import AsyncSessionLocal, create_all_tables
+        from sqlalchemy import text
+        # Ensure tables exist
+        await create_all_tables()
+        async with AsyncSessionLocal() as session:
+            r = await session.execute(text("SELECT count(*) FROM users;"))
+            count = r.scalar()
+            res["status"] = "connected"
+            res["users_count"] = count
+            r_users = await session.execute(text("SELECT id, email, full_name, role, created_at FROM users ORDER BY created_at DESC LIMIT 10;"))
+            res["recent_users"] = [
+                {"id": str(u[0]), "email": u[1], "full_name": u[2], "role": str(u[3]), "created_at": str(u[4])}
+                for u in r_users.fetchall()
+            ]
+    except Exception as e:
+        import traceback
+        res["status"] = "error"
+        res["error"] = str(e)
+        res["traceback"] = traceback.format_exc()
+    return res

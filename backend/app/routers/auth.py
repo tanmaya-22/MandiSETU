@@ -45,8 +45,16 @@ async def _find_user_by_id_or_email(db: AsyncSession, identifier: str) -> Option
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 async def register(payload: UserRegisterRequest, db: AsyncSession = Depends(get_db)):
     clean_email = payload.email.strip().lower()
-    # Check duplicate email
-    existing = await db.execute(select(User).where(func.lower(User.email) == clean_email))
+
+    # Self-healing table check: ensure users table exists in PostgreSQL
+    from app.core.database import create_all_tables
+    try:
+        existing = await db.execute(select(User).where(func.lower(User.email) == clean_email))
+    except Exception:
+        # Table might be missing on startup, create tables and retry
+        await create_all_tables()
+        existing = await db.execute(select(User).where(func.lower(User.email) == clean_email))
+
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="This email address is already registered. Please login instead.")
 
@@ -79,7 +87,7 @@ async def register(payload: UserRegisterRequest, db: AsyncSession = Depends(get_
         powers=[],
     )
     db.add(user)
-    await db.flush()
+    await db.commit()
     await db.refresh(user)
     return user
 
@@ -142,8 +150,14 @@ async def list_users_public(db: AsyncSession = Depends(get_db)):
     """Public endpoint for Admin(TanmayA) frontend auth to fetch all users.
     Returns sanitized user data (no hashed passwords).
     Protected by a simple admin key header in production."""
-    result = await db.execute(select(User).order_by(User.created_at.desc()))
-    users = result.scalars().all()
+    from app.core.database import create_all_tables
+    try:
+        result = await db.execute(select(User).order_by(User.created_at.desc()))
+        users = result.scalars().all()
+    except Exception:
+        await create_all_tables()
+        result = await db.execute(select(User).order_by(User.created_at.desc()))
+        users = result.scalars().all()
     return [
         {
             "id": str(u.id),
@@ -169,6 +183,7 @@ async def verify_user(user_id: str, db: AsyncSession = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     user.is_verified = True
+    await db.commit()
     return {"message": "User verified successfully"}
 
 
@@ -183,6 +198,7 @@ async def update_user_powers(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     user.powers = body.powers
+    await db.commit()
     return {
         "message": f"Powers updated for {user.full_name}",
         "user_id": str(user.id),
@@ -205,6 +221,7 @@ async def update_user_status(
         user.is_active = body["is_active"]
     if "is_verified" in body:
         user.is_verified = body["is_verified"]
+    await db.commit()
     return {
         "message": f"Status updated for {user.full_name}",
         "user_id": str(user.id),

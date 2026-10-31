@@ -111,13 +111,25 @@ export default function AdminDashboard() {
       toast.loading('Checking Render PostgreSQL backend connection (waking server if asleep)...', { id: 'health-check' })
     }
     const res = await systemAPI.checkBackendHealth()
-    setBackendHealth({ checked: true, ok: res.ok, latency: res.latency || 0, url: res.url, error: res.error })
+    setBackendHealth({
+      checked: true,
+      ok: res.ok,
+      latency: res.latency || 0,
+      url: res.url,
+      error: res.error || res.dbError,
+      usersCount: res.usersCount,
+      isLocalhost: res.isLocalhost,
+      warning: res.warning,
+      dbStatus: res.dbStatus,
+    })
     setCheckingHealth(false)
     if (showToast) {
-      if (res.ok) {
-        toast.success(`Connected! Render backend online (${res.latency}ms latency).`, { id: 'health-check' })
+      if (res.isLocalhost) {
+        toast.error('⚠️ Render DATABASE_URL is not set! Pointing to localhost.', { id: 'health-check', duration: 10000 })
+      } else if (res.ok) {
+        toast.success(`Connected! Render backend online (${res.latency}ms latency, ${res.usersCount ?? 0} DB users).`, { id: 'health-check' })
       } else {
-        toast.error(`Backend unreachable: ${res.error}. Check your Render URL.`, { id: 'health-check', duration: 8000 })
+        toast.error(`Backend unreachable: ${res.error || res.dbError}. Check your Render URL.`, { id: 'health-check', duration: 8000 })
       }
     }
     return res
@@ -623,9 +635,19 @@ export default function AdminDashboard() {
                 </span>
               </div>
               <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-                {backendHealth.ok
-                  ? `Active real-time synchronization across all computers. Total accounts in directory: ${registeredUsers.length} (${registeredUsers.filter(u => u.source === 'database').length} live from server, ${registeredUsers.filter(u => u.source !== 'database').length} demo).`
-                  : 'Render Free Tier servers enter sleep mode after 15 mins of inactivity. Click "Wake Server" below to connect, or enter your custom Render URL.'}
+                {backendHealth.isLocalhost ? (
+                  <span className="text-red-600 dark:text-red-400 font-bold">
+                    ⚠️ Render Web Service does not have DATABASE_URL configured! It is pointing to localhost. Copy your Render PostgreSQL Internal Connection String and add it to Render Web Service Environment Variables.
+                  </span>
+                ) : backendHealth.ok ? (
+                  `Active real-time synchronization across all computers. PostgreSQL Database accounts: ${backendHealth.usersCount !== undefined ? backendHealth.usersCount : registeredUsers.filter(u => u.source === 'database').length} live from server (${registeredUsers.filter(u => u.source !== 'database').length} demo).`
+                ) : backendHealth.dbError ? (
+                  <span className="text-red-600 dark:text-red-400 font-bold">
+                    Database Error: {backendHealth.dbError}
+                  </span>
+                ) : (
+                  'Render Free Tier servers enter sleep mode after 15 mins of inactivity. Click "Wake Server" below to connect, or enter your custom Render URL.'
+                )}
               </p>
             </div>
           </div>
