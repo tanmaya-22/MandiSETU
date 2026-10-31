@@ -6,10 +6,13 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../../store/authStore'
+import { useLangStore } from '../../store/langStore'
 import { updateLocalUser, ROLE_AVAILABLE_POWERS } from '../../api/modules'
+import { STATE_DISTRICTS } from '../../data/stateDistricts'
 
 export default function ProfilePage() {
   const { user, updateProfile } = useAuthStore()
+  const { t } = useLangStore()
 
   const [form, setForm] = useState({
     full_name: user?.full_name || user?.name || '',
@@ -22,6 +25,15 @@ export default function ProfilePage() {
     crops: user?.crops || 'Wheat, Soybean, Onion',
     role: user?.role || 'farmer',
   })
+
+  const handleStateChange = (newState) => {
+    const districts = STATE_DISTRICTS[newState] || ['Other']
+    setForm((f) => ({
+      ...f,
+      state: newState,
+      district: districts[0] || 'Other',
+    }))
+  }
 
   const [passwords, setPasswords] = useState({
     currentPassword: '',
@@ -245,13 +257,15 @@ export default function ProfilePage() {
                 <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
                   Primary State
                 </label>
-                <input
-                  type="text"
+                <select
                   value={form.state}
-                  onChange={e => setForm(f => ({ ...f, state: e.target.value }))}
-                  placeholder="e.g. Maharashtra, Punjab, Odisha"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500"
-                />
+                  onChange={(e) => handleStateChange(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500 cursor-pointer"
+                >
+                  {Object.keys(STATE_DISTRICTS).map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -260,13 +274,15 @@ export default function ProfilePage() {
                 <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
                   District
                 </label>
-                <input
-                  type="text"
+                <select
                   value={form.district}
-                  onChange={e => setForm(f => ({ ...f, district: e.target.value }))}
-                  placeholder="e.g. Nashik, Indore, Cuttack"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500"
-                />
+                  onChange={(e) => setForm((f) => ({ ...f, district: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500 cursor-pointer"
+                >
+                  {(STATE_DISTRICTS[form.state] || ['Other']).map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
               </div>
 
               <div>

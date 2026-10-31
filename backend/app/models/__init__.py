@@ -289,6 +289,32 @@ class Dispute(Base):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# MODULE 14 — Feedback & Grievance Reporting (PostgreSQL Persistence)
+# ══════════════════════════════════════════════════════════════════════════════
+
+class FeedbackGrievance(Base):
+    __tablename__ = "feedbacks"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    user_name = Column(String(200), nullable=True)
+    user_email = Column(String(255), nullable=True)
+    user_role = Column(String(50), default="farmer")
+
+    category = Column(String(100), default="General Feedback")  # Payment, Quality, Logistics, Platform Bug
+    subject = Column(String(300), nullable=False)
+    message = Column(Text, nullable=False)
+    rating = Column(Integer, default=5)
+    status = Column(String(50), default="open")  # open, under_review, resolved, closed
+    admin_response = Column(Text, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), default=now_utc)
+    updated_at = Column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
+
+    user = relationship("User", foreign_keys=[user_id])
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # MODULE 2 — Price Cache (so we don't hammer external APIs every request)
 # ══════════════════════════════════════════════════════════════════════════════
 

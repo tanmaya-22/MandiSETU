@@ -47,6 +47,17 @@ class UserLoginRequest(BaseModel):
     password: str
 
 
+class SendOTPRequest(BaseModel):
+    email: EmailStr
+    phone: Optional[str] = None
+    purpose: Optional[str] = "admin_registration"
+
+
+class VerifyOTPRequest(BaseModel):
+    email: EmailStr
+    otp: str
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"

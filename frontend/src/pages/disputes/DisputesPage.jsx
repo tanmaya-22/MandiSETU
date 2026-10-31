@@ -5,6 +5,7 @@ import { Card, PageHeader, StatusBadge, Spinner, EmptyState } from '../../compon
 import { useAuthStore } from '../../store/authStore'
 import { AlertTriangle, Plus, ShieldCheck, CheckCircle2, MessageSquare, Clock } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useLangStore } from '../../store/langStore'
 
 const MOCK_DISPUTES = [
   {
@@ -30,6 +31,7 @@ const MOCK_DISPUTES = [
 ]
 
 export default function DisputesPage() {
+  const { t } = useLangStore()
   const [searchParams] = useSearchParams()
   const initialTxnId = searchParams.get('txn_id') || ''
 
@@ -102,14 +104,14 @@ export default function DisputesPage() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <PageHeader
-        title="Dispute Resolution & Grievance Cell (Module 9)"
-        subtitle="Transparent conflict mitigation mechanism covering quality discrepancies, payment delays, and logistics damage."
+        title={t('dp_title') || 'Dispute Resolution & Grievance Cell (Module 9)'}
+        subtitle={t('dp_subtitle') || 'Transparent conflict mitigation mechanism covering quality discrepancies, payment delays, and logistics damage.'}
         actions={
           <button
             onClick={() => setShowCreate(!showCreate)}
             className="btn-primary inline-flex items-center gap-2 text-sm"
           >
-            <Plus size={16} /> {showCreate ? 'Close Form' : 'Raise New Grievance'}
+            <Plus size={16} /> {showCreate ? (t('dp_close_form') || 'Close Form') : (t('dp_raise_new') || 'Raise New Grievance')}
           </button>
         }
       />

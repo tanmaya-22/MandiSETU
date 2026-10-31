@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { Plus, Trash2, Calculator, Award, Loader2, Sparkles, MapPin, Navigation, Info, ArrowRight } from 'lucide-react'
+import { Plus, Trash2, Calculator, Award, Loader2, Sparkles, MapPin, Navigation, Info, ArrowRight, Crosshair, Pin } from 'lucide-react'
 import { calcAPI } from '../../api/modules'
 import { PageHeader, Spinner, Card } from '../../components/common/UI'
 import MandiMap from '../../components/common/MandiMap'
@@ -64,6 +64,35 @@ export default function CalculatorPage() {
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
   const [showMap, setShowMap] = useState(false)
+  const [detectingGps, setDetectingGps] = useState(false)
+
+  const handleAccessMyLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser')
+      return
+    }
+    setDetectingGps(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = parseFloat(pos.coords.latitude.toFixed(4))
+        const lng = parseFloat(pos.coords.longitude.toFixed(4))
+        setForm((f) => ({
+          ...f,
+          my_lat: lat,
+          my_lng: lng,
+          originName: `My Farm GPS (${lat}, ${lng})`,
+        }))
+        setDetectingGps(false)
+        toast.success(`📍 GPS Position Detected: ${lat}, ${lng}`)
+      },
+      (err) => {
+        console.warn('Geolocation error:', err)
+        toast.error('Could not access GPS. Please check location permissions.')
+        setDetectingGps(false)
+      },
+      { timeout: 8000 }
+    )
+  }
 
   const setF = (k, v) => setForm((f) => ({ ...f, [k]: v }))
   const setMarket = (i, k, v) =>
@@ -192,7 +221,20 @@ export default function CalculatorPage() {
       {/* Geospatial Map toggle */}
       {showMap && (
         <div className="animate-fade-in-down">
-          <MandiMap height="400px" selectedCommodity={form.commodity} />
+          <MandiMap
+            height="400px"
+            selectedCommodity={form.commodity}
+            onDropPin={(pos) => {
+              setF('my_lat', parseFloat(pos.lat.toFixed(4)))
+              setF('my_lng', parseFloat(pos.lng.toFixed(4)))
+              toast.success(`Origin updated from pin: ${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)}`, { icon: '📌' })
+            }}
+            onLocationFound={(pos) => {
+              setF('my_lat', parseFloat(pos.lat.toFixed(4)))
+              setF('my_lng', parseFloat(pos.lng.toFixed(4)))
+              toast.success(`GPS farm origin detected: ${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)}`, { icon: '📍' })
+            }}
+          />
         </div>
       )}
 
@@ -201,10 +243,35 @@ export default function CalculatorPage() {
         <div className="lg:col-span-7 space-y-4">
           {/* Crop & Origin */}
           <div className="card">
-            <h3 className="font-bold text-gray-900 text-base mb-3 flex items-center gap-2">
-              <Navigation size={18} className="text-brand-600" />
-              <span>{t('cp_origin_details') || 'Farm Origin & Produce Details'}</span>
-            </h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-gray-900 text-base flex items-center gap-2">
+                <Navigation size={18} className="text-brand-600" />
+                <span>{t('cp_origin_details') || 'Farm Origin & Produce Details'}</span>
+              </h3>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleAccessMyLocation}
+                  disabled={detectingGps}
+                  className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-xl border border-blue-200 transition flex items-center gap-1.5 shadow-sm"
+                  title="Detect GPS coordinates of your farm"
+                >
+                  <Crosshair size={14} className={detectingGps ? 'animate-spin' : ''} />
+                  <span>{detectingGps ? 'Locating...' : 'Access My Location'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowMap(!showMap)}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm ${
+                    showMap ? 'bg-brand-600 text-white' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'
+                  }`}
+                  title="Open map to pick or drop pin"
+                >
+                  <Pin size={14} />
+                  <span>{showMap ? 'Close Pin Map' : 'Drop Pin on Map'}</span>
+                </button>
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>

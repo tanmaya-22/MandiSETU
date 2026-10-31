@@ -34,6 +34,7 @@ import Layout from './components/common/Layout'
 import LandingPage from './pages/LandingPage'
 import FarmerGuide from './components/common/FarmerGuide'
 import AIAssistant from './components/common/AIAssistant'
+import ProtectedRoute from './components/common/ProtectedRoute'
 
 // ─── Per-page isolated error boundary so one page never kills the whole app ──
 class PageErrorBoundary extends Component {
@@ -134,37 +135,38 @@ export default function App() {
         <Route path="/login" element={<SafePage><LoginPage /></SafePage>} />
         <Route path="/register" element={<SafePage><RegisterPage /></SafePage>} />
 
-        {/* Authenticated Layout with all 12 modules */}
+        {/* Authenticated Layout with public exploration tools & protected modules */}
         <Route element={<Layout />}>
-          <Route path="/dashboard" element={<DashboardRedirect />} />
-
-          <Route path="/farmer-dashboard" element={<SafePage><FarmerDashboard /></SafePage>} />
-          <Route path="/buyer-dashboard" element={<SafePage><BuyerDashboard /></SafePage>} />
-          <Route path="/admin" element={<SafePage><AdminDashboard /></SafePage>} />
-
-          <Route path="/listings" element={<SafePage><ListingsPage /></SafePage>} />
-          <Route path="/listings/new" element={<SafePage><CreateLotPage /></SafePage>} />
-          <Route path="/listings/:id" element={<SafePage><LotDetailPage /></SafePage>} />
-
-          <Route path="/grading" element={<SafePage><GradingPage /></SafePage>} />
-          <Route path="/sale-window" element={<SafePage><SaleWindowPage /></SafePage>} />
-
-          <Route path="/matching" element={<SafePage><MatchingPage /></SafePage>} />
-          <Route path="/buyers" element={<SafePage><BuyersPage /></SafePage>} />
-
-          <Route path="/prices" element={<SafePage><PricesPage /></SafePage>} />
+          {/* Publicly Accessible Tools (No login required) */}
           <Route path="/calculator" element={<SafePage><CalculatorPage /></SafePage>} />
-
-          <Route path="/transactions" element={<SafePage><TransactionsPage /></SafePage>} />
-          <Route path="/transactions/:id" element={<SafePage><TransactionDetailPage /></SafePage>} />
-
-          <Route path="/logistics" element={<SafePage><LogisticsPage /></SafePage>} />
-          <Route path="/disputes" element={<SafePage><DisputesPage /></SafePage>} />
+          <Route path="/prices" element={<SafePage><PricesPage /></SafePage>} />
           <Route path="/weather" element={<SafePage><WeatherPage /></SafePage>} />
           <Route path="/mandi-map" element={<SafePage><MandiMapPage /></SafePage>} />
-          <Route path="/analytics" element={<SafePage><AnalyticsPage /></SafePage>} />
-          <Route path="/feedback" element={<SafePage><FeedbackPage /></SafePage>} />
-          <Route path="/profile" element={<SafePage><ProfilePage /></SafePage>} />
+
+          {/* Protected Modules (Require Login or Signup) */}
+          <Route path="/dashboard" element={<ProtectedRoute moduleName="Dashboard"><DashboardRedirect /></ProtectedRoute>} />
+          <Route path="/farmer-dashboard" element={<ProtectedRoute moduleName="Farmer Dashboard"><SafePage><FarmerDashboard /></SafePage></ProtectedRoute>} />
+          <Route path="/buyer-dashboard" element={<ProtectedRoute moduleName="Buyer Dashboard"><SafePage><BuyerDashboard /></SafePage></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute moduleName="Admin Oversight Panel"><SafePage><AdminDashboard /></SafePage></ProtectedRoute>} />
+
+          <Route path="/listings" element={<ProtectedRoute moduleName="Produce Lots & Bids"><SafePage><ListingsPage /></SafePage></ProtectedRoute>} />
+          <Route path="/listings/new" element={<ProtectedRoute moduleName="New Lot Creation"><SafePage><CreateLotPage /></SafePage></ProtectedRoute>} />
+          <Route path="/listings/:id" element={<ProtectedRoute moduleName="Lot Trade Details"><SafePage><LotDetailPage /></SafePage></ProtectedRoute>} />
+
+          <Route path="/grading" element={<ProtectedRoute moduleName="AGMARK AI Produce Grading"><SafePage><GradingPage /></SafePage></ProtectedRoute>} />
+          <Route path="/sale-window" element={<ProtectedRoute moduleName="Optimal Sale Window Engine"><SafePage><SaleWindowPage /></SafePage></ProtectedRoute>} />
+
+          <Route path="/matching" element={<ProtectedRoute moduleName="Algorithmic Buyer Matching"><SafePage><MatchingPage /></SafePage></ProtectedRoute>} />
+          <Route path="/buyers" element={<ProtectedRoute moduleName="Verified Buyer Directory"><SafePage><BuyersPage /></SafePage></ProtectedRoute>} />
+
+          <Route path="/transactions" element={<ProtectedRoute moduleName="Smart Contracts & Escrow"><SafePage><TransactionsPage /></SafePage></ProtectedRoute>} />
+          <Route path="/transactions/:id" element={<ProtectedRoute moduleName="Escrow Contract Details"><SafePage><TransactionDetailPage /></SafePage></ProtectedRoute>} />
+
+          <Route path="/logistics" element={<ProtectedRoute moduleName="Logistics & Fleet Booking"><SafePage><LogisticsPage /></SafePage></ProtectedRoute>} />
+          <Route path="/disputes" element={<ProtectedRoute moduleName="Dispute Arbitration System"><SafePage><DisputesPage /></SafePage></ProtectedRoute>} />
+          <Route path="/analytics" element={<ProtectedRoute moduleName="Agri Analytics Intelligence"><SafePage><AnalyticsPage /></SafePage></ProtectedRoute>} />
+          <Route path="/feedback" element={<ProtectedRoute moduleName="Feedback & Support Hotline"><SafePage><FeedbackPage /></SafePage></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute moduleName="User Profile & Settings"><SafePage><ProfilePage /></SafePage></ProtectedRoute>} />
         </Route>
 
         {/* Fallback */}

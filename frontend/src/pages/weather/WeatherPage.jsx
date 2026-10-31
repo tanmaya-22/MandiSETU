@@ -4,6 +4,7 @@ import {
   Compass, Navigation, Calendar, ShieldCheck, Sparkles, RefreshCw, CheckCircle2
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useLangStore } from '../../store/langStore'
 
 const WEATHER_API_KEY = '45f0ee74bec083ada9f8a8c45bc7e103'
 
@@ -19,6 +20,7 @@ const MAJOR_AGRI_CENTERS = [
 ]
 
 export default function WeatherPage() {
+  const { t, formatNum } = useLangStore()
   const [selectedCenter, setSelectedCenter] = useState(MAJOR_AGRI_CENTERS[0])
   const [coords, setCoords] = useState({ lat: MAJOR_AGRI_CENTERS[0].lat, lng: MAJOR_AGRI_CENTERS[0].lng })
   const [locationName, setLocationName] = useState(MAJOR_AGRI_CENTERS[0].name)
@@ -187,10 +189,10 @@ export default function WeatherPage() {
             <span>OpenWeatherMap Live Satellite Engine · High Precision Agri Forecast</span>
           </div>
           <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-            🌦️ Weather Intelligence & Crop Advisories
+            {t('wp_title') || '🌦️ Weather Intelligence & Crop Advisories'}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-            5-day precision forecast and actionable agricultural alerts tailored to your crops and mandi transport.
+            {t('wp_subtitle') || '5-day precision forecast and actionable agricultural alerts tailored to your crops and mandi transport.'}
           </p>
         </div>
 
@@ -202,7 +204,7 @@ export default function WeatherPage() {
             className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-bold text-sm shadow-lg shadow-blue-500/25 flex items-center gap-2 hover:scale-[1.02] transition-all"
           >
             <Navigation size={16} className={locating ? 'animate-spin' : ''} />
-            <span>{locating ? 'Detecting Coordinates...' : '📍 Use My Location'}</span>
+            <span>{locating ? (t('wp_locating') || 'Detecting Coordinates...') : (t('wp_access_location') || '📍 Access My Location')}</span>
           </button>
           <button
             onClick={() => fetchLiveWeather(coords.lat, coords.lng, locationName)}

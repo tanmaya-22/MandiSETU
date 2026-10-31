@@ -17,9 +17,12 @@ import {
   hasUserPower,
   getApiBaseUrl,
   setApiBaseUrl,
-  systemAPI
+  systemAPI,
+  feedbackAPI,
+  disputesAPI
 } from '../../api/modules'
 import { useAuthStore } from '../../store/authStore'
+import { useLangStore } from '../../store/langStore'
 import { StatCard, PageHeader } from '../../components/common/UI'
 
 const MOCK_ANALYTICS = {
@@ -63,6 +66,7 @@ const INITIAL_LOTS = [
 
 export default function AdminDashboard() {
   const { user } = useAuthStore()
+  const { t } = useLangStore()
 
   // Strict check if currently logged-in user is Admin(TanmayA)
   const isOwner =
@@ -176,13 +180,54 @@ export default function AdminDashboard() {
         }
       }
 
-      // 2. Feedbacks
-      const rawFb = localStorage.getItem('mandisetu_user_feedbacks')
-      if (rawFb) {
-        setFeedbacks(JSON.parse(rawFb))
+      // 2. Feedbacks — Fetch from PostgreSQL backend, merge with local
+      try {
+        const cloudFbs = await feedbackAPI.getAll()
+        const rawFb = localStorage.getItem('mandisetu_user_feedbacks')
+        const localFbs = rawFb ? JSON.parse(rawFb) : []
+        // Deduplicate
+        const mergedFbs = [...(cloudFbs || [])]
+        localFbs.forEach((l) => {
+          if (!mergedFbs.some((m) => m.id === l.id || (m.message === l.message && m.user_email === l.email))) {
+            mergedFbs.push(l)
+          }
+        })
+        setFeedbacks(mergedFbs)
+      } catch {
+        const rawFb = localStorage.getItem('mandisetu_user_feedbacks')
+        if (rawFb) {
+          setFeedbacks(JSON.parse(rawFb))
+        }
       }
 
-      // 3. Audits
+      // 3. Disputes / Grievances — Fetch from PostgreSQL backend, merge with initial
+      try {
+        const cloudDisputes = await disputesAPI.getAll()
+        const rawDisp = localStorage.getItem('mandisetu_user_disputes')
+        const localDisp = rawDisp ? JSON.parse(rawDisp) : []
+        const mergedList = [...INITIAL_GRIEVANCES]
+        const allDisputes = [...(cloudDisputes?.data || cloudDisputes || []), ...localDisp]
+        allDisputes.forEach((d) => {
+          if (!mergedList.some((m) => m.id === d.id)) {
+            mergedList.unshift({
+              id: d.id || `DISP-${Math.floor(100 + Math.random() * 900)}`,
+              farmer: d.filer_name || d.filer_role || 'User',
+              buyer: d.respondent_name || 'Counterparty',
+              type: d.category || 'Dispute',
+              amount: d.claim_amount || 0,
+              status: d.status || 'open',
+              date: d.created_at ? new Date(d.created_at).toISOString().split('T')[0] : 'Today',
+              description: d.description || d.reason || 'Dispute registered in system',
+              isDispute: true
+            })
+          }
+        })
+        setGrievances(mergedList)
+      } catch {
+        // Fallback already in place with INITIAL_GRIEVANCES
+      }
+
+      // 4. Audits
       const rawAudit = localStorage.getItem('mandisetu_admin_audits')
       if (rawAudit) {
         setAuditLog(JSON.parse(rawAudit))
@@ -436,12 +481,19 @@ export default function AdminDashboard() {
     setOverrideReason('')
   }
 
-  const confirmGrievanceAction = () => {
+  const confirmGrievanceAction = async () => {
     if (!overrideReason.trim()) {
       toast.error('Documented reason is mandatory for administrative action!')
       return
     }
     const { item, actionType } = pivotalModal
+    if (item?.isDispute && actionType === 'resolve') {
+      try {
+        await disputesAPI.resolve(item.id, overrideReason, 'Resolved by APMC Admin')
+      } catch {
+        // Fallback handled locally
+      }
+    }
     if (actionType === 'delete') {
       setGrievances((prev) => prev.filter((g) => g.id !== item.id))
     } else {

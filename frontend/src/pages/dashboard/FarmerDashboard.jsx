@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
   Plus, TrendingUp, Calculator, Calendar, Star,
@@ -20,6 +20,7 @@ const MOCK_LOTS = [
 export default function FarmerDashboard() {
   const user = useAuthStore((s) => s.user)
   const { lang, language, t, formatNum, formatPrice } = useLangStore()
+  const navigate = useNavigate()
   const [lots, setLots] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -79,45 +80,49 @@ export default function FarmerDashboard() {
 
       {/* KPI Stats with Localization */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card-interactive p-4 sm:p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center">
+        <Link to="/listings" className="card-interactive p-4 sm:p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4 hover:border-emerald-300 hover:shadow-md transition-all group">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
             <Package size={24} />
           </div>
           <div>
             <p className="text-2xl font-extrabold text-gray-900 dark:text-white">{formatNum(lots.length)}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('fd_total_lots') || 'Total Listed Lots'}</p>
           </div>
-        </div>
+          <ArrowRight size={16} className="ml-auto text-gray-300 group-hover:text-emerald-600 transition-colors" />
+        </Link>
 
-        <div className="card-interactive p-4 sm:p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-950 text-brand-600 flex items-center justify-center">
+        <Link to="/listings" className="card-interactive p-4 sm:p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4 hover:border-brand-300 hover:shadow-md transition-all group">
+          <div className="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-950 text-brand-600 flex items-center justify-center group-hover:scale-110 transition-transform">
             <CheckCircle2 size={24} />
           </div>
           <div>
             <p className="text-2xl font-extrabold text-brand-700 dark:text-brand-400">{formatNum(activeLots)}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('fd_active_lots') || 'Active in Mandi'}</p>
           </div>
-        </div>
+          <ArrowRight size={16} className="ml-auto text-gray-300 group-hover:text-brand-600 transition-colors" />
+        </Link>
 
-        <div className="card-interactive p-4 sm:p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 flex items-center justify-center">
+        <Link to="/matching" className="card-interactive p-4 sm:p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4 hover:border-blue-300 hover:shadow-md transition-all group">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
             <TrendingUp size={24} />
           </div>
           <div>
             <p className="text-2xl font-extrabold text-blue-700 dark:text-blue-400">{formatNum(matchedLots)}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('fd_matched_offers') || 'Buyer Offers Matched'}</p>
           </div>
-        </div>
+          <ArrowRight size={16} className="ml-auto text-gray-300 group-hover:text-blue-600 transition-colors" />
+        </Link>
 
-        <div className="card-interactive p-4 sm:p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 flex items-center justify-center">
+        <Link to="/weather" className="card-interactive p-4 sm:p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4 hover:border-amber-300 hover:shadow-md transition-all group">
+          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform">
             <CloudRain size={24} />
           </div>
           <div>
             <p className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400">{t('fd_low_risk') || 'Low Risk'}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('fd_weather_status') || 'Weather Advisory'}</p>
           </div>
-        </div>
+          <ArrowRight size={16} className="ml-auto text-gray-300 group-hover:text-amber-600 transition-colors" />
+        </Link>
       </div>
 
       {/* 6 Quick Action Cards with Hover Micro-Interactions */}
@@ -177,7 +182,7 @@ export default function FarmerDashboard() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {lots.map((l) => (
-                <tr key={l.id} className="hover:bg-gray-50/80 transition">
+                <tr key={l.id} onClick={() => navigate(`/listings/${l.id}`)} className="hover:bg-emerald-50/60 dark:hover:bg-emerald-950/20 transition cursor-pointer group">
                   <td className="py-3 px-3">
                     <span className="font-bold text-gray-900">{l.commodity}</span>
                     <span className="block text-[11px] text-gray-500">{l.variety || 'Standard Quality'}</span>

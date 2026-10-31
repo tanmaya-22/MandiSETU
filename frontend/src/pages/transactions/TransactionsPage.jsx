@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { transactionsAPI } from '../../api/modules'
 import { Card, PageHeader, StatusBadge, Spinner, EmptyState } from '../../components/common/UI'
 import { ArrowRight, Receipt, Truck, Calendar, IndianRupee } from 'lucide-react'
+import { useLangStore } from '../../store/langStore'
 
 const MOCK_TRANSACTIONS = [
   {
@@ -56,6 +57,7 @@ const MOCK_TRANSACTIONS = [
 ]
 
 export default function TransactionsPage() {
+  const { t } = useLangStore()
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -81,8 +83,8 @@ export default function TransactionsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Transaction Tracking & Settlement (Module 6)"
-        subtitle="End-to-end digital audit trail tracking lifecycle stages from offer acceptance to delivery and escrow settlement."
+        title={t('tp_title') || 'Transaction Tracking & Settlement (Module 6)'}
+        subtitle={t('tp_subtitle') || 'End-to-end digital audit trail tracking lifecycle stages from offer acceptance to delivery and escrow settlement.'}
       />
 
       {loading ? (

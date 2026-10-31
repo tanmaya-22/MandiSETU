@@ -5,6 +5,7 @@ import { Card, PageHeader, StatusBadge, Spinner, EmptyState } from '../../compon
 import { useAuthStore } from '../../store/authStore'
 import { Plus, Search, Filter, MapPin, Scale, Tag, ArrowRight } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useLangStore } from '../../store/langStore'
 
 const MOCK_LOTS = [
   {
@@ -71,6 +72,7 @@ const MOCK_LOTS = [
 
 export default function ListingsPage() {
   const { role } = useAuthStore()
+  const { t } = useLangStore()
   const [lots, setLots] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchCommodity, setSearchCommodity] = useState('')
@@ -112,12 +114,12 @@ export default function ListingsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Produce Listings (Module 4)"
-        subtitle="Explore active digital lots created by farmers and FPOs with verifiable grades and floor prices."
+        title={t('lip_title', 'Produce Listings (Module 4)')}
+        subtitle={t('lip_subtitle', 'Explore active digital lots created by farmers and FPOs with verifiable grades and floor prices.')}
         actions={
           role !== 'buyer' && (
             <Link to="/listings/new" className="btn-primary inline-flex items-center gap-2">
-              <Plus size={18} /> Create New Lot
+              <Plus size={18} /> {t('lip_create_lot', 'Create New Lot')}
             </Link>
           )
         }

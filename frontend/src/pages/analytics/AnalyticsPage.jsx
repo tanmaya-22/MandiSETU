@@ -9,6 +9,7 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
   Tooltip, CartesianGrid, PieChart, Pie, Cell, Legend
 } from 'recharts'
+import { useLangStore } from '../../store/langStore'
 
 const MOCK_STATS = {
   total_farmers: 12450,
@@ -35,6 +36,7 @@ const MOCK_STATS = {
 }
 
 export default function AnalyticsPage() {
+  const { t, formatNum } = useLangStore()
   const [stats, setStats] = useState(MOCK_STATS)
   const [loading, setLoading] = useState(false)
 
@@ -62,8 +64,8 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Platform Analytics & Macro Intelligence (Module 12)"
-        subtitle="Consolidated real-time operational statistics across mandi liquidity pools, settlement volumes, and farmer net-gain performance."
+        title={t('ap_title') || 'Platform Analytics & Macro Intelligence (Module 12)'}
+        subtitle={t('ap_subtitle') || 'Consolidated real-time operational statistics across mandi liquidity pools, settlement volumes, and farmer net-gain performance.'}
       />
 
       {loading ? (

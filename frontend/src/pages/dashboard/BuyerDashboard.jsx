@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
   Search, ShieldCheck, TrendingUp, FileText, Users,
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { transactionsAPI, buyersAPI } from '../../api/modules'
 import { useAuthStore } from '../../store/authStore'
+import { useLangStore } from '../../store/langStore'
 import { StatCard, Spinner, PageHeader, Card } from '../../components/common/UI'
 
 const MOCK_TRANSACTIONS = [
@@ -24,6 +25,8 @@ const QUICK_LINKS = [
 
 export default function BuyerDashboard() {
   const user = useAuthStore((s) => s.user)
+  const navigate = useNavigate()
+  const { t, formatNum } = useLangStore()
   const [transactions, setTransactions] = useState([])
   const [score, setScore] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -80,35 +83,38 @@ export default function BuyerDashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="card-interactive p-5 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+        <Link to="/transactions" className="card-interactive p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4 hover:border-blue-300 hover:shadow-md transition-all group">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
             <Package size={24} />
           </div>
           <div>
             <p className="text-2xl font-extrabold text-gray-900">{transactions.length}</p>
             <p className="text-xs text-gray-500 font-medium">Contracted Lots</p>
           </div>
-        </div>
+          <ArrowRight size={16} className="ml-auto text-gray-300 group-hover:text-blue-600 transition-colors" />
+        </Link>
 
-        <div className="card-interactive p-5 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+        <Link to="/transactions" className="card-interactive p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4 hover:border-emerald-300 hover:shadow-md transition-all group">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
             <CheckCircle2 size={24} />
           </div>
           <div>
             <p className="text-2xl font-extrabold text-brand-700">₹6,39,600</p>
             <p className="text-xs text-gray-500 font-medium">Completed Volume</p>
           </div>
-        </div>
+          <ArrowRight size={16} className="ml-auto text-gray-300 group-hover:text-emerald-600 transition-colors" />
+        </Link>
 
-        <div className="card-interactive p-5 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+        <Link to="/logistics" className="card-interactive p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4 hover:border-indigo-300 hover:shadow-md transition-all group">
+          <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
             <TrendingUp size={24} />
           </div>
           <div>
             <p className="text-2xl font-extrabold text-indigo-700">98.4%</p>
             <p className="text-xs text-gray-500 font-medium">Delivery Fulfilment</p>
           </div>
-        </div>
+          <ArrowRight size={16} className="ml-auto text-gray-300 group-hover:text-indigo-600 transition-colors" />
+        </Link>
       </div>
 
       {/* Quick Action Cards */}
@@ -164,7 +170,7 @@ export default function BuyerDashboard() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {transactions.map((t, idx) => (
-                <tr key={t.id || idx} className="hover:bg-gray-50/80 transition">
+                <tr key={t.id || idx} onClick={() => navigate(`/transactions/${t.id}`)} className="hover:bg-blue-50/60 dark:hover:bg-blue-950/20 transition cursor-pointer group">
                   <td className="py-3 px-3">
                     <span className="font-bold text-gray-900">{t.commodity || 'Agricultural Produce'}</span>
                     <span className="block text-[11px] text-gray-500">{t.seller || 'Verified Farmer'}</span>

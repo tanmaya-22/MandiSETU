@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { listingsAPI, offersAPI } from '../../api/modules'
 import { Card, PageHeader, StatusBadge, Spinner } from '../../components/common/UI'
 import { useAuthStore } from '../../store/authStore'
+import { useLangStore } from '../../store/langStore'
 import { MapPin, Scale, Tag, ArrowLeft, Check, X, ShieldAlert, Award, Send } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -10,6 +11,7 @@ export default function LotDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { role, user } = useAuthStore()
+  const { t } = useLangStore()
 
   const [lot, setLot] = useState(null)
   const [offers, setOffers] = useState([])

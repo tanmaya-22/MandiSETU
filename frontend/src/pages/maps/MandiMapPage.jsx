@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import {
   MapPin, Navigation, Compass, Search, Phone, ExternalLink,
-  ShieldCheck, Warehouse, Truck, Store, AlertCircle, Sparkles, Filter
+  ShieldCheck, Warehouse, Truck, Store, AlertCircle, Sparkles, Filter,
+  Crosshair, Pin
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { REAL_AGMARKNET_DATA } from '../../api/modules'
 import { ALL_MANDIS } from '../../data/mandisData'
+import { useLangStore } from '../../store/langStore'
 
 // Real verifiable Mandis across India
 const MANDIS_LIST = ALL_MANDIS
@@ -26,6 +28,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 }
 
 export default function MandiMapPage() {
+  const { t } = useLangStore()
   const mapContainerRef = useRef(null)
   const mapInstanceRef = useRef(null)
   const markersRef = useRef([])
@@ -36,6 +39,9 @@ export default function MandiMapPage() {
   const [locating, setLocating] = useState(false)
   const [search, setSearch] = useState('')
   const [filterState, setFilterState] = useState('all')
+  const [pinDropMode, setPinDropMode] = useState(false)
+  const [droppedPin, setDroppedPin] = useState(null)
+  const droppedPinMarkerRef = useRef(null)
 
   const states = ['all', ...new Set(MANDIS_LIST.map((m) => m.state))]
 
@@ -225,6 +231,63 @@ export default function MandiMapPage() {
     setLocating(false)
   }
 
+  const handleTogglePinDrop = () => {
+    const map = mapInstanceRef.current
+    if (!map) return
+    if (pinDropMode) {
+      setPinDropMode(false)
+      map.getContainer().style.cursor = ''
+      map.off('click')
+    } else {
+      setPinDropMode(true)
+      map.getContainer().style.cursor = 'crosshair'
+      toast('Click anywhere on the map to drop a pin and find distances!', { icon: '📌' })
+      map.once('click', (e) => {
+        const L = window.L
+        if (!L) return
+        if (droppedPinMarkerRef.current) droppedPinMarkerRef.current.remove()
+        const pinIcon = L.divIcon({
+          className: 'custom-dropped-pin',
+          html: `<div style="background-color: #dc2626; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer;">📌</div>`,
+          iconSize: [34, 34],
+          iconAnchor: [17, 34],
+        })
+        const marker = L.marker([e.latlng.lat, e.latlng.lng], { icon: pinIcon, draggable: true })
+          .addTo(map)
+          .bindPopup(`<b>📌 Dropped Pin Location</b><br/>Lat: ${e.latlng.lat.toFixed(4)}, Lng: ${e.latlng.lng.toFixed(4)}`)
+          .openPopup()
+
+        // Calculate nearest to dropped pin
+        let minDis = Infinity
+        let closest = null
+        MANDIS_LIST.forEach((m) => {
+          const d = parseFloat(calculateDistance(e.latlng.lat, e.latlng.lng, m.lat, m.lng))
+          if (d < minDis) {
+            minDis = d
+            closest = { ...m, distance: d }
+          }
+        })
+
+        marker.on('dragend', () => {
+          const pos = marker.getLatLng()
+          setDroppedPin({ lat: pos.lat, lng: pos.lng })
+          marker.setPopupContent(`<b>📌 Dropped Pin</b><br/>Lat: ${pos.lat.toFixed(4)}, Lng: ${pos.lng.toFixed(4)}`)
+        })
+
+        droppedPinMarkerRef.current = marker
+        setDroppedPin({ lat: e.latlng.lat, lng: e.latlng.lng })
+        setPinDropMode(false)
+        map.getContainer().style.cursor = ''
+
+        if (closest) {
+          setNearestMandi(closest)
+          setSelectedMandi(closest)
+          toast.success(`Nearest Mandi to dropped pin: ${closest.name} (~${closest.distance} km)`)
+        }
+      })
+    }
+  }
+
   const focusMandi = (m) => {
     setSelectedMandi(m)
     if (mapInstanceRef.current) {
@@ -249,7 +312,7 @@ export default function MandiMapPage() {
           </p>
         </div>
 
-        {/* Use My Location Primary Button */}
+        {/* Use My Location & Drop Pin Buttons */}
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={handleUseMyLocation}
@@ -257,7 +320,20 @@ export default function MandiMapPage() {
             className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-bold text-sm shadow-lg shadow-blue-500/25 flex items-center gap-2 hover:scale-[1.02] transition-all"
           >
             <Navigation size={16} className={locating ? 'animate-spin' : ''} />
-            <span>{locating ? 'Detecting Location...' : '📍 Use My Location'}</span>
+            <span>{locating ? 'Detecting Location...' : '📍 Access My Location'}</span>
+          </button>
+          <button
+            onClick={handleTogglePinDrop}
+            className={`px-4 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm ${
+              pinDropMode
+                ? 'bg-red-600 text-white animate-pulse'
+                : droppedPin
+                ? 'bg-red-50 text-red-700 border border-red-300'
+                : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700'
+            }`}
+          >
+            <Pin size={15} />
+            <span>{pinDropMode ? 'Click Map to Place Pin' : droppedPin ? `Pin: ${droppedPin.lat.toFixed(2)}, ${droppedPin.lng.toFixed(2)}` : '📌 Drop a Pin'}</span>
           </button>
           <button
             onClick={setFallbackLocation}

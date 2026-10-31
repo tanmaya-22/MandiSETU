@@ -5,6 +5,7 @@ import {
   ShieldCheck, Award, Building2, CheckCircle2,
   Clock, AlertCircle, Search
 } from 'lucide-react'
+import { useLangStore } from '../../store/langStore'
 
 const MOCK_BUYERS = [
   {
@@ -58,6 +59,7 @@ const MOCK_BUYERS = [
 ]
 
 export default function BuyersPage() {
+  const { t } = useLangStore()
   const [buyers, setBuyers] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -103,8 +105,8 @@ export default function BuyersPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Buyer Verification & Credibility Index (Module 8)"
-        subtitle="Transparent institutional and merchant credibility scores calculated from historical payment turnaround and grievance outcomes."
+        title={t('bp_title') || 'Buyer Verification & Credibility Index (Module 8)'}
+        subtitle={t('bp_subtitle') || 'Transparent institutional and merchant credibility scores calculated from historical payment turnaround and grievance outcomes.'}
       />
 
       <Card className="flex items-center gap-3">

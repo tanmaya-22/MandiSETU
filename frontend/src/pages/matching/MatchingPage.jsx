@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { listingsAPI } from '../../api/modules'
 import { Card, PageHeader, Spinner, EmptyState } from '../../components/common/UI'
 import { ShieldCheck, ArrowRight, Filter, Scale, MapPin } from 'lucide-react'
+import { useLangStore } from '../../store/langStore'
 
 const MOCK_MATCHES = [
   {
@@ -56,6 +57,7 @@ const MOCK_MATCHES = [
 ]
 
 export default function MatchingPage() {
+  const { t } = useLangStore()
   const [matches, setMatches] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedCommodity, setSelectedCommodity] = useState('')
@@ -101,8 +103,8 @@ export default function MatchingPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Buyer–Farmer Matchmaking (Module 5)"
-        subtitle="Algorithmic matching system ranking digital lots by price affinity, geographical proximity, and volume suitability."
+        title={t('mp_title') || 'Buyer–Farmer Matchmaking (Module 5)'}
+        subtitle={t('mp_subtitle') || 'Algorithmic matching system ranking digital lots by price affinity, geographical proximity, and volume suitability.'}
       />
 
       <Card className="flex flex-col sm:flex-row items-center justify-between gap-4">

@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { transactionsAPI } from '../../api/modules'
 import { Card, PageHeader, StatusBadge, Spinner } from '../../components/common/UI'
 import { useAuthStore } from '../../store/authStore'
+import { useLangStore } from '../../store/langStore'
 import {
   ArrowLeft, CheckCircle, Clock, Truck, ShieldAlert,
   FileText, IndianRupee, MapPin
@@ -23,6 +24,7 @@ export default function TransactionDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { role } = useAuthStore()
+  const { t } = useLangStore()
 
   const [txn, setTxn] = useState(null)
   const [loading, setLoading] = useState(true)

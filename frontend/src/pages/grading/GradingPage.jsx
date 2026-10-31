@@ -7,8 +7,10 @@ import {
   HelpCircle, RefreshCw, FileImage
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useLangStore } from '../../store/langStore'
 
 export default function GradingPage() {
+  const { t } = useLangStore()
   const [searchParams] = useSearchParams()
   const initialLotId = searchParams.get('lot_id') || '1a2b3c4d-0001-4000-8000-000000000001'
 
@@ -59,8 +61,8 @@ export default function GradingPage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <PageHeader
-        title="AI Produce Quality Grading (Module 10)"
-        subtitle="Computer-vision powered grading assigning objective A+ to D quality scores to standardize pricing."
+        title={t('gp_title') || 'AI Produce Quality Grading (Module 10)'}
+        subtitle={t('gp_subtitle') || 'Computer-vision powered grading assigning objective A+ to D quality scores to standardize pricing.'}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

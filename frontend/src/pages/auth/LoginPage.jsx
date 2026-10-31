@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Leaf, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, UserCheck, Sparkles } from 'lucide-react'
+import { Leaf, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, UserCheck, Sparkles, MapPin } from 'lucide-react'
 import { authAPI, getApiBaseUrl } from '../../api/modules'
 import { useAuthStore } from '../../store/authStore'
+import { useLangStore } from '../../store/langStore'
+import { STATE_DISTRICTS } from '../../data/stateDistricts'
 
 const QUICK_DEMO_USERS = [
   {
@@ -44,20 +46,37 @@ const QUICK_DEMO_USERS = [
 export default function LoginPage() {
   const navigate = useNavigate()
   const login = useAuthStore((s) => s.login)
+  const { t } = useLangStore()
 
-  const [form, setForm] = useState({ email: 'farmer@demo.com', password: 'demo1234' })
+  const [form, setForm] = useState({
+    email: 'farmer@demo.com',
+    password: 'demo1234',
+    state: 'Maharashtra',
+    district: 'Nashik',
+  })
   const [showPwd, setShowPwd] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  const statesList = Object.keys(STATE_DISTRICTS)
+  const districtsForState = STATE_DISTRICTS[form.state] || STATE_DISTRICTS['Maharashtra']
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
   const handleQuickSelect = (user) => {
     if (user.isEmptyForSecurity) {
-      setForm({ email: '', password: '' })
+      setForm((f) => ({ ...f, email: '', password: '' }))
       toast('Admin(TanmayA) selected. Please enter your username/email and password.', { icon: '👑' })
       return
     }
-    setForm({ email: user.email, password: user.password || 'demo1234' })
+    const userState = user.role === 'admin' ? 'Odisha' : 'Maharashtra'
+    const userDistrict = user.role === 'admin' ? 'Cuttack' : 'Nashik'
+    setForm((f) => ({
+      ...f,
+      email: user.email,
+      password: user.password || 'demo1234',
+      state: userState,
+      district: userDistrict,
+    }))
     toast.success(`Loaded credentials for ${user.label}`, { icon: '✨' })
   }
 
@@ -75,8 +94,15 @@ export default function LoginPage() {
       const data = res?.data
       if (!data) throw new Error('No user data received')
 
-      login(data)
-      toast.success(`Welcome back, ${data.full_name || identifier}!`, { icon: '🌾' })
+      // Attach selected state & district to session profile
+      const enrichedUser = {
+        ...data,
+        state: form.state || data.state,
+        district: form.district || data.district,
+      }
+
+      login(enrichedUser)
+      toast.success(`Welcome back, ${data.full_name || identifier}! (${form.district}, ${form.state})`, { icon: '🌾' })
 
       // Smart redirection based on role
       setTimeout(() => {
@@ -163,6 +189,52 @@ export default function LoginPage() {
                 required
                 autoComplete="username"
               />
+            </div>
+
+            {/* State and District Dropdown Selection */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-gray-50/80 rounded-2xl border border-gray-100">
+              <div>
+                <label className="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1 flex items-center gap-1">
+                  <MapPin size={12} className="text-brand-600" />
+                  State
+                </label>
+                <select
+                  value={form.state}
+                  onChange={(e) => {
+                    const newState = e.target.value
+                    const newDistricts = STATE_DISTRICTS[newState] || []
+                    setForm((f) => ({
+                      ...f,
+                      state: newState,
+                      district: newDistricts[0] || '',
+                    }))
+                  }}
+                  className="input-field text-xs py-2 bg-white cursor-pointer"
+                >
+                  {statesList.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1">
+                  District (APMC Region)
+                </label>
+                <select
+                  value={form.district}
+                  onChange={(e) => set('district', e.target.value)}
+                  className="input-field text-xs py-2 bg-white cursor-pointer"
+                >
+                  {districtsForState.map((dst) => (
+                    <option key={dst} value={dst}>
+                      {dst}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div>

@@ -17,7 +17,7 @@ from app.routers.prices import router as prices_router
 from app.routers.net_realization import router as net_calc_router
 from app.routers.listings import router as listings_router, offers_router
 from app.routers.transactions import (
-    transactions_router, logistics_router, disputes_router
+    transactions_router, logistics_router, disputes_router, feedback_router
 )
 from app.routers.misc_modules import (
     sale_window_router,
@@ -107,6 +107,7 @@ app.include_router(disputes_router,      prefix=API_PREFIX)  # Module 9
 app.include_router(grading_router,       prefix=API_PREFIX)  # Module 10
 app.include_router(weather_router,       prefix=API_PREFIX)  # Module 11
 app.include_router(analytics_router,     prefix=API_PREFIX)  # Module 12
+app.include_router(feedback_router,      prefix=API_PREFIX)  # Module 14
 
 
 @app.get("/")

@@ -6,6 +6,7 @@ import {
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../../store/authStore'
 import { useLangStore } from '../../store/langStore'
+import { feedbackAPI } from '../../api/modules'
 
 const CATEGORIES = [
   { id: 'general', label: '🌾 General Improvement', icon: Lightbulb },
@@ -44,7 +45,7 @@ export default function FeedbackPage() {
     }
   }, [user?.email])
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.message.trim()) {
       toast.error('Please write a short suggestion or feedback message!')
@@ -52,26 +53,45 @@ export default function FeedbackPage() {
     }
 
     setSubmitting(true)
-    const newEntry = {
-      id: 'fb_' + Date.now(),
-      ...form,
-      timestamp: new Date().toISOString(),
-      user_id: user?.id || user?.user_id || 'guest',
-      role: user?.role || 'visitor',
-      status: 'new',
+    const payload = {
+      user_name: form.name || user?.full_name || 'Anonymous Farmer',
+      user_email: form.email || user?.email,
+      user_role: user?.role || 'farmer',
+      category: form.category,
+      subject: `Feedback on ${form.category}`,
+      message: form.message,
+      rating: form.rating,
     }
 
     try {
+      // 1. Send directly to PostgreSQL cloud database
+      const res = await feedbackAPI.submit(payload)
+
+      // 2. Also keep in local history
+      const newEntry = {
+        id: res?.feedback_id || 'fb_' + Date.now(),
+        ...form,
+        timestamp: new Date().toISOString(),
+        user_id: user?.id || user?.user_id || 'guest',
+        role: user?.role || 'visitor',
+        status: 'open',
+        source: res?.isOffline ? 'local' : 'postgresql',
+      }
       const existing = JSON.parse(localStorage.getItem('mandisetu_user_feedbacks') || '[]')
       const updated = [newEntry, ...existing]
       localStorage.setItem('mandisetu_user_feedbacks', JSON.stringify(updated))
-      setMyFeedbacks(prev => [newEntry, ...prev])
+      setMyFeedbacks((prev) => [newEntry, ...prev])
 
-      toast.success('Thank you! Your feedback has been sent to TanmayA and the MandiSetu team.', {
-        duration: 5000,
-        icon: '🙏',
-      })
-      setForm(prev => ({ ...prev, message: '' }))
+      toast.success(
+        res?.isOffline
+          ? 'Feedback recorded locally and queued for cloud database sync.'
+          : 'Thank you! Your feedback has been securely synced to PostgreSQL database and sent to TanmayA.',
+        {
+          duration: 5000,
+          icon: '🙏',
+        }
+      )
+      setForm((prev) => ({ ...prev, message: '' }))
     } catch (err) {
       toast.error('Could not save feedback. Please try again.')
     } finally {

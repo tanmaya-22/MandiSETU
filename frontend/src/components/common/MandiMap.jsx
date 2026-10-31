@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { MapPin, Navigation, Info, ArrowUpRight, Layers, ZoomIn, ZoomOut, Search } from 'lucide-react'
+import { MapPin, Navigation, Info, ArrowUpRight, Layers, ZoomIn, ZoomOut, Search, Crosshair, Pin } from 'lucide-react'
 import { ALL_MANDIS } from '../../data/mandisData'
 
 // Realistic coordinates and public data for major Indian mandis across all regions
@@ -8,6 +8,8 @@ export const MANDI_GEO_DATA = ALL_MANDIS
 export default function MandiMap({
   selectedCommodity = 'All',
   onSelectMandi,
+  onDropPin,
+  onLocationFound,
   height = '500px',
   interactive = true,
 }) {
@@ -18,6 +20,12 @@ export default function MandiMap({
   const [mapLoaded, setMapLoaded] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [tileMode, setTileMode] = useState('standard') // 'standard' or 'satellite'
+  const [userLocation, setUserLocation] = useState(null)
+  const userMarkerRef = useRef(null)
+  const droppedPinRef = useRef(null)
+  const [droppedPin, setDroppedPin] = useState(null)
+  const [locatingUser, setLocatingUser] = useState(false)
+  const [pinDropMode, setPinDropMode] = useState(false)
 
   // Dynamically load Leaflet from reliable CDN so it never has bundler issues
   useEffect(() => {
@@ -140,6 +148,88 @@ export default function MandiMap({
   const handleReset = () => {
     mapInstanceRef.current?.flyTo([21.5, 76.5], 5, { duration: 1 })
     setSelectedMandi(null)
+    // Clear dropped pin
+    if (droppedPinRef.current) {
+      droppedPinRef.current.remove()
+      droppedPinRef.current = null
+    }
+    setDroppedPin(null)
+  }
+
+  const handleLocateMe = () => {
+    if (!navigator.geolocation) return
+    setLocatingUser(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords
+        setUserLocation({ lat: latitude, lng: longitude })
+        if (onLocationFound) onLocationFound({ lat: latitude, lng: longitude })
+        const map = mapInstanceRef.current
+        const L = window.L
+        if (map && L) {
+          // Remove old user marker if any
+          if (userMarkerRef.current) userMarkerRef.current.remove()
+          const userIcon = L.divIcon({
+            html: `<div class="flex items-center justify-center w-8 h-8"><div class="w-5 h-5 bg-blue-600 rounded-full border-4 border-white shadow-xl animate-pulse"></div></div>`,
+            className: 'user-location-pin',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
+          })
+          userMarkerRef.current = L.marker([latitude, longitude], { icon: userIcon })
+            .addTo(map)
+            .bindPopup(`<div class="text-xs font-bold text-center">📍 Your Location<br/><span class="font-mono text-gray-500">${latitude.toFixed(5)}, ${longitude.toFixed(5)}</span></div>`)
+            .openPopup()
+          map.flyTo([latitude, longitude], 10, { duration: 1.5 })
+        }
+        setLocatingUser(false)
+      },
+      (err) => {
+        console.warn('[MandiSetu Map] Location access denied:', err)
+        setLocatingUser(false)
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    )
+  }
+
+  const handleTogglePinDrop = () => {
+    const map = mapInstanceRef.current
+    if (!map) return
+    if (pinDropMode) {
+      // Exit pin drop mode
+      setPinDropMode(false)
+      map.getContainer().style.cursor = ''
+      map.off('click')
+    } else {
+      setPinDropMode(true)
+      map.getContainer().style.cursor = 'crosshair'
+      map.once('click', (e) => {
+        const L = window.L
+        if (!L) return
+        // Remove old dropped pin
+        if (droppedPinRef.current) droppedPinRef.current.remove()
+        const pinIcon = L.divIcon({
+          html: `<div class="flex flex-col items-center"><div class="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-lg border-2 border-white">📌</div><div class="w-1.5 h-1.5 bg-red-700 rotate-45 -mt-0.5 mx-auto"></div></div>`,
+          className: 'dropped-pin',
+          iconSize: [24, 30],
+          iconAnchor: [12, 30],
+        })
+        const marker = L.marker([e.latlng.lat, e.latlng.lng], { icon: pinIcon, draggable: true })
+          .addTo(map)
+          .bindPopup(`<div class="text-xs font-bold text-center">📌 Dropped Pin<br/><span class="font-mono text-gray-500">${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}</span></div>`)
+          .openPopup()
+        marker.on('dragend', () => {
+          const pos = marker.getLatLng()
+          setDroppedPin({ lat: pos.lat, lng: pos.lng })
+          if (onDropPin) onDropPin({ lat: pos.lat, lng: pos.lng })
+          marker.setPopupContent(`<div class="text-xs font-bold text-center">📌 Dropped Pin<br/><span class="font-mono text-gray-500">${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}</span></div>`)
+        })
+        droppedPinRef.current = marker
+        setDroppedPin({ lat: e.latlng.lat, lng: e.latlng.lng })
+        if (onDropPin) onDropPin({ lat: e.latlng.lat, lng: e.latlng.lng })
+        setPinDropMode(false)
+        map.getContainer().style.cursor = ''
+      })
+    }
   }
 
   return (
@@ -175,6 +265,24 @@ export default function MandiMap({
 
       {/* Floating Zoom & Map Controls (Google Maps Style) */}
       <div className="absolute bottom-5 right-4 z-[1000] flex flex-col gap-1.5 shadow-lg rounded-xl overflow-hidden border border-gray-200 bg-white">
+        <button
+          onClick={handleLocateMe}
+          title="Access My Current GPS Location"
+          className={`p-2.5 hover:bg-gray-50 active:bg-gray-100 transition border-b border-gray-100 ${
+            locatingUser ? 'text-blue-600 animate-spin' : userLocation ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
+          }`}
+        >
+          <Crosshair size={18} />
+        </button>
+        <button
+          onClick={handleTogglePinDrop}
+          title={pinDropMode ? 'Click on map to drop pin' : 'Drop a Pin on Map'}
+          className={`p-2.5 hover:bg-gray-50 active:bg-gray-100 transition border-b border-gray-100 ${
+            pinDropMode ? 'text-red-600 bg-red-50 animate-bounce' : droppedPin ? 'text-red-600' : 'text-gray-700'
+          }`}
+        >
+          <Pin size={18} />
+        </button>
         <button
           onClick={handleZoomIn}
           title="Zoom In"

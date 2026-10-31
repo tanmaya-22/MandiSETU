@@ -204,4 +204,125 @@ async def resolve_dispute(
     dispute.resolution = resolution
     dispute.admin_notes = admin_notes
     dispute.resolved_at = datetime.now(timezone.utc)
+    await db.commit()
     return {"message": "Dispute resolved"}
+
+
+# ═══════════════════════════ MODULE 14 — Feedback & Grievance Router ═════════
+
+feedback_router = APIRouter(prefix="/feedback", tags=["Module 14 — Feedback & Grievances"])
+
+
+@feedback_router.post("")
+@feedback_router.post("/")
+async def create_feedback(
+    payload: dict,
+    db: AsyncSession = Depends(get_db),
+):
+    """Submit user feedback or grievance. Saved persistently to PostgreSQL."""
+    from app.models import FeedbackGrievance
+    from app.core.database import create_all_tables
+
+    try:
+        fb = FeedbackGrievance(
+            user_name=payload.get("user_name") or payload.get("name") or "Anonymous Farmer",
+            user_email=payload.get("user_email") or payload.get("email"),
+            user_role=payload.get("user_role") or payload.get("role") or "farmer",
+            category=payload.get("category") or "General Feedback",
+            subject=payload.get("subject") or "User Submitted Feedback",
+            message=payload.get("message") or payload.get("feedback") or "",
+            rating=int(payload.get("rating") or 5),
+            status="open",
+        )
+        db.add(fb)
+        await db.commit()
+        await db.refresh(fb)
+        return {
+            "status": "success",
+            "message": "Feedback securely submitted and synchronized with PostgreSQL database.",
+            "feedback_id": str(fb.id),
+        }
+    except Exception as e:
+        await db.rollback()
+        # Self-heal table creation if missing
+        await create_all_tables()
+        fb = FeedbackGrievance(
+            user_name=payload.get("user_name") or "Anonymous Farmer",
+            user_email=payload.get("user_email"),
+            user_role=payload.get("user_role") or "farmer",
+            category=payload.get("category") or "General Feedback",
+            subject=payload.get("subject") or "User Feedback",
+            message=payload.get("message") or "",
+            rating=int(payload.get("rating") or 5),
+            status="open",
+        )
+        db.add(fb)
+        await db.commit()
+        await db.refresh(fb)
+        return {
+            "status": "success",
+            "message": "Feedback saved to PostgreSQL.",
+            "feedback_id": str(fb.id),
+        }
+
+
+@feedback_router.get("")
+@feedback_router.get("/")
+async def list_feedback(
+    db: AsyncSession = Depends(get_db),
+):
+    """Retrieve all feedback and grievances for Admin oversight from PostgreSQL."""
+    from app.models import FeedbackGrievance
+    from app.core.database import create_all_tables
+
+    try:
+        result = await db.execute(select(FeedbackGrievance).order_by(FeedbackGrievance.created_at.desc()))
+        feedbacks = result.scalars().all()
+    except Exception:
+        await create_all_tables()
+        result = await db.execute(select(FeedbackGrievance).order_by(FeedbackGrievance.created_at.desc()))
+        feedbacks = result.scalars().all()
+
+    return [
+        {
+            "id": str(f.id),
+            "user_name": f.user_name,
+            "user_email": f.user_email,
+            "user_role": f.user_role,
+            "category": f.category,
+            "subject": f.subject,
+            "message": f.message,
+            "rating": f.rating,
+            "status": f.status,
+            "created_at": f.created_at.isoformat() if f.created_at else None,
+            "source": "postgresql",
+        }
+        for f in feedbacks
+    ]
+
+
+@feedback_router.patch("/{feedback_id}/status")
+async def update_feedback_status(
+    feedback_id: str,
+    payload: dict,
+    db: AsyncSession = Depends(get_db),
+):
+    """Update status of a feedback/grievance."""
+    from app.models import FeedbackGrievance
+    import uuid
+
+    try:
+        fid = uuid.UUID(feedback_id)
+        result = await db.execute(select(FeedbackGrievance).where(FeedbackGrievance.id == fid))
+        fb = result.scalar_one_or_none()
+        if not fb:
+            raise HTTPException(status_code=404, detail="Feedback not found")
+        if "status" in payload:
+            fb.status = payload["status"]
+        if "admin_response" in payload:
+            fb.admin_response = payload["admin_response"]
+        await db.commit()
+        return {"message": "Status updated successfully", "status": fb.status}
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))

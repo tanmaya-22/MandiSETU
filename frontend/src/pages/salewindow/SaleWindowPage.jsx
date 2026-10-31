@@ -10,6 +10,7 @@ import {
   XAxis, YAxis, Tooltip, Legend, CartesianGrid
 } from 'recharts'
 import toast from 'react-hot-toast'
+import { useLangStore } from '../../store/langStore'
 
 const MOCK_RECOMMENDATION = {
   commodity: 'Tomato',
@@ -28,6 +29,7 @@ const MOCK_RECOMMENDATION = {
 }
 
 export default function SaleWindowPage() {
+  const { t } = useLangStore()
   const [form, setForm] = useState({
     commodity: 'Tomato',
     mandi_name: 'Kolar APMC Market',
@@ -71,8 +73,8 @@ export default function SaleWindowPage() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <PageHeader
-        title="ML Sale-Window Recommendation (Module 7)"
-        subtitle="Optimise harvest-to-market timing by balancing predictive price trajectories against commodity perishability loss curves."
+        title={t('sw_title') || 'ML Sale-Window Recommendation (Module 7)'}
+        subtitle={t('sw_subtitle') || 'Optimise harvest-to-market timing by balancing predictive price trajectories against commodity perishability loss curves.'}
       />
 
       {/* Input Configuration */}

@@ -6,8 +6,10 @@ import {
   ShieldCheck, Calculator, ArrowRight
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useLangStore } from '../../store/langStore'
 
 export default function LogisticsPage() {
+  const { t } = useLangStore()
   const [form, setForm] = useState({
     origin_lat: 28.7041,
     origin_lng: 77.1025,
@@ -59,8 +61,8 @@ export default function LogisticsPage() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <PageHeader
-        title="Logistics Coordination & Freight Estimator (Module 8b)"
-        subtitle="Distance-calibrated freight engine factoring vehicle capacity tiers, fuel surcharges, and inter-mandi transit times."
+        title={t('lp_title') || 'Logistics Coordination & Freight Estimator (Module 8b)'}
+        subtitle={t('lp_subtitle') || 'Distance-calibrated freight engine factoring vehicle capacity tiers, fuel surcharges, and inter-mandi transit times.'}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

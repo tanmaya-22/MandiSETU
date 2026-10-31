@@ -77,14 +77,27 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Auto-logout on 401 only if user was actually logged in and not already on /login
+// Auto-logout on 401 only for real invalid tokens, never for demo/offline accounts or non-fatal module errors
 api.interceptors.response.use(
   (res) => res,
   (err) => {
+    const isDemoUser =
+      useAuthStore.getState().user?.isDemo ||
+      useAuthStore.getState().token?.startsWith('jwt-token-local-') ||
+      useAuthStore.getState().token?.startsWith('jwt-token-tanmaya-') ||
+      useAuthStore.getState().token?.startsWith('demo-jwt-token')
+
+    // NEVER log out a demo user or throw them to login screen on API 401
+    if (isDemoUser) {
+      console.warn('[MandiSetu] Demo/Local token received 401 from cloud backend, maintaining demo session uninterrupted.')
+      return Promise.reject(err)
+    }
+
     if (
       err.response?.status === 401 &&
       typeof window !== 'undefined' &&
       window.location.pathname !== '/login' &&
+      window.location.pathname !== '/register' &&
       useAuthStore.getState().isAuthenticated
     ) {
       useAuthStore.getState().logout()
