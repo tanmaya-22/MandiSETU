@@ -86,10 +86,16 @@ async def register(payload: UserRegisterRequest, db: AsyncSession = Depends(get_
         gst_number=payload.gst_number,
         powers=[],
     )
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
-    return user
+    try:
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+        return user
+    except Exception as e:
+        await db.rollback()
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Database user insert error: {type(e).__name__}: {str(e)}")
 
 
 @router.post("/login", response_model=TokenResponse)

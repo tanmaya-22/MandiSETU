@@ -32,7 +32,12 @@ export const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
     const customUrl = localStorage.getItem('mandisetu_api_base_url')
     if (customUrl && customUrl.trim()) {
-      return cleanBackendUrl(customUrl)
+      // Auto-migrate away from old non-working URL without -rn2n
+      if (customUrl.includes('mandisetu-api.onrender.com') && !customUrl.includes('-rn2n')) {
+        localStorage.removeItem('mandisetu_api_base_url')
+      } else {
+        return cleanBackendUrl(customUrl)
+      }
     }
   }
   const envUrl = import.meta.env.VITE_API_URL
