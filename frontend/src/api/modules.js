@@ -184,6 +184,61 @@ export function saveLocalUser(user) {
   }
 }
 
+export function getPendingSyncUsers() {
+  try {
+    const raw = localStorage.getItem('mandisetu_pending_sync_users')
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+export function queuePendingUserForSync(user) {
+  try {
+    const existing = getPendingSyncUsers()
+    const filtered = existing.filter((u) => u.email?.toLowerCase() !== user.email?.toLowerCase())
+    localStorage.setItem('mandisetu_pending_sync_users', JSON.stringify([...filtered, user]))
+  } catch {}
+}
+
+export async function syncPendingUsersToCloud() {
+  const pending = getPendingSyncUsers()
+  if (!pending || pending.length === 0) return { synced: 0 }
+
+  let successCount = 0
+  const remaining = []
+
+  for (const user of pending) {
+    try {
+      const res = await api.post('/auth/register', {
+        full_name: user.full_name,
+        email: user.email,
+        phone: user.phone || undefined,
+        password: user.password || 'demo1234',
+        role: user.role || 'farmer',
+        state: user.state || undefined,
+        district: user.district || undefined,
+        land_area_acres: user.land_area_acres || undefined,
+      })
+      if (res?.data) {
+        successCount++
+        saveLocalUser({ ...user, ...res.data, source: 'database', needs_sync: false })
+      }
+    } catch (err) {
+      if (err?.response?.status === 400) {
+        // Already registered in PostgreSQL
+        successCount++
+        saveLocalUser({ ...user, source: 'database', needs_sync: false })
+      } else {
+        remaining.push(user)
+      }
+    }
+  }
+
+  localStorage.setItem('mandisetu_pending_sync_users', JSON.stringify(remaining))
+  return { synced: successCount, remaining: remaining.length }
+}
+
 export function updateLocalUser(email, updates) {
   try {
     const existing = getLocalUsers()
@@ -298,28 +353,43 @@ export function hasUserPower(user, powerId) {
 // ─── Module 1: Auth (with 100% resilient fallback) ───────────────────────────
 export const authAPI = {
   register: async (data) => {
+    // 1. Primary: Try PostgreSQL cloud database directly
     try {
       const res = await api.post('/auth/register', data)
       if (res?.data) {
-        saveLocalUser({ ...data, ...res.data, id: res.data?.id || 'usr_' + Date.now(), source: 'database' })
-        return res
+        saveLocalUser({
+          ...data,
+          ...res.data,
+          id: res.data?.id || 'usr_' + Date.now(),
+          source: 'database',
+          synced: true,
+          powers: res.data?.powers || [],
+        })
+        return { ...res, isOffline: false }
       }
-      return res
+      return { ...res, isOffline: false }
     } catch (err) {
-      console.error('[MandiSetu] Backend registration failed:', err?.response?.data || err?.message)
-      const errorMsg =
-        err?.response?.data?.detail ||
-        (Array.isArray(err?.response?.data) ? err.response.data.map(d => d.msg).join(', ') : null) ||
-        err?.message ||
-        'Server registration failed'
+      console.warn('[MandiSetu] Cloud registration failed, checking if validation or connection error:', err?.response?.data || err?.message)
 
-      // If server explicitly returned validation or duplicate error:
-      if (err?.response?.status === 400 || err?.response?.status === 422) {
-        throw new Error(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg))
+      // If server explicitly rejected with 400 (e.g. email or phone already registered), raise it
+      if (err?.response?.status === 400 && err?.response?.data?.detail?.includes('already registered')) {
+        throw new Error(err.response.data.detail)
       }
 
-      // If backend network is unreachable, throw actionable error
-      throw new Error(`Cannot reach cloud database at ${getApiBaseUrl()}: ${errorMsg}. Please ensure the backend is connected.`)
+      // 2. Resilient Fallback: Save account locally and queue for background cloud sync
+      const newUser = {
+        ...data,
+        id: 'usr_' + Date.now(),
+        access_token: 'jwt-token-local-' + Math.random().toString(36).substring(2),
+        source: 'local',
+        needs_sync: true,
+        is_verified: true,
+        created_at: new Date().toISOString(),
+        powers: [],
+      }
+      saveLocalUser(newUser)
+      queuePendingUserForSync(newUser)
+      return { data: newUser, isOffline: true }
     }
   },
 
@@ -447,6 +517,11 @@ export const authAPI = {
    * Merges server users with local demo users (no duplicates).
    */
   fetchAllUsers: async () => {
+    // 1. Automatically push any pending offline registrations to PostgreSQL
+    try {
+      await syncPendingUsersToCloud()
+    } catch {}
+
     let serverUsers = []
     try {
       const res = await api.get('/auth/users/public')
@@ -466,7 +541,7 @@ export const authAPI = {
     const serverEmails = new Set(serverUsers.map((u) => u.email?.toLowerCase()))
     const localOnlyUsers = localUsers
       .filter((u) => !serverEmails.has(u.email?.toLowerCase()))
-      .map((u) => ({ ...u, source: 'local' }))
+      .map((u) => ({ ...u, source: u.source || 'local' }))
 
     const merged = [...serverUsers, ...localOnlyUsers]
 

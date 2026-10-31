@@ -102,7 +102,11 @@ export default function RegisterPage() {
       const res = await authAPI.register(payload)
       const data = res?.data
 
-      toast.success('🎉 Account created successfully! Logging you in...', { duration: 3000 })
+      if (res?.isOffline) {
+        toast.success('🌾 Account created (saved locally & queued for cloud sync)!', { duration: 4000, icon: '💾' })
+      } else {
+        toast.success('🎉 Account created and saved to cloud database! Logging in...', { duration: 3000, icon: '☁️' })
+      }
 
       // Auto login newly registered account so the user can immediately experience the platform
       if (data) {

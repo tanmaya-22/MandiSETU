@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/v1/:path*",
-      "destination": "https://mandisetu-api.onrender.com/api/v1/:path*"
+      "destination": "https://mandisetu-api-rn2n.onrender.com/api/v1/:path*"
     },
     {
       "source": "/(.*)",

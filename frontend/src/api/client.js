@@ -41,7 +41,7 @@ export const getApiBaseUrl = () => {
   }
   // Default to standard Render backend URL if running on Vercel or any cloud domain
   if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    return 'https://mandisetu-api.onrender.com/api/v1'
+    return 'https://mandisetu-api-rn2n.onrender.com/api/v1'
   }
   return '/api/v1'
 }
