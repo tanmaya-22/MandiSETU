@@ -12,7 +12,10 @@ from sqlalchemy import select
 
 from app.core.database import get_db
 from app.core.security import get_current_user_payload
-from app.models import Transaction, TransactionStatus, Dispute, DisputeStatus, DisputeCategory
+from app.models import (
+    Transaction, TransactionStatus, Dispute, DisputeStatus, DisputeCategory,
+    LotStatus, ProduceLot, Offer, OfferStatus, User,
+)
 from app.schemas import (
     TransactionOut, TransactionStatusUpdate,
     DisputeCreateRequest, DisputeOut,
@@ -110,62 +113,65 @@ async def list_all_transactions_public(
 @transactions_router.post("/public/seed-demo")
 async def seed_demo_escrow_transaction(db: AsyncSession = Depends(get_db)):
     """Creates a real escrow trade contract between farmer and buyer in PostgreSQL."""
-    from app.models import ProduceLot, Offer, OfferStatus, User
-    first_lot = (await db.execute(select(ProduceLot).where(ProduceLot.status == LotStatus.ACTIVE).limit(1))).scalar_one_or_none()
-    if not first_lot:
-        first_lot = (await db.execute(select(ProduceLot).limit(1))).scalar_one_or_none()
-    if not first_lot:
-        return {"error": "No lots available to attach trade contract"}
+    try:
+        first_lot = (await db.execute(select(ProduceLot).where(ProduceLot.status == LotStatus.ACTIVE).limit(1))).scalar_one_or_none()
+        if not first_lot:
+            first_lot = (await db.execute(select(ProduceLot).limit(1))).scalar_one_or_none()
+        if not first_lot:
+            return {"error": "No lots available to attach trade contract"}
 
-    first_u = (await db.execute(select(User).limit(1))).scalar_one_or_none()
-    if not first_u:
-        return {"error": "No user available"}
+        first_u = (await db.execute(select(User).limit(1))).scalar_one_or_none()
+        if not first_u:
+            return {"error": "No user available"}
 
-    demo_offer = Offer(
-        lot_id=first_lot.id,
-        buyer_id=first_u.id,
-        offered_price_per_kg=first_lot.min_price_per_kg,
-        quantity_kg=first_lot.quantity_kg,
-        message="Standard verified APMC trade contract with Escrow Guarantee",
-        status=OfferStatus.ACCEPTED,
-    )
-    db.add(demo_offer)
-    await db.commit()
-    await db.refresh(demo_offer)
+        demo_offer = Offer(
+            lot_id=first_lot.id,
+            buyer_id=first_u.id,
+            offered_price_per_kg=first_lot.min_price_per_kg,
+            quantity_kg=first_lot.quantity_kg,
+            message="Standard verified APMC trade contract with Escrow Guarantee",
+            status=OfferStatus.ACCEPTED,
+        )
+        db.add(demo_offer)
+        await db.commit()
+        await db.refresh(demo_offer)
 
-    tot = round(first_lot.quantity_kg * first_lot.min_price_per_kg, 2)
-    comm = round(tot * 0.02, 2)
-    trans = 1450.0
-    stor = 300.0
-    net_r = round(tot - trans - comm - stor, 2)
+        tot = round(first_lot.quantity_kg * first_lot.min_price_per_kg, 2)
+        comm = round(tot * 0.02, 2)
+        trans = 1450.0
+        stor = 300.0
+        net_r = round(tot - trans - comm - stor, 2)
 
-    demo_txn = Transaction(
-        lot_id=first_lot.id,
-        offer_id=demo_offer.id,
-        seller_id=first_lot.owner_id,
-        buyer_id=first_u.id,
-        final_price_per_kg=first_lot.min_price_per_kg,
-        quantity_kg=first_lot.quantity_kg,
-        total_amount=tot,
-        transport_cost=trans,
-        commission_cost=comm,
-        storage_cost=stor,
-        net_realization=net_r,
-        status=TransactionStatus.IN_TRANSIT,
-        status_history=[
-            {"status": "initiated", "timestamp": datetime.now(timezone.utc).isoformat(), "note": "Offer accepted by farmer"},
-            {"status": "payment_received", "timestamp": datetime.now(timezone.utc).isoformat(), "note": "Escrow deposit locked by ICICI AgriPay"},
-            {"status": "pickup_scheduled", "timestamp": datetime.now(timezone.utc).isoformat(), "note": "Logistics assigned"},
-            {"status": "in_transit", "timestamp": datetime.now(timezone.utc).isoformat(), "note": "Tata 407 in transit to destination mandi"}
-        ],
-        logistics_provider="MandiSetu Direct Logistics (Tata 407)",
-        tracking_id="TRK-IND-9281",
-    )
-    db.add(demo_txn)
-    await db.commit()
-    await db.refresh(demo_txn)
+        demo_txn = Transaction(
+            lot_id=first_lot.id,
+            offer_id=demo_offer.id,
+            seller_id=first_lot.owner_id,
+            buyer_id=first_u.id,
+            final_price_per_kg=first_lot.min_price_per_kg,
+            quantity_kg=first_lot.quantity_kg,
+            total_amount=tot,
+            transport_cost=trans,
+            commission_cost=comm,
+            storage_cost=stor,
+            net_realization=net_r,
+            status=TransactionStatus.IN_TRANSIT,
+            status_history=[
+                {"status": "initiated", "timestamp": datetime.now(timezone.utc).isoformat(), "note": "Offer accepted by farmer"},
+                {"status": "payment_received", "timestamp": datetime.now(timezone.utc).isoformat(), "note": "Escrow deposit locked by ICICI AgriPay"},
+                {"status": "pickup_scheduled", "timestamp": datetime.now(timezone.utc).isoformat(), "note": "Logistics assigned"},
+                {"status": "in_transit", "timestamp": datetime.now(timezone.utc).isoformat(), "note": "Tata 407 in transit to destination mandi"}
+            ],
+            logistics_provider="MandiSetu Direct Logistics (Tata 407)",
+            tracking_id="TRK-IND-9281",
+        )
+        db.add(demo_txn)
+        await db.commit()
+        await db.refresh(demo_txn)
 
-    return {"message": "Demo escrow transaction seeded", "transaction_id": str(demo_txn.id)}
+        return {"message": "Demo escrow transaction seeded", "transaction_id": str(demo_txn.id)}
+    except Exception as e:
+        print(f"[Seed demo error]: {e}")
+        return {"error": str(e)}
 
 
 @transactions_router.get("/public/{txn_id}")
