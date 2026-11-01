@@ -270,7 +270,8 @@ async def accept_offer(
         status_history=[{"status": "initiated", "timestamp": datetime.now(timezone.utc).isoformat()}],
     )
     db.add(txn)
-    await db.flush()
+    await db.commit()
+    await db.refresh(txn)
     return {"message": "Offer accepted", "transaction_id": str(txn.id)}
 
 
