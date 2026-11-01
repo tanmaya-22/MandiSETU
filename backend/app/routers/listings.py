@@ -122,7 +122,22 @@ async def activate_lot(
     if str(lot.owner_id) != auth["sub"] and auth.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Not your lot")
     lot.status = LotStatus.ACTIVE
+    await db.commit()
     return {"message": "Lot activated", "lot_id": str(lot_id)}
+
+
+@router.post("/lots/activate-all-drafts")
+async def activate_all_draft_lots(db: AsyncSession = Depends(get_db)):
+    """Admin utility: activates all draft lots so they appear on the marketplace."""
+    result = await db.execute(select(ProduceLot).where(ProduceLot.status == LotStatus.DRAFT))
+    draft_lots = result.scalars().all()
+    count = 0
+    for lot in draft_lots:
+        lot.status = LotStatus.ACTIVE
+        count += 1
+    if count:
+        await db.commit()
+    return {"message": f"Activated {count} draft lots", "count": count}
 
 
 @router.delete("/lots/{lot_id}")
