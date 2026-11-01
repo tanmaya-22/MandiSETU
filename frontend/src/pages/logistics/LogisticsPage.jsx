@@ -3,10 +3,11 @@ import { logisticsAPI } from '../../api/modules'
 import { Card, PageHeader, Spinner } from '../../components/common/UI'
 import {
   Truck, MapPin, Scale, Clock, IndianRupee,
-  ShieldCheck, Calculator, ArrowRight
+  ShieldCheck, Calculator, ArrowRight, Navigation
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useLangStore } from '../../store/langStore'
+import { reverseGeocode } from '../../utils/geoUtils'
 
 export default function LogisticsPage() {
   const { t } = useLangStore()
@@ -27,6 +28,34 @@ export default function LogisticsPage() {
     total_freight_cost: 2875,
     recommended_vehicle: 'Tata Ace / Mini-Truck (2-tonne capacity)',
   })
+
+  const [originAreaName, setOriginAreaName] = useState('Azadpur, New Delhi')
+  const [destAreaName, setDestAreaName] = useState('Meerut, Uttar Pradesh')
+  const [locatingGps, setLocatingGps] = useState(false)
+
+  const handleAccessOriginGps = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation not supported by your browser')
+      return
+    }
+    setLocatingGps(true)
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        setLocatingGps(false)
+        const lat = parseFloat(pos.coords.latitude.toFixed(4))
+        const lng = parseFloat(pos.coords.longitude.toFixed(4))
+        setForm((prev) => ({ ...prev, origin_lat: lat, origin_lng: lng }))
+        const name = await reverseGeocode(lat, lng)
+        setOriginAreaName(name)
+        toast.success(`Origin detected: ${name}`, { icon: '📍' })
+      },
+      (err) => {
+        setLocatingGps(false)
+        toast.error('Unable to retrieve GPS: ' + err.message)
+      },
+      { timeout: 8000 }
+    )
+  }
 
   const handleEstimate = async (e) => {
     e.preventDefault()
@@ -94,9 +123,24 @@ export default function LogisticsPage() {
               />
             </div>
 
-            <div className="border-t border-gray-100 pt-2">
-              <span className="text-[11px] font-semibold text-gray-500 uppercase">Origin Coordinates</span>
-              <div className="grid grid-cols-2 gap-2 mt-1">
+            <div className="border-t border-gray-100 dark:border-gray-800 pt-2">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[11px] font-semibold text-gray-500 uppercase">Origin Area Location</span>
+                <button
+                  type="button"
+                  onClick={handleAccessOriginGps}
+                  disabled={locatingGps}
+                  className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1"
+                >
+                  <Navigation size={11} className={locatingGps ? 'animate-spin' : ''} />
+                  <span>{locatingGps ? 'Locating...' : 'Access My GPS'}</span>
+                </button>
+              </div>
+              <div className="p-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-1.5 mb-1.5">
+                <MapPin size={13} className="text-emerald-600 shrink-0" />
+                <span>{originAreaName}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
                 <input
                   type="number"
                   step="0.0001"
@@ -116,9 +160,13 @@ export default function LogisticsPage() {
               </div>
             </div>
 
-            <div className="border-t border-gray-100 pt-2">
-              <span className="text-[11px] font-semibold text-gray-500 uppercase">Destination Mandi</span>
-              <div className="grid grid-cols-2 gap-2 mt-1">
+            <div className="border-t border-gray-100 dark:border-gray-800 pt-2">
+              <span className="text-[11px] font-semibold text-gray-500 uppercase block mb-1">Destination Mandi / Hub</span>
+              <div className="p-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-1.5 mb-1.5">
+                <MapPin size={13} className="text-blue-600 shrink-0" />
+                <span>{destAreaName}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
                 <input
                   type="number"
                   step="0.0001"

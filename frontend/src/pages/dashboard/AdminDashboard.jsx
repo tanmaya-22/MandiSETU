@@ -108,8 +108,15 @@ export default function AdminDashboard() {
   const [overrideReason, setOverrideReason] = useState('')
   const [overrideValue, setOverrideValue] = useState('')
 
-  // Hover Tooltip for demo encrypted mode
-  const [hoveredEncryptedId, setHoveredEncryptedId] = useState(null)
+  // New Dispute Filing by Admin
+  const [showLogDisputeModal, setShowLogDisputeModal] = useState(false)
+  const [newDisputeForm, setNewDisputeForm] = useState({
+    farmerName: '',
+    buyerName: '',
+    category: 'Payment Delay',
+    amount: '',
+    description: '',
+  })
 
   // Cloud Backend / Cross-Device Sync State
   const [backendHealth, setBackendHealth] = useState({ checked: false, ok: false, latency: 0, url: getApiBaseUrl() })
@@ -521,9 +528,20 @@ export default function AdminDashboard() {
       } catch {
         // Fallback handled locally
       }
+    } else if (item?.isDispute && actionType === 'delete') {
+      try {
+        await disputesAPI.delete(item.id)
+      } catch {
+        // Fallback handled locally
+      }
     }
     if (actionType === 'delete') {
       setGrievances((prev) => prev.filter((g) => g.id !== item.id))
+      const rawDisp = localStorage.getItem('mandisetu_user_disputes')
+      if (rawDisp) {
+        const localDisp = JSON.parse(rawDisp).filter((d) => d.id !== item.id)
+        localStorage.setItem('mandisetu_user_disputes', JSON.stringify(localDisp))
+      }
     } else {
       setGrievances((prev) =>
         prev.map((g) => (g.id === item.id ? { ...g, status: actionType === 'resolve' ? 'resolved' : 'escalated' } : g))
@@ -532,6 +550,41 @@ export default function AdminDashboard() {
     logAuditAction(`Grievance ${actionType}`, item.id, `Reason: ${overrideReason}`)
     toast.success(`Grievance ${item.id} ${actionType}d with documented audit reason.`)
     setPivotalModal(null)
+  }
+
+  // Admin Logs a New Dispute/Arbitration Case
+  const handleAdminLogDispute = (e) => {
+    e.preventDefault()
+    if (!newDisputeForm.farmerName.trim() || !newDisputeForm.description.trim()) {
+      toast.error('Farmer name and description are required!')
+      return
+    }
+    const newCase = {
+      id: `DISP-${Math.floor(1000 + Math.random() * 9000)}`,
+      farmer: newDisputeForm.farmerName.trim(),
+      buyer: newDisputeForm.buyerName.trim() || 'Unassigned / APMC Buyer',
+      type: newDisputeForm.category,
+      amount: parseFloat(newDisputeForm.amount) || 0,
+      status: 'open',
+      date: new Date().toISOString().split('T')[0],
+      description: newDisputeForm.description.trim(),
+      isDispute: true,
+      filer_name: newDisputeForm.farmerName.trim(),
+      respondent_name: newDisputeForm.buyerName.trim() || 'APMC Merchant',
+    }
+    setGrievances((prev) => [newCase, ...prev])
+    const rawDisp = localStorage.getItem('mandisetu_user_disputes')
+    const localDisp = rawDisp ? JSON.parse(rawDisp) : []
+    localStorage.setItem('mandisetu_user_disputes', JSON.stringify([newCase, ...localDisp]))
+
+    logAuditAction(
+      'Log Dispute Case',
+      newCase.id,
+      `Case logged for ${newCase.farmer} vs ${newCase.buyer} (${newCase.type}) by Admin`
+    )
+    toast.success(`Dispute ${newCase.id} registered successfully in the system!`)
+    setShowLogDisputeModal(false)
+    setNewDisputeForm({ farmerName: '', buyerName: '', category: 'Payment Delay', amount: '', description: '' })
   }
 
   // Buyer Rating Override (with dynamic RBAC check)
@@ -1796,6 +1849,12 @@ export default function AdminDashboard() {
                 Every grievance resolution or escalation requires mandatory documented justification.
               </p>
             </div>
+            <button
+              onClick={() => setShowLogDisputeModal(true)}
+              className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow"
+            >
+              <span>+ Log New Case</span>
+            </button>
           </div>
 
           <div className="overflow-x-auto">
@@ -1997,15 +2056,15 @@ export default function AdminDashboard() {
                 <div key={f.id} className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 space-y-2">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-gray-900 dark:text-white text-xs">{f.name || 'Anonymous User'}</span>
-                      <span className="text-[11px] text-gray-500 font-mono">({f.email})</span>
+                      <span className="font-bold text-gray-900 dark:text-white text-xs">{f.user_name || f.name || 'Registered User'}</span>
+                      <span className="text-[11px] text-gray-500 font-mono">({f.user_email || f.email || 'N/A'})</span>
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-100 text-brand-800 capitalize">
                         {f.category}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
                       <span className="text-amber-500 font-bold">{f.rating}/5 ⭐</span>
-                      <span className="text-gray-400 text-[11px] font-mono">{new Date(f.timestamp).toLocaleString()}</span>
+                      <span className="text-gray-400 text-[11px] font-mono">{new Date(f.created_at || f.timestamp || Date.now()).toLocaleString()}</span>
                     </div>
                   </div>
                   <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
@@ -2289,6 +2348,116 @@ export default function AdminDashboard() {
                 Close Audit
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Log New Dispute Modal */}
+      {showLogDisputeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 max-w-lg w-full shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
+              <h3 className="font-extrabold text-base text-gray-900 dark:text-white flex items-center gap-2">
+                <span>⚖️</span> Log New Dispute / Arbitration Case
+              </h3>
+              <button
+                onClick={() => setShowLogDisputeModal(false)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleAdminLogDispute} className="space-y-4 pt-4 text-xs">
+              <div>
+                <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  Farmer Name / Filer <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Ramesh Patel"
+                  value={newDisputeForm.farmerName}
+                  onChange={(e) => setNewDisputeForm({ ...newDisputeForm, farmerName: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  Buyer Name / Respondent
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. AgroCorp Traders"
+                  value={newDisputeForm.buyerName}
+                  onChange={(e) => setNewDisputeForm({ ...newDisputeForm, buyerName: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    Dispute Category
+                  </label>
+                  <select
+                    value={newDisputeForm.category}
+                    onChange={(e) => setNewDisputeForm({ ...newDisputeForm, category: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  >
+                    <option value="Payment Delay">Payment Delay</option>
+                    <option value="Quality Rejection">Quality Rejection</option>
+                    <option value="Transit Spoilage">Transit Spoilage</option>
+                    <option value="Cess Deduction">Cess Deduction</option>
+                    <option value="Contract Default">Contract Default</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    Claim Amount (₹)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 25000"
+                    value={newDisputeForm.amount}
+                    onChange={(e) => setNewDisputeForm({ ...newDisputeForm, amount: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  Case Details & Evidence Notes <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  placeholder="Provide incident summary, lot numbers, or payment tranches involved..."
+                  value={newDisputeForm.description}
+                  onChange={(e) => setNewDisputeForm({ ...newDisputeForm, description: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                <button
+                  type="button"
+                  onClick={() => setShowLogDisputeModal(false)}
+                  className="flex-1 py-2 rounded-xl border border-gray-300 dark:border-gray-700 font-semibold text-gray-700 dark:text-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold shadow"
+                >
+                  Register Case
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

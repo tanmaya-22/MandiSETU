@@ -860,6 +860,7 @@ export const disputesAPI = {
   getAll: ()        => api.get('/disputes'),
   resolve: (id, resolution, admin_notes) =>
     api.patch(`/disputes/${id}/resolve`, null, { params: { resolution, admin_notes } }),
+  delete: (id)      => api.delete(`/disputes/${id}`),
 }
 
 // ─── Module 10: Grading ───────────────────────────────────────────────────────

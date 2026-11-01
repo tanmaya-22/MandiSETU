@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useLangStore } from '../../store/langStore'
+import { reverseGeocode } from '../../utils/geoUtils'
 
 const WEATHER_API_KEY = '45f0ee74bec083ada9f8a8c45bc7e103'
 
@@ -120,12 +121,13 @@ export default function WeatherPage() {
     }
 
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const uLat = pos.coords.latitude
         const uLng = pos.coords.longitude
         setCoords({ lat: uLat, lng: uLng })
-        setLocationName(`Your Farm Coordinates (${uLat.toFixed(2)}°N, ${uLng.toFixed(2)}°E)`)
-        toast.success('Live weather loaded for your current location!', { icon: '🌦️' })
+        const areaName = await reverseGeocode(uLat, uLng)
+        setLocationName(areaName)
+        toast.success(`Live weather loaded for ${areaName}!`, { icon: '🌦️' })
         setLocating(false)
       },
       (err) => {

@@ -235,6 +235,21 @@ async def resolve_dispute(
     return {"message": "Dispute resolved"}
 
 
+@disputes_router.delete("/{dispute_id}")
+async def delete_dispute(
+    dispute_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Admin purge/delete of dispute or grievance."""
+    result = await db.execute(select(Dispute).where(Dispute.id == dispute_id))
+    dispute = result.scalar_one_or_none()
+    if not dispute:
+        raise HTTPException(status_code=404, detail="Dispute not found")
+    await db.delete(dispute)
+    await db.commit()
+    return {"message": f"Dispute {dispute_id} permanently removed"}
+
+
 # ═══════════════════════════ MODULE 14 — Feedback & Grievance Router ═════════
 
 feedback_router = APIRouter(prefix="/feedback", tags=["Module 14 — Feedback & Grievances"])
