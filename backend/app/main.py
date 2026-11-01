@@ -45,16 +45,14 @@ async def lifespan(app: FastAPI):
             # Auto-seed live initial produce lots and escrow transactions if DB empty
             try:
                 from sqlalchemy import select, func
-                from app.models import ProduceLot, Transaction, LotStatus, TransactionStatus, User, GradeLevel
+                from app.models import ProduceLot, Transaction, Offer, OfferStatus, LotStatus, TransactionStatus, User, GradeLevel
                 import uuid
                 from datetime import datetime, timezone
 
                 lot_count = (await db.execute(select(func.count(ProduceLot.id)))).scalar()
-                if lot_count == 0:
-                    farmer_res = await db.execute(select(User).where(User.role == "farmer").limit(1))
-                    farmer = farmer_res.scalar_one_or_none()
-                    owner_id = farmer.id if farmer else uuid.UUID("11111111-1111-1111-1111-111111111111")
-                    
+                first_u = (await db.execute(select(User).limit(1))).scalar_one_or_none()
+                if first_u and lot_count == 0:
+                    owner_id = first_u.id
                     seed_lots = [
                         ProduceLot(
                             id=uuid.UUID("1a2b3c4d-0001-4000-8000-000000000001"),
@@ -132,6 +130,52 @@ async def lifespan(app: FastAPI):
                     db.add_all(seed_lots)
                     await db.commit()
                     print(f"[MandiSetu] Seeded {len(seed_lots)} live produce lots to PostgreSQL")
+
+                # Seed demo transaction if none exist
+                txn_count = (await db.execute(select(func.count(Transaction.id)))).scalar()
+                if first_u and txn_count == 0:
+                    first_lot = (await db.execute(select(ProduceLot).limit(1))).scalar_one_or_none()
+                    if first_lot:
+                        demo_offer = Offer(
+                            id=uuid.UUID("1a2b3c4d-0001-5000-8000-000000000001"),
+                            lot_id=first_lot.id,
+                            buyer_id=first_u.id,
+                            offered_price_per_kg=first_lot.min_price_per_kg,
+                            quantity_kg=first_lot.quantity_kg,
+                            message="Procurement order via MandiSetu Escrow",
+                            status=OfferStatus.ACCEPTED,
+                        )
+                        db.add(demo_offer)
+                        await db.commit()
+
+                        tot = round((first_lot.quantity_kg or 2500) * (first_lot.min_price_per_kg or 24.5), 2)
+                        demo_txn = Transaction(
+                            id=uuid.UUID("99014401-8801-4000-8000-000000000001"),
+                            lot_id=first_lot.id,
+                            offer_id=demo_offer.id,
+                            seller_id=first_lot.owner_id,
+                            buyer_id=first_u.id,
+                            final_price_per_kg=first_lot.min_price_per_kg or 24.5,
+                            quantity_kg=first_lot.quantity_kg or 2500,
+                            total_amount=tot,
+                            transport_cost=1200.0,
+                            commission_cost=round(tot * 0.02, 2),
+                            storage_cost=0.0,
+                            net_realization=round(tot - 1200.0 - (tot * 0.02), 2),
+                            status=TransactionStatus.IN_TRANSIT,
+                            status_history=[
+                                {"status": "initiated", "timestamp": datetime.now(timezone.utc).isoformat(), "note": "Trade contract generated"},
+                                {"status": "payment_received", "timestamp": datetime.now(timezone.utc).isoformat(), "note": "Buyer escrow funded"},
+                                {"status": "in_transit", "timestamp": datetime.now(timezone.utc).isoformat(), "note": "Dispatched via Tata 407"}
+                            ],
+                            logistics_provider="MandiSetu AgriLogistics (Tata 407)",
+                            tracking_id="TRK-IND-9281",
+                        )
+                        db.add(demo_txn)
+                        await db.commit()
+                        print("[MandiSetu] Seeded live escrow demo transaction connected to lot")
+            except Exception as e_seed:
+                print(f"[MandiSetu DB Seed Notice]: {e_seed}")
             except Exception as e_seed:
                 print(f"[MandiSetu DB Seed Notice]: {e_seed}")
     except Exception as e:

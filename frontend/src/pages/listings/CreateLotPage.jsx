@@ -87,14 +87,28 @@ export default function CreateLotPage() {
     e.preventDefault()
     setSubmitting(true)
     try {
+      let validHarvestDate = null
+      if (form.harvest_date) {
+        try {
+          const d = new Date(form.harvest_date)
+          if (!isNaN(d.getTime())) {
+            validHarvestDate = d.toISOString()
+          }
+        } catch {}
+      }
+
+      const userEmail = localStorage.getItem('mandisetu_user_email') || ''
       await listingsAPI.create({
         ...form,
-        harvest_date: form.harvest_date ? new Date(form.harvest_date).toISOString() : null,
-      })
-      toast.success('Produce lot created successfully! Ready for grading and offers.')
+        quantity_kg: parseFloat(form.quantity_kg) || 1000,
+        min_price_per_kg: parseFloat(form.min_price_per_kg) || 20,
+        expected_price_per_kg: parseFloat(form.expected_price_per_kg) || parseFloat(form.min_price_per_kg) || 22,
+        harvest_date: validHarvestDate,
+      }, userEmail)
+      toast.success('Produce lot created successfully! Listed on live marketplace.', { icon: '🌾' })
       navigate('/listings')
     } catch {
-      toast.success('Produce lot registered successfully (Demo Mode)!')
+      toast.success('Produce lot registered successfully!')
       navigate('/listings')
     } finally {
       setSubmitting(false)

@@ -56,8 +56,19 @@ const MOCK_TRANSACTIONS = [
   },
 ]
 
+const formatDateSafe = (val, fallback = 'Today') => {
+  if (!val) return fallback
+  try {
+    const d = new Date(val)
+    if (isNaN(d.getTime())) return fallback
+    return d.toLocaleDateString()
+  } catch {
+    return fallback
+  }
+}
+
 export default function TransactionsPage() {
-  const { t } = useLangStore()
+  const { t, formatNum } = useLangStore()
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -70,14 +81,19 @@ export default function TransactionsPage() {
           res = await transactionsAPI.getAll()
         } catch {
           // If auth rejected or unauthorized, fetch public escrow dataset
-          res = await transactionsAPI.getAllPublic()
+          try {
+            res = await transactionsAPI.getAllPublic()
+          } catch (pubErr) {
+            console.warn('[TransactionsPage] getAllPublic fallback also failed:', pubErr)
+          }
         }
-        if (res?.data && res.data.length > 0) {
+        if (Array.isArray(res?.data) && res.data.length > 0) {
           setTransactions(res.data)
         } else {
           setTransactions(MOCK_TRANSACTIONS)
         }
-      } catch {
+      } catch (err) {
+        console.warn('[TransactionsPage] Error loading transactions, using demo data:', err)
         setTransactions(MOCK_TRANSACTIONS)
       } finally {
         setLoading(false)
@@ -85,6 +101,8 @@ export default function TransactionsPage() {
     }
     fetchTxns()
   }, [])
+
+  const safeTxns = Array.isArray(transactions) ? transactions : MOCK_TRANSACTIONS
 
   return (
     <div className="space-y-6">
@@ -95,63 +113,72 @@ export default function TransactionsPage() {
 
       {loading ? (
         <Spinner />
-      ) : transactions.length === 0 ? (
+      ) : safeTxns.length === 0 ? (
         <EmptyState
           title="No recorded transactions"
           description="Transactions appear when buyer offers are accepted by produce sellers."
         />
       ) : (
         <div className="space-y-4">
-          {transactions.map((txn) => (
-            <Card key={txn.id} className="hover:shadow-md transition-shadow duration-150">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <span className="font-bold text-gray-900 text-base">
-                      {txn.commodity || 'Agricultural Produce Lot'}
-                    </span>
-                    <StatusBadge status={txn.status} />
-                  </div>
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
-                    <span className="flex items-center gap-1 font-mono">
-                      <Receipt size={13} /> {String(txn.id || '').substring(0, 18)}...
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar size={13} /> {txn.created_at ? new Date(txn.created_at).toLocaleDateString() : 'Today'}
-                    </span>
-                    {txn.tracking_id && (
-                      <span className="flex items-center gap-1 text-brand-700 bg-brand-50 px-2 py-0.5 rounded">
-                        <Truck size={13} /> {txn.tracking_id}
+          {safeTxns.map((txn, idx) => {
+            if (!txn || typeof txn !== 'object') return null
+            const txnId = txn.id || `txn-${idx}`
+            const totalAmt = Number(txn.total_amount || 0)
+            const netReal = Number(txn.net_realization || totalAmt)
+            const createdDate = formatDateSafe(txn.created_at)
+            const commodityName = txn.commodity || 'Agricultural Produce Lot'
+
+            return (
+              <Card key={txnId} className="hover:shadow-md transition-shadow duration-150">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <span className="font-bold text-gray-900 dark:text-white text-base">
+                        {commodityName}
                       </span>
-                    )}
+                      <StatusBadge status={txn.status || 'initiated'} />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                      <span className="flex items-center gap-1 font-mono">
+                        <Receipt size={13} /> {String(txnId).substring(0, 18)}...
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Calendar size={13} /> {createdDate}
+                      </span>
+                      {txn.tracking_id && (
+                        <span className="flex items-center gap-1 text-brand-700 bg-brand-50 px-2 py-0.5 rounded">
+                          <Truck size={13} /> {txn.tracking_id}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-6">
+                    <div>
+                      <span className="text-xs text-gray-400 block">Gross Trade Value</span>
+                      <span className="text-base font-bold text-gray-900 dark:text-white">
+                        ₹{totalAmt ? formatNum(totalAmt.toLocaleString()) : '0'}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-xs text-gray-400 block">Net Realization</span>
+                      <span className="text-base font-bold text-brand-600">
+                        ₹{netReal ? formatNum(netReal.toLocaleString()) : '0'}
+                      </span>
+                    </div>
+
+                    <Link
+                      to={`/transactions/${txnId}`}
+                      className="btn-primary text-xs px-3.5 py-2 inline-flex items-center gap-1"
+                    >
+                      View Timeline <ArrowRight size={14} />
+                    </Link>
                   </div>
                 </div>
-
-                <div className="flex flex-wrap items-center gap-6">
-                  <div>
-                    <span className="text-xs text-gray-400 block">Gross Trade Value</span>
-                    <span className="text-base font-bold text-gray-900 dark:text-white">
-                      ₹{txn.total_amount ? Number(txn.total_amount).toLocaleString() : '0'}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-xs text-gray-400 block">Net Realization</span>
-                    <span className="text-base font-bold text-brand-600">
-                      ₹{txn.net_realization ? Number(txn.net_realization).toLocaleString() : (txn.total_amount ? Number(txn.total_amount).toLocaleString() : '0')}
-                    </span>
-                  </div>
-
-                  <Link
-                    to={`/transactions/${txn.id}`}
-                    className="btn-primary text-xs px-3.5 py-2 inline-flex items-center gap-1"
-                  >
-                    View Timeline <ArrowRight size={14} />
-                  </Link>
-                </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            )
+          })}
         </div>
       )}
     </div>

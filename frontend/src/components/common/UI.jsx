@@ -17,6 +17,9 @@ export function PageHeader({ title, subtitle, actions }) {
 }
 
 export function StatusBadge({ status }) {
+  if (!status) return <span className="badge-gray">Active</span>
+  const raw = typeof status === 'object' && status !== null ? (status.value || status.name || String(status)) : String(status)
+  const key = raw.toLowerCase().trim()
   const colors = {
     active: 'badge-green', draft: 'badge-gray', matched: 'badge-blue',
     in_transit: 'badge-yellow', delivered: 'badge-green', completed: 'badge-green',
@@ -26,9 +29,9 @@ export function StatusBadge({ status }) {
     open: 'badge-red', under_review: 'badge-yellow', resolved: 'badge-green',
     rising: 'badge-green', falling: 'badge-red', stable: 'badge-blue',
     low: 'badge-green', medium: 'badge-yellow', high: 'badge-red', critical: 'badge-red',
-    Gold: 'badge-yellow', Silver: 'badge-gray', Bronze: 'badge-yellow', Unrated: 'badge-gray',
+    gold: 'badge-yellow', silver: 'badge-gray', bronze: 'badge-yellow', unrated: 'badge-gray',
   }
-  return <span className={colors[status] || 'badge-gray'}>{status?.replace(/_/g, ' ')}</span>
+  return <span className={colors[key] || 'badge-gray'}>{raw.replace(/_/g, ' ')}</span>
 }
 
 export function Spinner() {

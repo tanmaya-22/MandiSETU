@@ -111,8 +111,8 @@ export default function TransactionDetailPage() {
       </button>
 
       <PageHeader
-        title={`Transaction #${txn.id.substring(0, 8)}`}
-        subtitle={`Commodity: ${txn.commodity || 'Agricultural Lot'} · Quantity: ${txn.quantity_kg.toLocaleString()} kg`}
+        title={`Transaction #${String(txn.id || '').substring(0, 8)}`}
+        subtitle={`Commodity: ${txn.commodity || 'Agricultural Lot'} · Quantity: ${Number(txn.quantity_kg || 0).toLocaleString()} kg`}
         actions={<StatusBadge status={txn.status} />}
       />
 
@@ -154,34 +154,34 @@ export default function TransactionDetailPage() {
             <div className="divide-y divide-gray-100 text-sm">
               <div className="py-2.5 flex justify-between">
                 <span className="text-gray-600">Contracted Rate</span>
-                <span className="font-semibold text-gray-900">₹{txn.final_price_per_kg} / kg</span>
+                <span className="font-semibold text-gray-900">₹{Number(txn.final_price_per_kg || 0)} / kg</span>
               </div>
               <div className="py-2.5 flex justify-between">
                 <span className="text-gray-600">Total Lot Volume</span>
-                <span className="font-semibold text-gray-900">{txn.quantity_kg.toLocaleString()} kg</span>
+                <span className="font-semibold text-gray-900">{Number(txn.quantity_kg || 0).toLocaleString()} kg</span>
               </div>
               <div className="py-2.5 flex justify-between text-base">
                 <span className="font-bold text-gray-900">Gross Contract Value</span>
-                <span className="font-bold text-gray-900">₹{txn.total_amount.toLocaleString()}</span>
+                <span className="font-bold text-gray-900">₹{Number(txn.total_amount || 0).toLocaleString()}</span>
               </div>
 
               {/* Deductions breakdown */}
               <div className="py-2 flex justify-between text-xs text-red-600">
                 <span>Freight & Transport Deduction</span>
-                <span>- ₹{txn.transport_cost?.toLocaleString() || 0}</span>
+                <span>- ₹{Number(txn.transport_cost || 0).toLocaleString()}</span>
               </div>
               <div className="py-2 flex justify-between text-xs text-red-600">
                 <span>APMC / Market Mandi Fee (2%)</span>
-                <span>- ₹{txn.commission_cost?.toLocaleString() || 0}</span>
+                <span>- ₹{Number(txn.commission_cost || 0).toLocaleString()}</span>
               </div>
               <div className="py-2 flex justify-between text-xs text-red-600">
                 <span>Weighment & Storage Deduction</span>
-                <span>- ₹{txn.storage_cost?.toLocaleString() || 0}</span>
+                <span>- ₹{Number(txn.storage_cost || 0).toLocaleString()}</span>
               </div>
 
               <div className="pt-3 pb-1 flex justify-between text-lg bg-brand-50/60 p-3 rounded-lg mt-2">
                 <span className="font-bold text-brand-900">True Net Take-Home Realization</span>
-                <span className="font-bold text-brand-700">₹{txn.net_realization?.toLocaleString()}</span>
+                <span className="font-bold text-brand-700">₹{Number(txn.net_realization || txn.total_amount || 0).toLocaleString()}</span>
               </div>
             </div>
           </Card>

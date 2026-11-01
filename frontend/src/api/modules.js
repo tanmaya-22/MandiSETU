@@ -808,12 +808,14 @@ export const listingsAPI = {
       return await api.post('/listings/lots', data)
     } catch (err) {
       // If 401/unauthorized (e.g. demo or local user), persist to cloud via /listings/lots/public
+      const email = ownerEmail || useAuthStore.getState().user?.email || localStorage.getItem('mandisetu_user_email') || ''
       return await api.post('/listings/lots/public', data, {
-        params: { owner_email: ownerEmail || localStorage.getItem('mandisetu_user_email') || '' },
+        params: { owner_email: email },
       })
     }
   },
-  getAll: (params)      => api.get('/listings/lots', { params }),
+  getAll: (params)      => api.get('/listings/lots', { params: { status_filter: 'all', ...params } }),
+  getPublic: (params)   => api.get('/listings/lots', { params: { status_filter: 'all', ...params } }),
   getOne: (id)          => api.get(`/listings/lots/${id}`),
   activate: (id)        => api.patch(`/listings/lots/${id}/activate`),
   close: (id)           => api.delete(`/listings/lots/${id}`),

@@ -70,6 +70,17 @@ const MOCK_LOTS = [
   },
 ]
 
+const formatDateSafe = (val, fallback = 'Today') => {
+  if (!val) return fallback
+  try {
+    const d = new Date(val)
+    if (isNaN(d.getTime())) return fallback
+    return d.toLocaleDateString()
+  } catch {
+    return fallback
+  }
+}
+
 export default function ListingsPage() {
   const { role } = useAuthStore()
   const { t, formatNum } = useLangStore()
@@ -82,16 +93,17 @@ export default function ListingsPage() {
     setLoading(true)
     try {
       const res = await listingsAPI.getAll({
+        status_filter: 'all',
         commodity: searchCommodity || undefined,
         state: selectedState || undefined,
       })
-      if (res.data && res.data.length > 0) {
+      if (Array.isArray(res?.data) && res.data.length > 0) {
         setLots(res.data)
       } else {
         setLots(MOCK_LOTS)
       }
-    } catch {
-      // Fallback for seamless demo
+    } catch (err) {
+      console.warn('[ListingsPage] Error fetching listings from cloud, using demo lots:', err)
       setLots(MOCK_LOTS)
     } finally {
       setLoading(false)
@@ -102,8 +114,10 @@ export default function ListingsPage() {
     fetchLots()
   }, [])
 
-  const filteredLots = (lots || []).filter((lot) => {
-    if (!lot) return false
+  const safeLots = Array.isArray(lots) ? lots : MOCK_LOTS
+
+  const filteredLots = safeLots.filter((lot) => {
+    if (!lot || typeof lot !== 'object') return false
     const commStr = String(lot.commodity || '')
     const matchComm = !searchCommodity || commStr.toLowerCase().includes(searchCommodity.toLowerCase())
     const stateStr = String(lot.state || '')
@@ -112,8 +126,8 @@ export default function ListingsPage() {
   })
 
   const getCommodityName = (rawName) => {
-    if (!rawName) return ''
-    const key = `comm_${rawName.toLowerCase()}`
+    if (!rawName) return 'Produce'
+    const key = `comm_${String(rawName).toLowerCase()}`
     const translated = t(key)
     return translated !== key ? translated : rawName
   }
@@ -178,76 +192,88 @@ export default function ListingsPage() {
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredLots.map((lot) => (
-            <Card key={lot.id} className="hover:shadow-md transition-shadow duration-150 flex flex-col justify-between">
-              <div className="space-y-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                      {getCommodityName(lot.commodity)}
-                    </h3>
-                    <p className="text-xs text-gray-500">{lot.variety || 'Standard Variety'}</p>
-                  </div>
-                  <div className="flex gap-1.5 items-center">
-                    {lot.is_aggregated && (
-                      <span className="badge bg-purple-100 text-purple-800 text-xs">FPO Aggregated</span>
-                    )}
-                    <StatusBadge status={lot.status} />
-                  </div>
-                </div>
+          {filteredLots.map((lot, idx) => {
+            const lotId = lot.id || `lot-${idx}`
+            const qtyNum = Number(lot.quantity_kg || lot.quantity || 0)
+            const minPriceNum = Number(lot.min_price_per_kg || lot.price || 0)
+            const gradeDisplay = typeof lot.grade === 'string' ? lot.grade : (lot.grade?.value || 'Ungraded')
+            const qualityDisplay = typeof lot.quality_score === 'number'
+              ? `${formatNum((lot.quality_score * 100).toFixed(0))}%`
+              : (lot.quality_score ? String(lot.quality_score) : 'Pending')
+            const locationDisplay = lot.mandi_name || `${lot.district || 'Market'}, ${lot.state || 'India'}`
+            const dateDisplay = formatDateSafe(lot.created_at)
 
-                <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-3 grid grid-cols-2 gap-2 text-sm">
-                  <div>
-                    <span className="text-gray-500 text-xs flex items-center gap-1">
-                      <Scale size={13} /> {t('quantity') || 'Quantity'}
-                    </span>
-                    <p className="font-semibold text-gray-800 dark:text-gray-200">
-                      {formatNum((lot.quantity_kg || lot.quantity || 0).toLocaleString())} kg
-                    </p>
+            return (
+              <Card key={lotId} className="hover:shadow-md transition-shadow duration-150 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                        {getCommodityName(lot.commodity)}
+                      </h3>
+                      <p className="text-xs text-gray-500">{lot.variety || 'Standard Variety'}</p>
+                    </div>
+                    <div className="flex gap-1.5 items-center">
+                      {Boolean(lot.is_aggregated) && (
+                        <span className="badge bg-purple-100 text-purple-800 text-xs">FPO Aggregated</span>
+                      )}
+                      <StatusBadge status={lot.status || 'active'} />
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-gray-500 text-xs flex items-center gap-1">
-                      <Tag size={13} /> {t('price') || 'Floor Price'}
-                    </span>
-                    <p className="font-semibold text-brand-600">
-                      ₹{formatNum(lot.min_price_per_kg)} / kg
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 text-xs">{t('grade') || 'Quality Grade'}</span>
-                    <p className="font-semibold text-gray-800 dark:text-gray-200">
-                      <span className="inline-block px-2 py-0.5 rounded bg-brand-100 dark:bg-brand-950/60 text-brand-800 dark:text-brand-300 font-bold text-xs">
-                        {lot.grade || 'Ungraded'}
+
+                  <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-3 grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-gray-500 text-xs flex items-center gap-1">
+                        <Scale size={13} /> {t('quantity') || 'Quantity'}
                       </span>
-                    </p>
+                      <p className="font-semibold text-gray-800 dark:text-gray-200">
+                        {formatNum(qtyNum.toLocaleString())} kg
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 text-xs flex items-center gap-1">
+                        <Tag size={13} /> {t('price') || 'Floor Price'}
+                      </span>
+                      <p className="font-semibold text-brand-600">
+                        ₹{formatNum(minPriceNum)} / kg
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 text-xs">{t('grade') || 'Quality Grade'}</span>
+                      <p className="font-semibold text-gray-800 dark:text-gray-200">
+                        <span className="inline-block px-2 py-0.5 rounded bg-brand-100 dark:bg-brand-950/60 text-brand-800 dark:text-brand-300 font-bold text-xs uppercase">
+                          {gradeDisplay}
+                        </span>
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 text-xs">Quality Score</span>
+                      <p className="font-semibold text-gray-700 dark:text-gray-300">
+                        {qualityDisplay}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-gray-500 text-xs">Quality Score</span>
-                    <p className="font-semibold text-gray-700 dark:text-gray-300">
-                      {lot.quality_score ? `${formatNum((lot.quality_score * 100).toFixed(0))}%` : 'Pending'}
-                    </p>
+
+                  <div className="text-xs text-gray-500 flex items-center gap-1">
+                    <MapPin size={14} className="text-gray-400 shrink-0" />
+                    <span className="truncate">{locationDisplay}</span>
                   </div>
                 </div>
 
-                <div className="text-xs text-gray-500 flex items-center gap-1">
-                  <MapPin size={14} className="text-gray-400 shrink-0" />
-                  <span className="truncate">{lot.mandi_name || `${lot.district}, ${lot.state}`}</span>
+                <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                  <span className="text-xs text-gray-400">
+                    {dateDisplay}
+                  </span>
+                  <Link
+                    to={`/listings/${lotId}`}
+                    className="text-sm font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1"
+                  >
+                    {t('view_details') || 'View Details'} <ArrowRight size={15} />
+                  </Link>
                 </div>
-              </div>
-
-              <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                <span className="text-xs text-gray-400">
-                  {lot.created_at ? new Date(lot.created_at).toLocaleDateString() : 'Today'}
-                </span>
-                <Link
-                  to={`/listings/${lot.id}`}
-                  className="text-sm font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1"
-                >
-                  {t('view_details') || 'View Details'} <ArrowRight size={15} />
-                </Link>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            )
+          })}
         </div>
       )}
     </div>

@@ -28,9 +28,12 @@ async def create_lot(
     db: AsyncSession = Depends(get_db),
 ):
     """Farmer / FPO creates a produce lot listing."""
+    data = payload.model_dump(exclude_none=True)
+    if "status" not in data:
+        data["status"] = LotStatus.ACTIVE
     lot = ProduceLot(
         owner_id=auth["sub"],
-        **payload.model_dump(exclude_none=True),
+        **data,
     )
     db.add(lot)
     await db.commit()
@@ -56,17 +59,19 @@ async def create_lot_public(
             owner_uuid = u.id
 
     if not owner_uuid:
-        # Default to first farmer in system or system seed UUID
-        res = await db.execute(select(User).where(User.role == "farmer").limit(1))
+        # Default to any existing user in DB so foreign key constraint NEVER fails
+        res = await db.execute(select(User).limit(1))
         u = res.scalar_one_or_none()
         if u:
             owner_uuid = u.id
-        else:
-            owner_uuid = uuid.UUID("11111111-1111-1111-1111-111111111111")
+
+    data = payload.model_dump(exclude_none=True)
+    if "status" not in data:
+        data["status"] = LotStatus.ACTIVE
 
     lot = ProduceLot(
         owner_id=owner_uuid,
-        **payload.model_dump(exclude_none=True),
+        **data,
     )
     db.add(lot)
     await db.commit()
@@ -79,7 +84,7 @@ async def list_lots(
     commodity: Optional[str] = Query(None),
     state: Optional[str] = Query(None),
     status_filter: Optional[str] = Query(None),
-    limit: int = Query(20, le=100),
+    limit: int = Query(50, le=100),
     db: AsyncSession = Depends(get_db),
 ):
     """Public browse — active lots available for buying."""
@@ -88,11 +93,8 @@ async def list_lots(
         query = query.where(ProduceLot.commodity.ilike(f"%{commodity}%"))
     if state:
         query = query.where(ProduceLot.state.ilike(f"%{state}%"))
-    if status_filter:
-        if status_filter != "all":
-            query = query.where(ProduceLot.status == status_filter)
-    else:
-        query = query.where(ProduceLot.status == LotStatus.ACTIVE)
+    if status_filter and status_filter != "all":
+        query = query.where(ProduceLot.status == status_filter)
     query = query.order_by(desc(ProduceLot.created_at)).limit(limit)
     result = await db.execute(query)
     return result.scalars().all()

@@ -176,20 +176,20 @@ export default function LotDetailPage() {
                 <span className="text-xs text-gray-500 flex items-center gap-1">
                   <Scale size={13} /> Available Quantity
                 </span>
-                <p className="text-lg font-bold text-gray-900">{lot.quantity_kg.toLocaleString()} kg</p>
+                <p className="text-lg font-bold text-gray-900">{Number(lot.quantity_kg || 0).toLocaleString()} kg</p>
               </div>
 
               <div className="p-3 bg-gray-50 rounded-lg">
                 <span className="text-xs text-gray-500 flex items-center gap-1">
                   <Tag size={13} /> Floor Price
                 </span>
-                <p className="text-lg font-bold text-brand-600">₹{lot.min_price_per_kg} / kg</p>
+                <p className="text-lg font-bold text-brand-600">₹{Number(lot.min_price_per_kg || 0)} / kg</p>
               </div>
 
               <div className="p-3 bg-gray-50 rounded-lg">
                 <span className="text-xs text-gray-500">Expected Value</span>
                 <p className="text-lg font-bold text-gray-900">
-                  ₹{(lot.quantity_kg * (lot.expected_price_per_kg || lot.min_price_per_kg)).toLocaleString()}
+                  ₹{(Number(lot.quantity_kg || 0) * Number(lot.expected_price_per_kg || lot.min_price_per_kg || 0)).toLocaleString()}
                 </p>
               </div>
 
@@ -201,14 +201,14 @@ export default function LotDetailPage() {
               <div className="p-3 bg-gray-50 rounded-lg">
                 <span className="text-xs text-gray-500">Computer Vision Score</span>
                 <p className="text-base font-bold text-gray-800">
-                  {lot.quality_score ? `${(lot.quality_score * 100).toFixed(1)}%` : 'Not run'}
+                  {typeof lot.quality_score === 'number' ? `${(lot.quality_score * 100).toFixed(1)}%` : 'Pending'}
                 </p>
               </div>
 
               <div className="p-3 bg-gray-50 rounded-lg">
                 <span className="text-xs text-gray-500">Harvest Date</span>
                 <p className="text-base font-semibold text-gray-800">
-                  {lot.harvest_date ? new Date(lot.harvest_date).toLocaleDateString() : 'N/A'}
+                  {lot.harvest_date ? new Date(lot.harvest_date).toLocaleDateString() : 'Recent'}
                 </p>
               </div>
             </div>

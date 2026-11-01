@@ -63,24 +63,40 @@ async def list_all_transactions_public(
 ):
     """Public read of transactions & escrow state for dashboard sync."""
     try:
-        result = await db.execute(select(Transaction).order_by(Transaction.created_at.desc()).limit(100))
-        txns = result.scalars().all()
+        from app.models import ProduceLot
+        result = await db.execute(
+            select(Transaction, ProduceLot.commodity, ProduceLot.variety)
+            .outerjoin(ProduceLot, Transaction.lot_id == ProduceLot.id)
+            .order_by(Transaction.created_at.desc())
+            .limit(100)
+        )
+        rows = result.all()
         out = []
-        for t in txns:
+        for row in rows:
+            t = row[0]
+            comm = row[1] or "Agricultural Produce Lot"
+            var = row[2] or ""
             price = getattr(t, 'final_price_per_kg', None) or getattr(t, 'agreed_price', 0.0)
-            total = getattr(t, 'total_amount', None) or round(t.quantity_kg * price, 2)
+            total = getattr(t, 'total_amount', None) or round((t.quantity_kg or 0) * price, 2)
+            net_r = getattr(t, 'net_realization', None) or total
             out.append({
                 "id": str(t.id),
                 "lot_id": str(t.lot_id),
+                "commodity": f"{comm} ({var})" if var else comm,
                 "seller_id": str(t.seller_id),
                 "buyer_id": str(t.buyer_id),
-                "quantity_kg": t.quantity_kg,
+                "quantity_kg": t.quantity_kg or 0,
                 "final_price_per_kg": price,
                 "agreed_price": price,
                 "total_amount": total,
+                "transport_cost": t.transport_cost or 0,
+                "commission_cost": t.commission_cost or 0,
+                "storage_cost": t.storage_cost or 0,
+                "net_realization": net_r,
                 "status": t.status.value if hasattr(t.status, "value") else str(t.status),
-                "logistics_provider": t.logistics_provider,
-                "tracking_id": t.tracking_id,
+                "status_history": t.status_history or [],
+                "logistics_provider": t.logistics_provider or "MandiSetu Direct Logistics",
+                "tracking_id": t.tracking_id or f"TRK-{str(t.id)[:8].upper()}",
                 "payment_ref": f"ESCROW-MANDI-{str(t.id)[:8].upper()}",
                 "created_at": t.created_at.isoformat() if t.created_at else None,
                 "updated_at": t.updated_at.isoformat() if t.updated_at else None,
@@ -89,6 +105,35 @@ async def list_all_transactions_public(
     except Exception as e:
         print(f"[Transactions public all error]: {e}")
         return []
+
+
+@transactions_router.get("/public/{txn_id}")
+async def get_transaction_public(txn_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    """Public read of a specific transaction for timeline display."""
+    result = await db.execute(select(Transaction).where(Transaction.id == txn_id))
+    txn = result.scalar_one_or_none()
+    if not txn:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    price = getattr(txn, 'final_price_per_kg', None) or 0.0
+    total = getattr(txn, 'total_amount', None) or 0.0
+    return {
+        "id": str(txn.id),
+        "lot_id": str(txn.lot_id),
+        "seller_id": str(txn.seller_id),
+        "buyer_id": str(txn.buyer_id),
+        "quantity_kg": txn.quantity_kg or 0,
+        "final_price_per_kg": price,
+        "total_amount": total,
+        "transport_cost": txn.transport_cost or 0,
+        "commission_cost": txn.commission_cost or 0,
+        "storage_cost": txn.storage_cost or 0,
+        "net_realization": txn.net_realization or total,
+        "status": txn.status.value if hasattr(txn.status, "value") else str(txn.status),
+        "status_history": txn.status_history or [],
+        "logistics_provider": txn.logistics_provider or "MandiSetu Direct Logistics",
+        "tracking_id": txn.tracking_id or f"TRK-{str(txn.id)[:8].upper()}",
+        "created_at": txn.created_at.isoformat() if txn.created_at else None,
+    }
 
 
 @transactions_router.get("/{txn_id}", response_model=TransactionOut)

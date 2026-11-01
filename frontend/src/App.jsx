@@ -40,29 +40,42 @@ import ProtectedRoute from './components/common/ProtectedRoute'
 class PageErrorBoundary extends Component {
   constructor(props) {
     super(props)
-    this.state = { hasError: false }
+    this.state = { hasError: false, error: null }
   }
-  static getDerivedStateFromError() {
-    return { hasError: true }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error }
   }
-  componentDidCatch(error) {
-    console.error('[MandiSetu Page Error]', error)
+  componentDidCatch(error, errorInfo) {
+    console.error('[MandiSetu Page Error]', error, errorInfo)
   }
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center">
+        <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center animate-fade-in">
           <span className="text-4xl mb-3">🌾</span>
           <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Page Temporarily Unavailable</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-sm">
-            This page encountered a temporary issue (often a network timeout). Your other pages are working fine.
+            This module encountered a render synchronization delay. You can retry or return to your live dashboard.
           </p>
-          <button
-            onClick={() => this.setState({ hasError: false })}
-            className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold rounded-xl transition"
-          >
-            Retry this page
-          </button>
+          {this.state.error && (
+            <p className="text-[11px] font-mono text-gray-400 dark:text-gray-500 max-w-md bg-gray-100 dark:bg-gray-800 p-2 rounded-lg mb-4 truncate">
+              {String(this.state.error?.message || this.state.error)}
+            </p>
+          )}
+          <div className="flex gap-3">
+            <button
+              onClick={() => this.setState({ hasError: false, error: null })}
+              className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold rounded-xl transition"
+            >
+              Retry this page
+            </button>
+            <a
+              href="/dashboard"
+              className="px-5 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 text-sm font-semibold rounded-xl transition"
+            >
+              Dashboard
+            </a>
+          </div>
         </div>
       )
     }
