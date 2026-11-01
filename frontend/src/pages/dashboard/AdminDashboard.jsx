@@ -6,7 +6,7 @@ import {
   Calendar, CheckCircle, RefreshCw, UserCheck, Lock, Unlock,
   Sliders, Award, MessageSquare, FileText, CheckCircle2, XCircle, ChevronRight,
   Zap, Sparkles, Check, Crown, Server, Globe, Wifi, WifiOff,
-  Trash2, Ban, PlayCircle
+  Trash2, Ban, PlayCircle, MapPin
 } from 'lucide-react'
 import {
   analyticsAPI,
