@@ -202,7 +202,7 @@ export default function ListingsPage() {
                       <Scale size={13} /> {t('quantity') || 'Quantity'}
                     </span>
                     <p className="font-semibold text-gray-800 dark:text-gray-200">
-                      {formatNum(lot.quantity_kg.toLocaleString())} kg
+                      {formatNum((lot.quantity_kg || lot.quantity || 0).toLocaleString())} kg
                     </p>
                   </div>
                   <div>
@@ -237,7 +237,7 @@ export default function ListingsPage() {
 
               <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
                 <span className="text-xs text-gray-400">
-                  {new Date(lot.created_at).toLocaleDateString()}
+                  {lot.created_at ? new Date(lot.created_at).toLocaleDateString() : 'Today'}
                 </span>
                 <Link
                   to={`/listings/${lot.id}`}

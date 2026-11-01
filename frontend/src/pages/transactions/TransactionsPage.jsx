@@ -114,10 +114,10 @@ export default function TransactionsPage() {
                   </div>
                   <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
                     <span className="flex items-center gap-1 font-mono">
-                      <Receipt size={13} /> {txn.id.substring(0, 18)}...
+                      <Receipt size={13} /> {String(txn.id || '').substring(0, 18)}...
                     </span>
                     <span className="flex items-center gap-1">
-                      <Calendar size={13} /> {new Date(txn.created_at).toLocaleDateString()}
+                      <Calendar size={13} /> {txn.created_at ? new Date(txn.created_at).toLocaleDateString() : 'Today'}
                     </span>
                     {txn.tracking_id && (
                       <span className="flex items-center gap-1 text-brand-700 bg-brand-50 px-2 py-0.5 rounded">
@@ -130,15 +130,15 @@ export default function TransactionsPage() {
                 <div className="flex flex-wrap items-center gap-6">
                   <div>
                     <span className="text-xs text-gray-400 block">Gross Trade Value</span>
-                    <span className="text-base font-bold text-gray-900">
-                      ₹{txn.total_amount?.toLocaleString()}
+                    <span className="text-base font-bold text-gray-900 dark:text-white">
+                      ₹{txn.total_amount ? Number(txn.total_amount).toLocaleString() : '0'}
                     </span>
                   </div>
 
                   <div>
                     <span className="text-xs text-gray-400 block">Net Realization</span>
                     <span className="text-base font-bold text-brand-600">
-                      ₹{txn.net_realization ? txn.net_realization.toLocaleString() : txn.total_amount?.toLocaleString()}
+                      ₹{txn.net_realization ? Number(txn.net_realization).toLocaleString() : (txn.total_amount ? Number(txn.total_amount).toLocaleString() : '0')}
                     </span>
                   </div>
 
