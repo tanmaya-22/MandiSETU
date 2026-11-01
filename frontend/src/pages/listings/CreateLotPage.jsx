@@ -8,10 +8,12 @@ import { useLangStore } from '../../store/langStore'
 import { STATE_DISTRICTS } from '../../data/stateDistricts'
 import MandiMap from '../../components/common/MandiMap'
 import { reverseGeocode } from '../../utils/geoUtils'
+import { useAuthStore } from '../../store/authStore'
 
 export default function CreateLotPage() {
   const navigate = useNavigate()
   const { t, formatNum } = useLangStore()
+  const { user } = useAuthStore()
   const [submitting, setSubmitting] = useState(false)
   const [locatingGps, setLocatingGps] = useState(false)
   const [showMapModal, setShowMapModal] = useState(false)
@@ -97,7 +99,7 @@ export default function CreateLotPage() {
         } catch {}
       }
 
-      const userEmail = localStorage.getItem('mandisetu_user_email') || ''
+      const userEmail = user?.email || localStorage.getItem('mandisetu_user_email') || ''
       await listingsAPI.create({
         ...form,
         quantity_kg: parseFloat(form.quantity_kg) || 1000,

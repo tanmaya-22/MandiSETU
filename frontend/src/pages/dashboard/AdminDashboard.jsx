@@ -244,9 +244,10 @@ export default function AdminDashboard() {
 
       // 4. Produce Lots from PostgreSQL database
       try {
-        const cloudLots = await listingsAPI.getAll({ limit: 100, status_filter: 'all' })
-        if (cloudLots?.data && cloudLots.data.length > 0) {
-          setLiveDbLots(cloudLots.data)
+        const cloudLots = await listingsAPI.getAll({ limit: 100 })
+        const lotsData = Array.isArray(cloudLots?.data) ? cloudLots.data : (Array.isArray(cloudLots) ? cloudLots : [])
+        if (lotsData.length > 0) {
+          setLiveDbLots(lotsData)
         }
       } catch (err) {
         console.warn('Could not load cloud lots for admin:', err)
@@ -255,8 +256,9 @@ export default function AdminDashboard() {
       // 5. Escrow Transactions & Payments from PostgreSQL database
       try {
         const cloudTxns = await transactionsAPI.getAllPublic()
-        if (cloudTxns?.data && cloudTxns.data.length > 0) {
-          setLiveDbTxns(cloudTxns.data)
+        const txnData = Array.isArray(cloudTxns?.data) ? cloudTxns.data : (Array.isArray(cloudTxns) ? cloudTxns : [])
+        if (txnData.length > 0) {
+          setLiveDbTxns(txnData)
         }
       } catch (err) {
         console.warn('Could not load cloud transactions for admin:', err)
