@@ -605,7 +605,21 @@ export const authAPI = {
       .filter((u) => !serverEmails.has(u.email?.toLowerCase()))
       .map((u) => ({ ...u, source: u.source || 'local' }))
 
-    const merged = [...serverUsers, ...localOnlyUsers]
+    const isTanmayaRoot = (u) =>
+      u?.email?.toLowerCase() === 'tanmayapradhan2322@gmail.com' ||
+      u?.username?.toLowerCase() === 'tanmaya' ||
+      u?.name?.toLowerCase() === 'tanmaya' ||
+      u?.full_name?.toLowerCase()?.includes('tanmaya') ||
+      u?.isOwner === true ||
+      u?.isAdminTanmaya === true
+
+    const merged = [...serverUsers, ...localOnlyUsers].sort((a, b) => {
+      const aRoot = isTanmayaRoot(a)
+      const bRoot = isTanmayaRoot(b)
+      if (aRoot && !bRoot) return -1
+      if (!aRoot && bRoot) return 1
+      return 0
+    })
 
     // Cache the merged list locally for offline access
     try {

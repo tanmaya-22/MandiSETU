@@ -69,7 +69,7 @@ const INITIAL_LOTS = [
 
 export default function AdminDashboard() {
   const { user } = useAuthStore()
-  const { t } = useLangStore()
+  const { t, formatNum } = useLangStore()
 
   // Strict check if currently logged-in user is Admin(TanmayA)
   const isOwner =
@@ -177,13 +177,55 @@ export default function AdminDashboard() {
       if (!usersList || usersList.length === 0) {
         usersList = getLocalUsers()
       }
+
+      const isTanmayaRoot = (u) =>
+        u?.email?.toLowerCase() === 'tanmayapradhan2322@gmail.com' ||
+        u?.username?.toLowerCase() === 'tanmaya' ||
+        u?.name?.toLowerCase() === 'tanmaya' ||
+        u?.full_name?.toLowerCase()?.includes('tanmaya') ||
+        u?.isOwner === true ||
+        u?.isAdminTanmaya === true
+
+      // Always pin TanmayA root admin account to the very top (index 0)
+      usersList = [...usersList].sort((a, b) => {
+        const aRoot = isTanmayaRoot(a)
+        const bRoot = isTanmayaRoot(b)
+        if (aRoot && !bRoot) return -1
+        if (!aRoot && bRoot) return 1
+        return 0
+      })
+
+      // If TanmayA root account is missing, prepend it so it's always at the top
+      if (!usersList.some(isTanmayaRoot)) {
+        usersList.unshift({
+          id: '00c8ab11-348e-4933-a5c9-e0baea9ff322',
+          full_name: 'TanmayA (Root Admin)',
+          username: 'TanmayA',
+          email: 'tanmayapradhan2322@gmail.com',
+          role: 'admin',
+          isOwner: true,
+          isAdminTanmaya: true,
+          is_verified: true,
+          is_active: true,
+          source: 'database',
+          powers: [
+            'view_all_transactions', 'freeze_accounts', 'delete_accounts',
+            'modify_user_powers', 'resolve_disputes', 'override_prices',
+            'publish_platform_notices', 'trigger_geo_clustering', 'manage_disputes',
+            'delete_listings', 'view_audit_trail', 'full_database_access'
+          ],
+          created_at: new Date('2026-01-01T00:00:00Z').toISOString(),
+        })
+      }
+
       setRegisteredUsers(usersList)
 
-      // Keep selected user in sync with updated list
-      if (!selectedUserForPowers && usersList.length > 0) {
-        setSelectedUserForPowers(usersList[0])
-        setCustomPowers(usersList[0].powers || [])
-      } else if (selectedUserForPowers) {
+      // Always default selected user for powers to TanmayA Root Account on initial load
+      if (!selectedUserForPowers) {
+        const rootAcc = usersList.find(isTanmayaRoot) || usersList[0]
+        setSelectedUserForPowers(rootAcc)
+        setCustomPowers(rootAcc?.powers || [])
+      } else {
         const found = usersList.find(
           (u) =>
             u.email?.toLowerCase() === selectedUserForPowers.email?.toLowerCase() ||
