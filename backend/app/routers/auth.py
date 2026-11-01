@@ -409,3 +409,118 @@ async def delete_user(
         "message": f"Account for {userName} ({userMail}) permanently deleted",
         "user_id": user_id
     }
+
+
+@router.get("/users/{user_id}/audit-trail")
+async def get_user_audit_trail(
+    user_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Retrieve complete live PostgreSQL audit history for a specific user.
+    Aggregates produce lots created, transactions, offers, grievances, and profile actions.
+    """
+    from app.models import ProduceLot, Transaction, Offer, FeedbackGrievance, Dispute
+    from sqlalchemy import or_
+
+    user = await _find_user_by_id_or_email(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    u_id = user.id
+    u_email = user.email
+
+    audit_events = []
+
+    # 1. Registration Event
+    if user.created_at:
+        audit_events.append({
+            "id": f"reg_{u_id}",
+            "action": "Account Created & Verified",
+            "category": "AUTH",
+            "timestamp": user.created_at.isoformat(),
+            "details": f"Role: {user.role.value if hasattr(user.role, 'value') else user.role} · State: {user.state or 'N/A'}, {user.district or ''}",
+            "status": "active" if user.is_active else "frozen",
+        })
+
+    # 2. Produce Lots Listed
+    try:
+        lots_res = await db.execute(select(ProduceLot).where(ProduceLot.owner_id == u_id))
+        user_lots = lots_res.scalars().all()
+        for lot in user_lots:
+            audit_events.append({
+                "id": f"lot_{lot.id}",
+                "action": f"Produce Lot Listed: {lot.commodity}",
+                "category": "LOT_LISTING",
+                "timestamp": lot.created_at.isoformat() if lot.created_at else now_utc().isoformat(),
+                "details": f"{lot.quantity_kg} kg @ ₹{lot.min_price_per_kg}/kg · Grade: {lot.grade or 'Ungraded'} · Status: {lot.status.value if hasattr(lot.status, 'value') else lot.status}",
+                "status": lot.status.value if hasattr(lot.status, 'value') else str(lot.status),
+            })
+    except Exception:
+        pass
+
+    # 3. Escrow Transactions (as Seller or Buyer)
+    try:
+        txns_res = await db.execute(
+            select(Transaction).where(or_(Transaction.seller_id == u_id, Transaction.buyer_id == u_id))
+        )
+        user_txns = txns_res.scalars().all()
+        for txn in user_txns:
+            is_seller = str(txn.seller_id) == str(u_id)
+            audit_events.append({
+                "id": f"txn_{txn.id}",
+                "action": f"Escrow Contract ({'Seller' if is_seller else 'Buyer'})",
+                "category": "TRANSACTION",
+                "timestamp": txn.created_at.isoformat() if txn.created_at else now_utc().isoformat(),
+                "details": f"Amount: ₹{txn.agreed_price * txn.quantity_kg:,.2f} · Status: {txn.status.value if hasattr(txn.status, 'value') else txn.status} · Logistics: {txn.logistics_provider or 'Pending'}",
+                "status": txn.status.value if hasattr(txn.status, 'value') else str(txn.status),
+            })
+    except Exception:
+        pass
+
+    # 4. Offers
+    try:
+        offers_res = await db.execute(select(Offer).where(Offer.buyer_id == u_id))
+        user_offers = offers_res.scalars().all()
+        for off in user_offers:
+            audit_events.append({
+                "id": f"off_{off.id}",
+                "action": f"Procurement Bid Placed",
+                "category": "OFFER",
+                "timestamp": off.created_at.isoformat() if off.created_at else now_utc().isoformat(),
+                "details": f"Offered Price: ₹{off.offered_price_per_kg}/kg · Status: {off.status.value if hasattr(off.status, 'value') else off.status}",
+                "status": off.status.value if hasattr(off.status, 'value') else str(off.status),
+            })
+    except Exception:
+        pass
+
+    # 5. Feedback & Grievances
+    try:
+        fbs_res = await db.execute(select(FeedbackGrievance).where(
+            or_(FeedbackGrievance.user_id == u_id, FeedbackGrievance.user_email == u_email)
+        ))
+        user_fbs = fbs_res.scalars().all()
+        for fb in user_fbs:
+            audit_events.append({
+                "id": f"fb_{fb.id}",
+                "action": f"Feedback / Grievance Submitted",
+                "category": "GRIEVANCE",
+                "timestamp": fb.created_at.isoformat() if fb.created_at else now_utc().isoformat(),
+                "details": f"[{fb.category}] {fb.subject} — Status: {fb.status}",
+                "status": fb.status,
+            })
+    except Exception:
+        pass
+
+    # Sort reverse chronological
+    audit_events.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+
+    return {
+        "user_id": str(u_id),
+        "full_name": user.full_name,
+        "email": user.email,
+        "role": user.role.value if hasattr(user.role, "value") else str(user.role),
+        "is_active": user.is_active,
+        "powers": user.powers or [],
+        "total_events": len(audit_events),
+        "events": audit_events
+    }

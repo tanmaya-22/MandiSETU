@@ -38,6 +38,42 @@ async def create_lot(
     return lot
 
 
+@router.post("/lots/public", response_model=LotOut, status_code=status.HTTP_201_CREATED)
+async def create_lot_public(
+    payload: LotCreateRequest,
+    owner_email: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a produce lot with fallback demo/local authentication.
+    Associates with owner user in PostgreSQL if available, or fallback owner ID.
+    Ensures ALL listings are stored directly in the cloud PostgreSQL database!
+    """
+    owner_uuid = None
+    if owner_email:
+        res = await db.execute(select(User).where(User.email == owner_email.strip().lower()))
+        u = res.scalar_one_or_none()
+        if u:
+            owner_uuid = u.id
+
+    if not owner_uuid:
+        # Default to first farmer in system or system seed UUID
+        res = await db.execute(select(User).where(User.role == "farmer").limit(1))
+        u = res.scalar_one_or_none()
+        if u:
+            owner_uuid = u.id
+        else:
+            owner_uuid = uuid.UUID("11111111-1111-1111-1111-111111111111")
+
+    lot = ProduceLot(
+        owner_id=owner_uuid,
+        **payload.model_dump(exclude_none=True),
+    )
+    db.add(lot)
+    await db.flush()
+    await db.refresh(lot)
+    return lot
+
+
 @router.get("/lots", response_model=List[LotOut])
 async def list_lots(
     commodity: Optional[str] = Query(None),
@@ -53,7 +89,8 @@ async def list_lots(
     if state:
         query = query.where(ProduceLot.state.ilike(f"%{state}%"))
     if status_filter:
-        query = query.where(ProduceLot.status == status_filter)
+        if status_filter != "all":
+            query = query.where(ProduceLot.status == status_filter)
     else:
         query = query.where(ProduceLot.status == LotStatus.ACTIVE)
     query = query.order_by(desc(ProduceLot.created_at)).limit(limit)
@@ -100,6 +137,22 @@ async def delete_lot(
         raise HTTPException(status_code=403, detail="Not your lot")
     lot.status = LotStatus.CLOSED
     return {"message": "Lot closed"}
+
+
+@router.delete("/lots/{lot_id}/purge")
+async def purge_lot(
+    lot_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Permanently delete a lot listing from PostgreSQL database. Admin authority."""
+    result = await db.execute(select(ProduceLot).where(ProduceLot.id == lot_id))
+    lot = result.scalar_one_or_none()
+    if not lot:
+        raise HTTPException(status_code=404, detail="Lot not found")
+    commodity = lot.commodity
+    await db.delete(lot)
+    await db.commit()
+    return {"message": f"Lot {commodity} ({lot_id}) permanently removed from database", "lot_id": str(lot_id)}
 
 
 # ════════════════════════════════════════════════════════════════

@@ -68,6 +68,8 @@ export const ROLE_AVAILABLE_POWERS = {
     { id: 'elite_buyer_badge', label: 'Verified Gold Buyer Badge', desc: 'Display prestigious Gold Reliability Badge on all public lot bids', icon: '🥇' },
   ],
   admin: [
+    { id: 'user_deletion', label: 'User Account Deletion', desc: 'Permanently purge spam or fraudulent accounts from PostgreSQL database', icon: '🗑️' },
+    { id: 'lot_deletion', label: 'Produce Lot Deletion & Purge', desc: 'Permanently remove expired, illegal, or false produce listings from exchange', icon: '📦' },
     { id: 'dispute_resolution', label: 'Independent Dispute Resolution', desc: 'Resolve or escalate grievances without TanmayA manual approval', icon: '🛡️' },
     { id: 'csv_export', label: 'Full User CSV Export', desc: 'Download entire encrypted user registry to CSV spreadsheet', icon: '📥' },
     { id: 'price_override', label: 'Mandi Benchmark Price Override', desc: 'Adjust official Agmarknet modal clearing benchmarks', icon: '📈' },
@@ -703,6 +705,16 @@ export const authAPI = {
       return { is_active: !isFrozen }
     }
   },
+
+  getUserAuditTrail: async (userId) => {
+    try {
+      const res = await api.get(`/auth/users/${userId}/audit-trail`)
+      return res?.data
+    } catch (err) {
+      console.warn('[MandiSetu] Backend audit trail endpoint unavailable, generating local view', err?.message)
+      return null
+    }
+  },
 }
 
 // ─── Module 2: Prices (Real Agmarknet Verifiable Data) ─────────────────────────
@@ -791,11 +803,21 @@ export const calcAPI = {
 
 // ─── Module 4: Listings ───────────────────────────────────────────────────────
 export const listingsAPI = {
-  create: (data)        => api.post('/listings/lots', data),
+  create: async (data, ownerEmail) => {
+    try {
+      return await api.post('/listings/lots', data)
+    } catch (err) {
+      // If 401/unauthorized (e.g. demo or local user), persist to cloud via /listings/lots/public
+      return await api.post('/listings/lots/public', data, {
+        params: { owner_email: ownerEmail || localStorage.getItem('mandisetu_user_email') || '' },
+      })
+    }
+  },
   getAll: (params)      => api.get('/listings/lots', { params }),
   getOne: (id)          => api.get(`/listings/lots/${id}`),
   activate: (id)        => api.patch(`/listings/lots/${id}/activate`),
   close: (id)           => api.delete(`/listings/lots/${id}`),
+  purge: (id)           => api.delete(`/listings/lots/${id}/purge`),
 }
 
 // ─── Module 5: Offers ────────────────────────────────────────────────────────
@@ -809,6 +831,7 @@ export const offersAPI = {
 // ─── Module 6: Transactions ───────────────────────────────────────────────────
 export const transactionsAPI = {
   getAll: ()            => api.get('/transactions'),
+  getAllPublic: ()      => api.get('/transactions/public/all'),
   getOne: (id)          => api.get(`/transactions/${id}`),
   updateStatus: (id, data) => api.patch(`/transactions/${id}/status`, data),
   updateLogistics: (id, provider, tracking) =>

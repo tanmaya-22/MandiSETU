@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Leaf, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, UserCheck, Sparkles, MapPin } from 'lucide-react'
+import { Leaf, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, Sparkles, Sun, Moon } from 'lucide-react'
 import { authAPI, getApiBaseUrl } from '../../api/modules'
 import { useAuthStore } from '../../store/authStore'
 import { useLangStore } from '../../store/langStore'
-import { STATE_DISTRICTS } from '../../data/stateDistricts'
+import { useThemeStore } from '../../store/themeStore'
+import HeaderControls from '../../components/common/HeaderControls'
 
 const QUICK_DEMO_USERS = [
   {
@@ -47,18 +48,14 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const login = useAuthStore((s) => s.login)
   const { t } = useLangStore()
+  const { isDark, toggleDark } = useThemeStore()
 
   const [form, setForm] = useState({
     email: 'farmer@demo.com',
     password: 'demo1234',
-    state: 'Maharashtra',
-    district: 'Nashik',
   })
   const [showPwd, setShowPwd] = useState(false)
   const [loading, setLoading] = useState(false)
-
-  const statesList = Object.keys(STATE_DISTRICTS)
-  const districtsForState = STATE_DISTRICTS[form.state] || STATE_DISTRICTS['Maharashtra']
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
@@ -68,14 +65,10 @@ export default function LoginPage() {
       toast('Admin(TanmayA) selected. Please enter your username/email and password.', { icon: '👑' })
       return
     }
-    const userState = user.role === 'admin' ? 'Odisha' : 'Maharashtra'
-    const userDistrict = user.role === 'admin' ? 'Cuttack' : 'Nashik'
     setForm((f) => ({
       ...f,
       email: user.email,
       password: user.password || 'demo1234',
-      state: userState,
-      district: userDistrict,
     }))
     toast.success(`Loaded credentials for ${user.label}`, { icon: '✨' })
   }
@@ -94,15 +87,8 @@ export default function LoginPage() {
       const data = res?.data
       if (!data) throw new Error('No user data received')
 
-      // Attach selected state & district to session profile
-      const enrichedUser = {
-        ...data,
-        state: form.state || data.state,
-        district: form.district || data.district,
-      }
-
-      login(enrichedUser)
-      toast.success(`Welcome back, ${data.full_name || identifier}! (${form.district}, ${form.state})`, { icon: '🌾' })
+      login(data)
+      toast.success(`Welcome back, ${data.full_name || identifier}!`, { icon: '🌾' })
 
       // Smart redirection based on role
       setTimeout(() => {
@@ -119,66 +105,71 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex items-center justify-center p-4">
-      {/* Background ambient lighting */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-10 left-10 w-96 h-96 bg-emerald-300/30 rounded-full blur-3xl animate-blob" />
-        <div className="absolute bottom-10 right-10 w-96 h-96 bg-teal-300/30 rounded-full blur-3xl animate-blob delay-300" />
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950 flex flex-col justify-between p-4 transition-colors duration-300">
+      {/* Top Bar with Language Selector and Dark / Light Mode Toggle */}
+      <div className="w-full max-w-5xl mx-auto flex items-center justify-between py-2 px-3">
+        <Link to="/" className="inline-flex items-center gap-2 group">
+          <div className="w-9 h-9 bg-gradient-to-tr from-brand-600 to-emerald-500 rounded-xl flex items-center justify-center shadow-md">
+            <Leaf size={18} className="text-white" />
+          </div>
+          <span className="font-extrabold text-base text-gray-900 dark:text-white tracking-tight">MandiSetu</span>
+        </Link>
+        <div className="flex items-center gap-2">
+          <HeaderControls />
+        </div>
       </div>
 
-      <div className="relative w-full max-w-md animate-fade-in-up">
-        {/* Logo and Brand */}
-        <div className="text-center mb-6">
-          <Link to="/" className="inline-flex items-center gap-2.5 mb-2 group">
-            <div className="w-12 h-12 bg-gradient-to-tr from-brand-600 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-200">
+      {/* Background ambient lighting */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-10 left-10 w-96 h-96 bg-emerald-300/30 dark:bg-emerald-600/10 rounded-full blur-3xl animate-blob" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-teal-300/30 dark:bg-teal-600/10 rounded-full blur-3xl animate-blob delay-300" />
+      </div>
+
+      <div className="relative w-full max-w-md mx-auto my-auto animate-fade-in-up">
+        {/* Card */}
+        <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-3xl shadow-xl border border-white/60 dark:border-gray-800 p-7 sm:p-8">
+          <div className="text-center mb-6">
+            <div className="w-12 h-12 mx-auto bg-gradient-to-tr from-brand-600 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg mb-3">
               <Leaf size={24} className="text-white" />
             </div>
-            <div className="text-left">
-              <span className="text-2xl font-extrabold text-gray-900 tracking-tight">MandiSetu</span>
-              <span className="block text-xs font-semibold text-brand-600 tracking-wider uppercase">Market Intelligence</span>
-            </div>
-          </Link>
-          <p className="text-gray-600 text-sm">Sign in to access your agri-market portal</p>
-        </div>
+            <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+              {t('reg_sign_in') || 'Sign In to MandiSetu'}
+            </h2>
+            <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">
+              {t('brand_tagline') || 'Connect directly with verified mandis and fair prices'}
+            </p>
+          </div>
 
-        {/* Card */}
-        <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-xl border border-white/60 p-7 sm:p-8">
           {/* Quick Demo Access Buttons */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2.5">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles size={14} className="text-amber-500" /> Quick Demo Accounts (1-Click)
+              <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles size={14} className="text-amber-500" /> {t('quick_demo') || 'Quick Demo Accounts (1-Click)'}
               </span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {QUICK_DEMO_USERS.map((u) => (
                 <button
-                  key={u.email}
+                  key={u.label}
                   type="button"
                   onClick={() => handleQuickSelect(u)}
                   className={`p-2.5 rounded-xl border text-center transition-all duration-200 text-xs font-medium hover:shadow-md hover:-translate-y-0.5 active:scale-95 ${
                     form.email === u.email
-                      ? 'border-brand-500 bg-brand-50/80 text-brand-900 shadow-sm ring-2 ring-brand-500/20'
-                      : 'border-gray-200 bg-gray-50/50 hover:bg-white text-gray-700'
+                      ? 'border-brand-500 bg-brand-50/70 dark:bg-brand-950/40 text-brand-900 dark:text-brand-300 ring-2 ring-brand-500/30'
+                      : 'border-gray-200 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-800/60 hover:bg-white dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
                   }`}
                 >
-                  <div className="font-semibold truncate">{u.label.split(' ')[1]}</div>
-                  <div className="text-[10px] text-gray-500 capitalize">{u.role}</div>
+                  <div className="font-bold text-xs truncate">{u.label}</div>
+                  <div className="text-[10px] text-gray-400 truncate">{u.role}</div>
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="relative flex py-2 items-center mb-4">
-            <div className="flex-grow border-t border-gray-200"></div>
-            <span className="flex-shrink mx-3 text-xs text-gray-400 font-medium">Or enter credentials</span>
-            <div className="flex-grow border-t border-gray-200"></div>
-          </div>
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Username or Email Address
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                {t('reg_email') || 'Username or Email Address'}
               </label>
               <input
                 type="text"
@@ -191,58 +182,15 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* State and District Dropdown Selection */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-gray-50/80 rounded-2xl border border-gray-100">
-              <div>
-                <label className="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1 flex items-center gap-1">
-                  <MapPin size={12} className="text-brand-600" />
-                  State
-                </label>
-                <select
-                  value={form.state}
-                  onChange={(e) => {
-                    const newState = e.target.value
-                    const newDistricts = STATE_DISTRICTS[newState] || []
-                    setForm((f) => ({
-                      ...f,
-                      state: newState,
-                      district: newDistricts[0] || '',
-                    }))
-                  }}
-                  className="input-field text-xs py-2 bg-white cursor-pointer"
-                >
-                  {statesList.map((st) => (
-                    <option key={st} value={st}>
-                      {st}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1">
-                  District (APMC Region)
-                </label>
-                <select
-                  value={form.district}
-                  onChange={(e) => set('district', e.target.value)}
-                  className="input-field text-xs py-2 bg-white cursor-pointer"
-                >
-                  {districtsForState.map((dst) => (
-                    <option key={dst} value={dst}>
-                      {dst}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-semibold text-gray-700">
-                  Password
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                  {t('reg_password') || 'Password'}
                 </label>
-                <span className="text-xs text-brand-600 hover:underline cursor-pointer" onClick={() => set('password', 'demo1234')}>
+                <span
+                  className="text-xs text-brand-600 hover:underline cursor-pointer"
+                  onClick={() => set('password', 'demo1234')}
+                >
                   Use default (demo1234)
                 </span>
               </div>
@@ -259,7 +207,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPwd((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1"
                 >
                   {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -278,7 +226,7 @@ export default function LoginPage() {
                 </>
               ) : (
                 <>
-                  <span>Sign In</span>
+                  <span>{t('reg_sign_in') || 'Sign In'}</span>
                   <ArrowRight size={16} />
                 </>
               )}
@@ -286,11 +234,11 @@ export default function LoginPage() {
           </form>
 
           {/* Footer inside card */}
-          <div className="mt-6 pt-5 border-t border-gray-100 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
+          <div className="mt-6 pt-5 border-t border-gray-100 dark:border-gray-800 text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {t('reg_already_have') ? "Don't have an account?" : "Don't have an account?"}{' '}
               <Link to="/register" className="text-brand-600 font-semibold hover:underline">
-                Register as Farmer / Buyer
+                {t('reg_submit') || 'Create Free Account'}
               </Link>
             </p>
           </div>
@@ -307,6 +255,7 @@ export default function LoginPage() {
           </span>
         </div>
       </div>
+      <div />
     </div>
   )
 }

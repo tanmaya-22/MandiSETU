@@ -57,6 +57,33 @@ async def list_transactions(
     return result.scalars().all()
 
 
+@transactions_router.get("/public/all")
+async def list_all_transactions_public(
+    db: AsyncSession = Depends(get_db),
+):
+    """Public read of transactions & escrow state for dashboard sync."""
+    result = await db.execute(select(Transaction).order_by(Transaction.created_at.desc()).limit(100))
+    txns = result.scalars().all()
+    out = []
+    for t in txns:
+        out.append({
+            "id": str(t.id),
+            "lot_id": str(t.lot_id),
+            "seller_id": str(t.seller_id),
+            "buyer_id": str(t.buyer_id),
+            "quantity_kg": t.quantity_kg,
+            "agreed_price": t.agreed_price,
+            "total_amount": round(t.quantity_kg * t.agreed_price, 2),
+            "status": t.status.value if hasattr(t.status, "value") else str(t.status),
+            "logistics_provider": t.logistics_provider,
+            "tracking_id": t.tracking_id,
+            "payment_ref": f"ESCROW-MANDI-{str(t.id)[:8].upper()}",
+            "created_at": t.created_at.isoformat() if t.created_at else None,
+            "updated_at": t.updated_at.isoformat() if t.updated_at else None,
+        })
+    return out
+
+
 @transactions_router.get("/{txn_id}", response_model=TransactionOut)
 async def get_transaction(txn_id: uuid.UUID, auth=Depends(get_current_user_payload), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Transaction).where(Transaction.id == txn_id))

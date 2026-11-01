@@ -5,6 +5,7 @@ import { calcAPI } from '../../api/modules'
 import { PageHeader, Spinner, Card } from '../../components/common/UI'
 import MandiMap from '../../components/common/MandiMap'
 import { useLangStore } from '../../store/langStore'
+import { reverseGeocode } from '../../utils/geoUtils'
 
 const PRESETS = [
   {
@@ -74,17 +75,18 @@ export default function CalculatorPage() {
     }
     setDetectingGps(true)
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const lat = parseFloat(pos.coords.latitude.toFixed(4))
         const lng = parseFloat(pos.coords.longitude.toFixed(4))
+        const areaName = await reverseGeocode(lat, lng)
         setForm((f) => ({
           ...f,
           my_lat: lat,
           my_lng: lng,
-          originName: `My Farm GPS (${lat}, ${lng})`,
+          originName: areaName,
         }))
         setDetectingGps(false)
-        toast.success(`📍 GPS Position Detected: ${lat}, ${lng}`)
+        toast.success(`📍 Location identified: ${areaName}`)
       },
       (err) => {
         console.warn('Geolocation error:', err)
@@ -225,15 +227,23 @@ export default function CalculatorPage() {
           <MandiMap
             height="400px"
             selectedCommodity={form.commodity}
-            onDropPin={(pos) => {
-              setF('my_lat', parseFloat(pos.lat.toFixed(4)))
-              setF('my_lng', parseFloat(pos.lng.toFixed(4)))
-              toast.success(`Origin updated from pin: ${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)}`, { icon: '📌' })
+            onDropPin={async (pos) => {
+              const lat = parseFloat(pos.lat.toFixed(4))
+              const lng = parseFloat(pos.lng.toFixed(4))
+              setF('my_lat', lat)
+              setF('my_lng', lng)
+              const area = await reverseGeocode(lat, lng)
+              setF('originName', area)
+              toast.success(`Location updated: ${area}`, { icon: '📌' })
             }}
-            onLocationFound={(pos) => {
-              setF('my_lat', parseFloat(pos.lat.toFixed(4)))
-              setF('my_lng', parseFloat(pos.lng.toFixed(4)))
-              toast.success(`GPS farm origin detected: ${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)}`, { icon: '📍' })
+            onLocationFound={async (pos) => {
+              const lat = parseFloat(pos.lat.toFixed(4))
+              const lng = parseFloat(pos.lng.toFixed(4))
+              setF('my_lat', lat)
+              setF('my_lng', lng)
+              const area = await reverseGeocode(lat, lng)
+              setF('originName', area)
+              toast.success(`Location detected: ${area}`, { icon: '📍' })
             }}
           />
         </div>
@@ -247,7 +257,7 @@ export default function CalculatorPage() {
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-bold text-gray-900 text-base flex items-center gap-2">
                 <Navigation size={18} className="text-brand-600" />
-                <span>{t('cp_origin_details') || 'Farm Origin & Produce Details'}</span>
+                <span>{t('cp_origin_details') || 'Source Area & Produce Details'}</span>
               </h3>
               <div className="flex items-center gap-2">
                 <button

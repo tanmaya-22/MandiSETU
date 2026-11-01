@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { listingsAPI } from '../../api/modules'
 import { Card, PageHeader } from '../../components/common/UI'
@@ -7,6 +7,7 @@ import { PackagePlus, ArrowLeft, Crosshair, MapPin, Navigation, Map, ChevronDown
 import { useLangStore } from '../../store/langStore'
 import { STATE_DISTRICTS } from '../../data/stateDistricts'
 import MandiMap from '../../components/common/MandiMap'
+import { reverseGeocode } from '../../utils/geoUtils'
 
 export default function CreateLotPage() {
   const navigate = useNavigate()
@@ -15,6 +16,7 @@ export default function CreateLotPage() {
   const [locatingGps, setLocatingGps] = useState(false)
   const [showMapModal, setShowMapModal] = useState(false)
   const [showManualCoords, setShowManualCoords] = useState(false)
+  const [detectedAreaName, setDetectedAreaName] = useState('Sehore, Madhya Pradesh')
 
   const [form, setForm] = useState({
     commodity: 'Wheat',
@@ -37,6 +39,7 @@ export default function CreateLotPage() {
       state: newState,
       district: districts[0] || 'Other',
     }))
+    setDetectedAreaName(`${districts[0] || 'Market'}, ${newState}`)
   }
 
   const handleAccessLocation = () => {
@@ -46,12 +49,14 @@ export default function CreateLotPage() {
     }
     setLocatingGps(true)
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         setLocatingGps(false)
         const lat = parseFloat(pos.coords.latitude.toFixed(4))
         const lng = parseFloat(pos.coords.longitude.toFixed(4))
         setForm((prev) => ({ ...prev, latitude: lat, longitude: lng }))
-        toast.success(`GPS Farm Location pinned: ${lat}, ${lng}`, { icon: '📍' })
+        const areaName = await reverseGeocode(lat, lng)
+        setDetectedAreaName(areaName)
+        toast.success(`Location identified: ${areaName}`, { icon: '📍' })
       },
       (err) => {
         setLocatingGps(false)
@@ -61,11 +66,13 @@ export default function CreateLotPage() {
     )
   }
 
-  const handleDropPin = (coords) => {
+  const handleDropPin = async (coords) => {
     const lat = parseFloat(coords.lat.toFixed(4))
     const lng = parseFloat(coords.lng.toFixed(4))
     setForm(prev => ({ ...prev, latitude: lat, longitude: lng }))
-    toast.success(`Farm location pinned on map: ${lat}, ${lng}`, { icon: '📌' })
+    const areaName = await reverseGeocode(lat, lng)
+    setDetectedAreaName(areaName)
+    toast.success(`Location pinned: ${areaName}`, { icon: '📌' })
   }
 
   const handleChange = (e) => {
@@ -210,16 +217,16 @@ export default function CreateLotPage() {
             </div>
           </div>
 
-          {/* Farm Origin & Location Details with GPS & Pin Drop Map */}
+          {/* Source Location & Area Details with GPS & Pin Drop Map */}
           <div className="border-t border-gray-100 dark:border-gray-800 pt-5 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
                   <MapPin size={16} className="text-emerald-600" />
-                  {t('cl_origin_details') || 'Farm Origin & Location Details'}
+                  {t('cl_origin_details') || 'Source Location & Area Details'}
                 </h4>
                 <p className="text-xs text-gray-500">
-                  {t('loc_auto_detected') || 'Coordinates set automatically via GPS or Pin Drop'}
+                  {t('loc_auto_detected') || 'Area and coordinates identified via GPS or Map Pin Drop'}
                 </p>
               </div>
 
@@ -245,12 +252,12 @@ export default function CreateLotPage() {
               </div>
             </div>
 
-            {/* Farm Origin Status Badge */}
+            {/* Source Area Status Badge (Shows Google-style place name) */}
             <div className="p-3 bg-emerald-50/60 dark:bg-emerald-950/30 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                <span className="font-semibold text-emerald-900 dark:text-emerald-200">
-                  {form.district}, {form.state}
+                <span className="font-bold text-emerald-950 dark:text-emerald-100 text-sm">
+                  {detectedAreaName}
                 </span>
                 <span className="text-gray-400">·</span>
                 <span className="text-emerald-700 dark:text-emerald-300 font-medium">
@@ -273,7 +280,7 @@ export default function CreateLotPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-bold text-gray-800 dark:text-gray-200">
                     <Map size={14} className="text-emerald-600" />
-                    <span>Click anywhere on the map or drag the pin to set your exact farm origin</span>
+                    <span>Click anywhere on the map or drag the pin to set your exact location area</span>
                   </div>
                   <button
                     type="button"
@@ -288,12 +295,12 @@ export default function CreateLotPage() {
                     center={[form.latitude || 23.2, form.longitude || 77.0]}
                     zoom={9}
                     onDropPin={handleDropPin}
-                    onLocationFound={(pos) => {
-                      setForm(prev => ({
-                        ...prev,
-                        latitude: parseFloat(pos.lat.toFixed(4)),
-                        longitude: parseFloat(pos.lng.toFixed(4)),
-                      }))
+                    onLocationFound={async (pos) => {
+                      const lat = parseFloat(pos.lat.toFixed(4))
+                      const lng = parseFloat(pos.lng.toFixed(4))
+                      setForm(prev => ({ ...prev, latitude: lat, longitude: lng }))
+                      const area = await reverseGeocode(lat, lng)
+                      setDetectedAreaName(area)
                     }}
                   />
                 </div>
@@ -303,7 +310,7 @@ export default function CreateLotPage() {
                     onClick={() => setShowMapModal(false)}
                     className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors"
                   >
-                    Confirm Farm Location
+                    Confirm Location Area
                   </button>
                 </div>
               </div>
