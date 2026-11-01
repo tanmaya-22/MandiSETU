@@ -22,6 +22,7 @@ const TICKER_ITEMS = [
 const MODULES = [
   {
     num: '01',
+    id: 'm01',
     icon: Users,
     title: 'User & Role Architecture',
     desc: 'Distinct unified dashboards for Farmers, Bulk Buyers, Aggregators/FPOs, and Admins.',
@@ -29,6 +30,7 @@ const MODULES = [
   },
   {
     num: '02',
+    id: 'm02',
     icon: TrendingUp,
     title: 'Price Discovery & Forecast',
     desc: 'Real-time Agmarknet APMC rates with Prophet ML 14-day price trajectory curves.',
@@ -36,6 +38,7 @@ const MODULES = [
   },
   {
     num: '03',
+    id: 'm03',
     icon: Calculator,
     title: 'Net-Realization Calculator',
     desc: 'Haversine distance freight deduction, APMC cess, and net in-hand realization.',
@@ -43,6 +46,7 @@ const MODULES = [
   },
   {
     num: '04',
+    id: 'm04',
     icon: Tractor,
     title: 'Produce Lot Listings',
     desc: 'Create verified crop listings with harvest dates, floor prices, and location coordinates.',
@@ -50,6 +54,7 @@ const MODULES = [
   },
   {
     num: '05',
+    id: 'm05',
     icon: ShieldCheck,
     title: 'Buyer-Farmer Match Engine',
     desc: 'Algorithmic matching scoring buyers and farmers based on crop grade, price, and distance.',
@@ -57,6 +62,7 @@ const MODULES = [
   },
   {
     num: '06',
+    id: 'm06',
     icon: IndianRupee,
     title: 'Escrow & Transaction State',
     desc: 'End-to-end 7-stage state machine from contract agreement to final disbursement.',
@@ -64,6 +70,7 @@ const MODULES = [
   },
   {
     num: '07',
+    id: 'm07',
     icon: Calendar,
     title: 'Optimal Sale Window (ML)',
     desc: 'Balances price appreciation curves against crop perishability and storage degradation.',
@@ -71,6 +78,7 @@ const MODULES = [
   },
   {
     num: '08',
+    id: 'm08',
     icon: Star,
     title: 'Buyer Trust & Scoring',
     desc: 'Verified reliability rating based on payment punctuality, dispute history, and volume.',
@@ -78,6 +86,7 @@ const MODULES = [
   },
   {
     num: '8B',
+    id: 'm08b',
     icon: Truck,
     title: 'Logistics Coordination',
     desc: 'Per-tonne-km freight estimation and carrier integration with live tracking.',
@@ -85,6 +94,7 @@ const MODULES = [
   },
   {
     num: '09',
+    id: 'm09',
     icon: AlertTriangle,
     title: 'Dispute Arbitration',
     desc: 'Transparent dispute filing with photo evidence, weights verification, and admin mediation.',
@@ -92,6 +102,7 @@ const MODULES = [
   },
   {
     num: '10',
+    id: 'm10',
     icon: Camera,
     title: 'Computer Vision Grading',
     desc: 'Upload produce photos for instant ML color, shape, and defect analysis (Grades A+ to C).',
@@ -99,6 +110,7 @@ const MODULES = [
   },
   {
     num: '11',
+    id: 'm11',
     icon: CloudRain,
     title: 'Weather Risk Advisory',
     desc: 'Hyperlocal weather risk matrix warning against unseasonal rain during transit or harvest.',
@@ -107,7 +119,7 @@ const MODULES = [
 ]
 
 export default function LandingPage() {
-  const { t } = useLangStore()
+  const { t, formatNum } = useLangStore()
   const [sampleQty, setSampleQty] = useState(50) // quintals
   const [sampleCommodity, setSampleCommodity] = useState('Onion')
 
@@ -140,10 +152,10 @@ export default function LandingPage() {
             {TICKER_ITEMS.map((item, i) => (
               <div key={i} className="inline-flex items-center gap-1.5 text-xs">
                 <span className="font-medium text-gray-300">{item.mandi}</span>
-                <span className="font-bold text-white">{item.commodity}</span>
-                <span className="font-extrabold text-emerald-300">{item.price}</span>
+                <span className="font-bold text-white">{t('comm_' + item.commodity.toLowerCase().replace(/ /g, '_')) || item.commodity}</span>
+                <span className="font-extrabold text-emerald-300">{formatNum(item.price)}</span>
                 <span className={`text-[10px] font-bold ${item.up ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {item.change}
+                  {formatNum(item.change)}
                 </span>
               </div>
             ))}
@@ -163,7 +175,7 @@ export default function LandingPage() {
                 {t('brand_name')}
               </span>
               <span className="hidden sm:inline-block ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                12 Integrated Modules
+                {formatNum(12)} {t('lp_stat_modules')}
               </span>
             </div>
           </Link>
@@ -202,18 +214,15 @@ export default function LandingPage() {
             <div className="lg:col-span-7 space-y-6 text-left">
               <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-md border border-white/20 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-200">
                 <Sparkles size={14} className="text-amber-300" />
-                <span>India’s 1st AI & Geospatial Agricultural Market Bridge</span>
+                <span>{t('lp_hero_badge')}</span>
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight">
-                Bridging Farmers to <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-green-300">
-                  Fair Mandi Prices.
-                </span>
+                {t('lp_hero_title')}
               </h1>
 
               <p className="text-base sm:text-lg text-emerald-100 max-w-2xl leading-relaxed">
-                Stop selling below market value. MandiSetu connects Indian smallholder farmers and FPOs directly to verified buyers, providing real-time APMC price intelligence, haversine transport cost optimization, and computer vision quality grading.
+                {t('lp_hero_sub')}
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3.5 pt-2">
@@ -221,7 +230,7 @@ export default function LandingPage() {
                   to="/register"
                   className="px-7 py-3.5 bg-white text-brand-900 font-bold rounded-2xl shadow-xl hover:bg-emerald-50 hover:shadow-2xl transition-all duration-200 flex items-center justify-center gap-2 transform hover:-translate-y-0.5 active:scale-95"
                 >
-                  <span>Explore Platform Free</span>
+                  <span>{t('lp_explore_free')}</span>
                   <ArrowRight size={18} />
                 </Link>
 
@@ -230,7 +239,7 @@ export default function LandingPage() {
                   className="px-6 py-3.5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-semibold rounded-2xl transition-all duration-200 flex items-center justify-center gap-2"
                 >
                   <Sparkles size={18} className="text-amber-300" />
-                  <span>Interactive Farmer Tour</span>
+                  <span>{t('lp_interactive_tour')}</span>
                 </button>
               </div>
 
@@ -238,15 +247,15 @@ export default function LandingPage() {
               <div className="pt-4 flex flex-wrap gap-4 text-xs text-emerald-200">
                 <div className="flex items-center gap-1.5">
                   <CheckCircle2 size={16} className="text-emerald-400" />
-                  <span>Real Agmarknet Benchmark Data</span>
+                  <span>{t('lp_pill_agmarknet')}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <CheckCircle2 size={16} className="text-emerald-400" />
-                  <span>Interactive Geospatial Mandi Map</span>
+                  <span>{t('lp_pill_geospatial')}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <CheckCircle2 size={16} className="text-emerald-400" />
-                  <span>4 Languages (EN / हिन्दी / मराठी / ଓଡ଼ିଆ)</span>
+                  <span>{t('lp_pill_languages')}</span>
                 </div>
               </div>
             </div>
@@ -260,8 +269,8 @@ export default function LandingPage() {
                       <Calculator size={18} />
                     </div>
                     <div>
-                      <h3 className="font-extrabold text-sm text-gray-900 dark:text-white">Net Realization Estimator</h3>
-                      <p className="text-[11px] text-gray-500 dark:text-gray-400">Compare take-home profit across mandis</p>
+                      <h3 className="font-extrabold text-sm text-gray-900 dark:text-white">{t('lp_calc_title')}</h3>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400">{t('lp_calc_sub')}</p>
                     </div>
                   </div>
                   <span className="text-[10px] font-bold px-2 py-0.5 bg-brand-100 dark:bg-brand-950 text-brand-800 dark:text-brand-300 rounded-full">
@@ -272,7 +281,7 @@ export default function LandingPage() {
                 {/* Crop & Quantity Selector */}
                 <div className="space-y-3.5">
                   <div>
-                    <label className="text-xs font-bold text-gray-600 dark:text-gray-300 block mb-1">Select Crop</label>
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-300 block mb-1">{t('lp_calc_select_crop')}</label>
                     <div className="grid grid-cols-4 gap-1.5">
                       {['Onion', 'Wheat', 'Tomato', 'Potato'].map((crop) => (
                         <button
@@ -284,7 +293,7 @@ export default function LandingPage() {
                               : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
                           }`}
                         >
-                          {crop}
+                          {t('comm_' + crop.toLowerCase()) || crop}
                         </button>
                       ))}
                     </div>
@@ -292,8 +301,8 @@ export default function LandingPage() {
 
                   <div>
                     <div className="flex justify-between text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">
-                      <span>Harvest Quantity</span>
-                      <span className="text-brand-700 dark:text-emerald-400 font-bold">{sampleQty} Quintals ({sampleQty * 100} kg)</span>
+                      <span>{t('lp_calc_harvest_qty')}</span>
+                      <span className="text-brand-700 dark:text-emerald-400 font-bold">{formatNum(sampleQty)} {t('lp_calc_quintals')} ({formatNum(sampleQty * 100)} kg)</span>
                     </div>
                     <input
                       type="range"
@@ -309,17 +318,17 @@ export default function LandingPage() {
                   {/* Profit Comparison Card */}
                   <div className="p-3.5 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 rounded-2xl border border-emerald-100 dark:border-emerald-900/40 space-y-2">
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-600 dark:text-gray-400">Local Village Broker:</span>
-                      <span className="font-semibold text-gray-700 dark:text-gray-200">₹{netLocal.toLocaleString('en-IN')}</span>
+                      <span className="text-gray-600 dark:text-gray-400">{t('lp_calc_local_broker')}</span>
+                      <span className="font-semibold text-gray-700 dark:text-gray-200">₹{formatNum(netLocal.toLocaleString('en-IN'))}</span>
                     </div>
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-600 dark:text-gray-400">MandiSetu Terminal APMC:</span>
-                      <span className="font-bold text-brand-700 dark:text-emerald-400">₹{netDistant.toLocaleString('en-IN')}</span>
+                      <span className="text-gray-600 dark:text-gray-400">{t('lp_calc_terminal_mandi')}</span>
+                      <span className="font-bold text-brand-700 dark:text-emerald-400">₹{formatNum(netDistant.toLocaleString('en-IN'))}</span>
                     </div>
                     <div className="pt-2 border-t border-emerald-200 dark:border-emerald-800 flex justify-between items-center">
-                      <span className="text-xs font-extrabold text-emerald-900 dark:text-emerald-200">Your Extra Take-Home:</span>
+                      <span className="text-xs font-extrabold text-emerald-900 dark:text-emerald-200">{t('lp_calc_extra_take_home')}</span>
                       <span className="text-base font-extrabold text-emerald-700 dark:text-emerald-400">
-                        +₹{extraProfit.toLocaleString('en-IN')}
+                        +₹{formatNum(extraProfit.toLocaleString('en-IN'))}
                       </span>
                     </div>
                   </div>
@@ -328,7 +337,7 @@ export default function LandingPage() {
                     to="/calculator"
                     className="block w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold text-center rounded-xl transition shadow-md"
                   >
-                    Open Full Multi-Mandi Route Calculator →
+                    {t('lp_calc_open_full')}
                   </Link>
                 </div>
               </div>
@@ -342,20 +351,20 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div className="p-4">
-              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700 dark:text-emerald-400">500+</div>
-              <div className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">APMC Mandis Connected</div>
+              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700 dark:text-emerald-400">{formatNum(500)}+</div>
+              <div className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">{t('lp_stat_mandis')}</div>
             </div>
             <div className="p-4">
-              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700 dark:text-emerald-400">10,000+</div>
-              <div className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">Empowered Farmers</div>
+              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700 dark:text-emerald-400">{formatNum('10,000')}+</div>
+              <div className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">{t('lp_stat_farmers')}</div>
             </div>
             <div className="p-4">
-              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700 dark:text-emerald-400">₹50 Cr+</div>
-              <div className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">Facilitated Trade Value</div>
+              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700 dark:text-emerald-400">₹{formatNum(50)} Cr+</div>
+              <div className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">{t('lp_stat_trade_val')}</div>
             </div>
             <div className="p-4">
-              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700 dark:text-emerald-400">12 Modules</div>
-              <div className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">End-to-End Agri Suite</div>
+              <div className="text-3xl sm:text-4xl font-extrabold text-brand-700 dark:text-emerald-400">{formatNum(12)} {t('lp_stat_modules')}</div>
+              <div className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">{t('lp_stat_modules')}</div>
             </div>
           </div>
         </div>
@@ -366,19 +375,21 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <span className="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-emerald-400 bg-brand-50 dark:bg-gray-900 px-3 py-1 rounded-full border border-brand-200 dark:border-gray-800">
-              Full Architecture
+              {t('lp_modules_badge')}
             </span>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white mt-3 mb-4">
-              All 12 Modules Built Ground-Up for Indian Agriculture
+              {t('lp_modules_heading')}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-              Every stage from harvest date planning, ML price discovery, quality assessment to dispute settlement is covered under a unified digital workflow.
+              {t('lp_modules_sub')}
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {MODULES.map((m) => {
               const Icon = m.icon
+              const modTitle = t(`mod_${m.id}_title`) || m.title
+              const modDesc = t(`mod_${m.id}_desc`) || m.desc
               return (
                 <div
                   key={m.num}
@@ -389,14 +400,14 @@ export default function LandingPage() {
                       <Icon size={22} />
                     </div>
                     <span className="text-xs font-mono font-bold text-gray-400 group-hover:text-brand-600 dark:group-hover:text-emerald-400 transition">
-                      M{m.num}
+                      M{formatNum(m.num)}
                     </span>
                   </div>
                   <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2 group-hover:text-brand-700 dark:group-hover:text-emerald-400 transition">
-                    {m.title}
+                    {modTitle}
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                    {m.desc}
+                    {modDesc}
                   </p>
                 </div>
               )
@@ -409,23 +420,23 @@ export default function LandingPage() {
       <section className="bg-gradient-to-r from-brand-700 via-emerald-700 to-green-800 text-white py-16">
         <div className="max-w-5xl mx-auto px-4 text-center space-y-6">
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-            Ready to experience transparent agri-market intelligence?
+            {t('lp_cta_title')}
           </h2>
           <p className="text-emerald-100 max-w-xl mx-auto text-sm sm:text-base">
-            Create a free account in under 60 seconds. Sign in with demo credentials or register as a farmer, buyer, or FPO.
+            {t('lp_cta_sub')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
             <Link
               to="/register"
               className="px-8 py-3.5 bg-white text-brand-900 font-bold rounded-2xl shadow-xl hover:bg-emerald-50 transition transform hover:-translate-y-0.5"
             >
-              Get Started for Free
+              {t('lp_cta_get_started')}
             </Link>
             <Link
               to="/login"
               className="px-8 py-3.5 bg-white/10 hover:bg-white/20 border border-white/30 text-white font-semibold rounded-2xl transition"
             >
-              Sign In to Existing Account
+              {t('lp_cta_sign_in')}
             </Link>
           </div>
         </div>
@@ -444,30 +455,30 @@ export default function LandingPage() {
                 </span>
               </div>
               <p className="text-gray-400 text-xs max-w-md">
-                Empowering Indian farmers with Agmarknet price intelligence, net take-home calculators, OpenStreetMap logistics, and dispute arbitration.
+                {t('lp_footer_desc')}
               </p>
             </div>
 
             <div className="flex flex-wrap gap-4 text-xs">
-              <Link to="/prices" className="hover:text-emerald-400 transition">Market Rates</Link>
-              <Link to="/calculator" className="hover:text-emerald-400 transition">Net Calculator</Link>
-              <Link to="/mandi-map" className="hover:text-emerald-400 transition">Mandi Maps</Link>
-              <Link to="/weather" className="hover:text-emerald-400 transition">Weather Alerts</Link>
-              <Link to="/feedback" className="text-emerald-400 font-bold hover:underline">💬 Give Feedback</Link>
+              <Link to="/prices" className="hover:text-emerald-400 transition">{t('lp_footer_market_rates')}</Link>
+              <Link to="/calculator" className="hover:text-emerald-400 transition">{t('lp_footer_calculator')}</Link>
+              <Link to="/mandi-map" className="hover:text-emerald-400 transition">{t('lp_footer_mandi_maps')}</Link>
+              <Link to="/weather" className="hover:text-emerald-400 transition">{t('lp_footer_weather_alerts')}</Link>
+              <Link to="/feedback" className="text-emerald-400 font-bold hover:underline">{t('lp_footer_feedback')}</Link>
             </div>
           </div>
 
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-400">
             <div>
-              © 2024–2026 MandiSetu. All rights reserved.
+              © 2024–2026 MandiSetu. {t('lp_footer_rights')}
             </div>
 
             <div className="font-bold text-gray-200 text-center">
-              Prototype Credits: <span className="text-emerald-400">TanmayA, Anuj, Yatharth and Team</span>
+              {t('lp_footer_credits')} <span className="text-emerald-400">TanmayA, Anuj, Yatharth and Team</span>
             </div>
 
             <div className="text-gray-400">
-              MandiSetu Platform · Built for Indian Farmers & APMC Markets
+              {t('lp_footer_built_for')}
             </div>
           </div>
         </div>

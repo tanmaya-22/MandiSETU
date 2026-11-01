@@ -7,49 +7,18 @@ import {
   ArrowRight,
   CheckCircle2,
   ShieldCheck,
-  Sparkles,
   Building2,
   Tractor,
   Users,
   Shield,
   KeyRound,
   Check,
+  Navigation,
 } from 'lucide-react'
 import { authAPI, getApiBaseUrl } from '../../api/modules'
 import { useAuthStore } from '../../store/authStore'
 import { useLangStore } from '../../store/langStore'
 import { STATE_DISTRICTS } from '../../data/stateDistricts'
-
-const ROLES = [
-  {
-    value: 'farmer',
-    label: 'Farmer',
-    icon: Tractor,
-    desc: 'Sell produce, check mandi rates, AI quality grading',
-    color: 'border-emerald-500 bg-emerald-50/70 text-emerald-900',
-  },
-  {
-    value: 'buyer',
-    label: 'Buyer / Trader',
-    icon: Building2,
-    desc: 'Source verified bulk produce from farmers & FPOs',
-    color: 'border-blue-500 bg-blue-50/70 text-blue-900',
-  },
-  {
-    value: 'fpo',
-    label: 'FPO / Group',
-    icon: Users,
-    desc: 'Aggregate crops, negotiate higher bulk prices',
-    color: 'border-purple-500 bg-purple-50/70 text-purple-900',
-  },
-  {
-    value: 'admin',
-    label: 'APMC Admin',
-    icon: Shield,
-    desc: 'APMC Mandi Administrator (OTP verification required)',
-    color: 'border-amber-500 bg-amber-50/70 text-amber-900',
-  },
-]
 
 const STATES = [
   'Andhra Pradesh', 'Bihar', 'Gujarat', 'Haryana', 'Himachal Pradesh',
@@ -78,6 +47,7 @@ export default function RegisterPage() {
   const { t } = useLangStore()
   const [form, setForm] = useState(INITIAL)
   const [loading, setLoading] = useState(false)
+  const [detectingLocation, setDetectingLocation] = useState(false)
 
   // OTP Verification state for APMC Admin
   const [otpSent, setOtpSent] = useState(false)
@@ -88,31 +58,94 @@ export default function RegisterPage() {
   const [previewOtp, setPreviewOtp] = useState('')
   const [otpCooldown, setOtpCooldown] = useState(0)
 
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+  const set = (key, val) => setForm((prev) => ({ ...prev, [key]: val }))
 
   const handleStateChange = (newState) => {
     const districts = STATE_DISTRICTS[newState] || ['Other']
-    setForm((f) => ({
-      ...f,
+    setForm((prev) => ({
+      ...prev,
       state: newState,
       district: districts[0] || 'Other',
     }))
   }
 
-  const handleSendOtp = async () => {
-    if (!form.email || !form.email.includes('@')) {
-      toast.error('Please enter a valid email address first to receive your verification OTP')
+  const handleDetectGpsLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser')
       return
     }
+    setDetectingLocation(true)
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
+          if (res.ok) {
+            const data = await res.json()
+            const addr = data.address || {}
+            const detectedState = addr.state || ''
+            const detectedDistrict = addr.state_district || addr.county || addr.city || ''
+
+            const matchedState = STATES.find(s =>
+              detectedState.toLowerCase().includes(s.toLowerCase()) || s.toLowerCase().includes(detectedState.toLowerCase())
+            )
+            if (matchedState) {
+              const districts = STATE_DISTRICTS[matchedState] || ['Other']
+              const matchedDistrict = districts.find(d =>
+                detectedDistrict.toLowerCase().includes(d.toLowerCase()) || d.toLowerCase().includes(detectedDistrict.toLowerCase())
+              ) || districts[0]
+              setForm(f => ({ ...f, state: matchedState, district: matchedDistrict }))
+              toast.success(`Location detected: ${matchedDistrict}, ${matchedState}`, { icon: '📍' })
+              setDetectingLocation(false)
+              return
+            }
+          }
+        } catch {}
+
+        // Fallback heuristic for major agri belts
+        let fallbackState = 'Maharashtra'
+        let fallbackDistrict = 'Nashik'
+        if (lat >= 21 && lat <= 26 && lng >= 74 && lng <= 82) {
+          fallbackState = 'Madhya Pradesh'
+          fallbackDistrict = 'Sehore'
+        } else if (lat >= 19 && lat <= 22 && lng >= 82 && lng <= 87) {
+          fallbackState = 'Odisha'
+          fallbackDistrict = 'Cuttack'
+        } else if (lat >= 28 && lat <= 32) {
+          fallbackState = 'Punjab'
+          fallbackDistrict = 'Amritsar'
+        } else if (lat >= 12 && lat <= 18) {
+          fallbackState = 'Karnataka'
+          fallbackDistrict = 'Kolar'
+        }
+        setForm(f => ({ ...f, state: fallbackState, district: fallbackDistrict }))
+        toast.success(`Location set from GPS: ${fallbackDistrict}, ${fallbackState}`, { icon: '📍' })
+        setDetectingLocation(false)
+      },
+      (err) => {
+        setDetectingLocation(false)
+        toast.error('Could not access location: ' + err.message)
+      },
+      { timeout: 8000 }
+    )
+  }
+
+  // Send OTP handler
+  const handleSendOtp = async () => {
+    if (!form.email || !form.email.includes('@')) {
+      toast.error('Please enter a valid email address first to receive OTP.')
+      return
+    }
+
     setSendingOtp(true)
     try {
-      const res = await authAPI.sendOtp({ email: form.email, phone: form.phone, purpose: 'admin_registration' })
+      const res = await authAPI.sendOtp(form.email, form.phone, 'APMC Administrator Registration')
       setOtpSent(true)
-      if (res?.preview_otp) {
+      if (res.preview_otp) {
         setPreviewOtp(res.preview_otp)
       }
-      toast.success(res?.message || 'OTP verification code sent!')
-      setOtpCooldown(60)
+      toast.success(res.message || 'OTP verification code sent successfully!', { icon: '📧' })
+      setOtpCooldown(45)
       const interval = setInterval(() => {
         setOtpCooldown((prev) => {
           if (prev <= 1) {
@@ -123,24 +156,30 @@ export default function RegisterPage() {
         })
       }, 1000)
     } catch (err) {
-      toast.error(err?.response?.data?.detail || err?.message || 'Failed to send OTP')
+      toast.error(err.response?.data?.detail || 'Failed to dispatch OTP. Please check email address.')
     } finally {
       setSendingOtp(false)
     }
   }
 
+  // Verify OTP handler
   const handleVerifyOtp = async () => {
-    if (!otpCode || otpCode.trim().length !== 6) {
-      toast.error('Please enter the 6-digit OTP code')
+    if (!otpCode || otpCode.length < 4) {
+      toast.error('Please enter the 6-digit OTP received on email.')
       return
     }
+
     setVerifyingOtp(true)
     try {
-      await authAPI.verifyOtp({ email: form.email, otp: otpCode.trim() })
-      setOtpVerified(true)
-      toast.success('🛡️ APMC Admin Identity verified via OTP!')
+      const res = await authAPI.verifyOtp(form.email, otpCode)
+      if (res.verified) {
+        setOtpVerified(true)
+        toast.success('Admin identity verified via OTP! You may now submit registration.', { icon: '✅' })
+      } else {
+        toast.error('Invalid or expired OTP code.')
+      }
     } catch (err) {
-      toast.error(err?.message || err?.response?.data?.detail || 'Invalid or expired OTP')
+      toast.error(err.response?.data?.detail || 'OTP verification failed. Please try again.')
     } finally {
       setVerifyingOtp(false)
     }
@@ -148,83 +187,115 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
     if (!form.full_name.trim()) {
       toast.error('Please enter your full name')
       return
     }
-    if (!form.email.trim() || !form.email.includes('@')) {
-      toast.error('Please enter a valid email address')
-      return
-    }
-    if (!form.phone.trim()) {
-      toast.error('Please enter your contact phone number')
+    if (!form.email.trim()) {
+      toast.error('Please enter your email')
       return
     }
     if (form.password.length < 6) {
-      toast.error('Password must be at least 6 characters long')
+      toast.error('Password must be at least 6 characters')
       return
     }
     if (form.password !== form.confirm) {
       toast.error('Passwords do not match')
       return
     }
+
+    // Strict validation for APMC Admin role
     if (form.role === 'admin' && !otpVerified) {
-      toast.error('🛡️ APMC Admin accounts require mandatory OTP verification before creation.', { icon: '🔒' })
+      toast.error('APMC Admin registration requires email OTP verification before submitting.')
       return
     }
 
     setLoading(true)
     try {
-      const { confirm, ...raw } = form
-      const payload = {
-        full_name: raw.full_name.trim(),
-        email: raw.email.trim().toLowerCase(),
-        phone: raw.phone.trim() || undefined,
-        password: raw.password,
-        role: raw.role || 'farmer',
-        state: raw.state || undefined,
-        district: raw.district || undefined,
+      const raw = {
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
+        full_name: form.full_name.trim(),
+        role: form.role,
+        phone: form.phone.trim() || undefined,
+        state: form.state || undefined,
+        district: form.district || undefined,
       }
-      if (raw.land_area_acres && !isNaN(parseFloat(raw.land_area_acres))) {
-        payload.land_area_acres = parseFloat(raw.land_area_acres)
-      }
-      if (raw.business_name?.trim()) payload.business_name = raw.business_name.trim()
-      if (raw.fpo_name?.trim()) payload.fpo_name = raw.fpo_name.trim()
 
-      const res = await authAPI.register(payload)
-      const data = res?.data
+      const res = await authAPI.register(raw)
+      const data = res?.data || {}
 
-      if (res?.isOffline) {
-        toast.success('🌾 Account created (saved locally & queued for cloud sync)!', { duration: 4000, icon: '💾' })
+      if (res.isOffline) {
+        toast.success(`Account created! Mode: Offline demo data.`, { icon: '🌱' })
       } else {
-        toast.success('🎉 Account created and saved to cloud database! Logging in...', { duration: 3000, icon: '☁️' })
+        toast.success(`Account created successfully! Welcome to MandiSetu, ${form.full_name}.`, { icon: '🎉' })
       }
 
-      // Auto login newly registered account so the user can immediately experience the platform
-      if (data) {
-        login({
-          ...data,
-          access_token: data.access_token || 'jwt-token-new-' + Date.now(),
-          role: form.role,
-          full_name: form.full_name,
-        })
+      // Auto login newly registered account
+      const userSession = {
+        id: data.id || `usr-local-${Date.now()}`,
+        access_token: data.access_token || `jwt-token-local-${Date.now()}`,
+        token_type: 'bearer',
+        role: data.role || form.role,
+        full_name: data.full_name || form.full_name,
+        email: data.email || form.email,
+        phone: data.phone || form.phone,
+        state: data.state || form.state,
+        district: data.district || form.district,
+        is_verified: true,
+        source: res.isOffline ? 'local_offline' : 'postgres_cloud',
       }
+
+      login(userSession)
 
       setTimeout(() => {
-        if (form.role === 'buyer') navigate('/buyer-dashboard')
-        else if (form.role === 'admin') navigate('/admin')
-        else navigate('/farmer-dashboard')
-      }, 500)
+        navigate('/dashboard', { replace: true })
+      }, 350)
     } catch (err) {
-      console.error('Registration failed:', err)
-      toast.error(err?.response?.data?.detail || err?.message || 'Failed to create account. Please try again.')
+      const detail = err.response?.data?.detail
+      let msg = 'Registration failed. Please check details.'
+      if (typeof detail === 'string') msg = detail
+      else if (Array.isArray(detail)) msg = detail.map((d) => d.msg).join(', ')
+      toast.error(msg)
     } finally {
       setLoading(false)
     }
   }
 
+  const roleConfigs = [
+    {
+      value: 'farmer',
+      label: t('reg_role_farmer') || 'Farmer',
+      icon: Tractor,
+      desc: t('reg_role_farmer_desc') || 'Sell produce, check mandi rates, AI quality grading',
+      color: 'border-emerald-500 bg-emerald-50/70 text-emerald-900',
+    },
+    {
+      value: 'buyer',
+      label: t('reg_role_buyer') || 'Buyer / Trader',
+      icon: Building2,
+      desc: t('reg_role_buyer_desc') || 'Source verified bulk produce from farmers & FPOs',
+      color: 'border-blue-500 bg-blue-50/70 text-blue-900',
+    },
+    {
+      value: 'fpo',
+      label: t('reg_role_fpo') || 'FPO / Group',
+      icon: Users,
+      desc: t('reg_role_fpo_desc') || 'Aggregate crops, negotiate higher bulk prices',
+      color: 'border-purple-500 bg-purple-50/70 text-purple-900',
+    },
+    {
+      value: 'admin',
+      label: t('reg_role_admin') || 'APMC Admin',
+      icon: Shield,
+      desc: t('reg_role_admin_desc') || 'APMC Mandi Administrator (OTP verification required)',
+      color: 'border-amber-500 bg-amber-50/70 text-amber-900',
+    },
+  ]
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex items-center justify-center p-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950 flex items-center justify-center p-4 py-8">
       {/* Background ambient decorative shapes */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-10 right-10 w-96 h-96 bg-emerald-200/40 rounded-full blur-3xl animate-blob" />
@@ -239,23 +310,25 @@ export default function RegisterPage() {
               <Leaf size={24} className="text-white" />
             </div>
             <div className="text-left">
-              <span className="text-2xl font-extrabold text-gray-900 tracking-tight">MandiSetu</span>
+              <span className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">MandiSetu</span>
               <span className="block text-xs font-semibold text-brand-600 tracking-wider uppercase">Market Intelligence</span>
             </div>
           </Link>
-          <p className="text-gray-600 text-sm">Join 10,000+ farmers & buyers getting fair agricultural prices</p>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">
+            {t('reg_subtitle') || 'Join 10,000+ farmers & buyers getting fair agricultural prices'}
+          </p>
         </div>
 
         {/* Form Card */}
-        <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-xl border border-white/60 p-7 sm:p-9">
+        <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-3xl shadow-xl border border-white/60 dark:border-gray-800 p-7 sm:p-9">
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Role selector */}
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2.5">
-                Select Your Role <span className="text-emerald-600">*</span>
+              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2.5">
+                {t('reg_select_role') || 'Select Your Role'} <span className="text-emerald-600">*</span>
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {ROLES.map((r) => {
+                {roleConfigs.map((r) => {
                   const Icon = r.icon
                   const active = form.role === r.value
                   return (
@@ -266,7 +339,7 @@ export default function RegisterPage() {
                       className={`p-3 rounded-2xl border-2 text-left transition-all duration-200 hover:shadow-md active:scale-95 flex flex-col justify-between ${
                         active
                           ? `${r.color} shadow-sm ring-2 ring-brand-500/20`
-                          : 'border-gray-200 bg-gray-50/50 hover:bg-white text-gray-700'
+                          : 'border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 hover:bg-white text-gray-700 dark:text-gray-300'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">
@@ -288,20 +361,22 @@ export default function RegisterPage() {
                   <div className="flex items-center gap-2">
                     <Shield className="text-amber-600" size={18} />
                     <span className="font-bold text-xs text-amber-900 dark:text-amber-300">
-                      APMC Admin Security Gate (OTP Verification Required)
+                      {t('reg_admin_otp_box') || 'APMC Admin Security Gate (OTP Verification Required)'}
                     </span>
                   </div>
                   {otpVerified ? (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[11px]">
                       <Check size={13} className="text-emerald-700" />
-                      Verified
+                      {t('reg_otp_verified') || 'Verified'}
                     </span>
                   ) : (
-                    <span className="text-[11px] font-semibold text-amber-700">Verification Pending</span>
+                    <span className="text-[11px] font-semibold text-amber-700">
+                      {t('reg_otp_pending') || 'Verification Pending'}
+                    </span>
                   )}
                 </div>
                 <p className="text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed">
-                  Administrator registration requires email OTP verification. Once created, operational authorities and permissions are assigned and controlled by Admin(TanmayA).
+                  {t('reg_admin_otp_info') || 'Administrator registration requires email OTP verification. Once created, operational authorities and permissions are assigned and controlled by Admin(TanmayA).'}
                 </p>
 
                 {!otpVerified && (
@@ -318,7 +393,7 @@ export default function RegisterPage() {
                         ) : (
                           <KeyRound size={14} />
                         )}
-                        <span>{otpSent ? (otpCooldown > 0 ? `Resend OTP (${otpCooldown}s)` : 'Resend OTP') : 'Send OTP to Email'}</span>
+                        <span>{otpSent ? (otpCooldown > 0 ? `Resend OTP (${otpCooldown}s)` : 'Resend OTP') : (t('reg_send_otp') || 'Send Verification Code (OTP)')}</span>
                       </button>
 
                       {previewOtp && (
@@ -340,17 +415,17 @@ export default function RegisterPage() {
                           maxLength={6}
                           value={otpCode}
                           onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                          placeholder="Enter 6-digit OTP"
+                          placeholder={t('reg_otp_placeholder') || 'Enter 6-digit OTP'}
                           className="input-field text-center font-mono tracking-widest text-sm font-bold max-w-[170px]"
                         />
                         <button
                           type="button"
                           onClick={handleVerifyOtp}
-                          disabled={verifyingOtp || otpCode.length !== 6}
-                          className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs transition shadow-sm flex items-center gap-1.5"
+                          disabled={verifyingOtp || otpCode.length < 4}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition shadow-sm flex items-center gap-1"
                         >
-                          {verifyingOtp ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                          <span>Verify OTP</span>
+                          {verifyingOtp ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                          <span>{t('reg_verify_otp') || 'Verify OTP'}</span>
                         </button>
                       </div>
                     )}
@@ -362,38 +437,39 @@ export default function RegisterPage() {
             {/* Full Name & Phone */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Full Name <span className="text-red-500">*</span>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                  {t('reg_full_name') || 'Full Name'} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={form.full_name}
                   onChange={(e) => set('full_name', e.target.value)}
-                  placeholder="e.g. Ramesh Kumar"
+                  placeholder="e.g. Ramesh Patel"
                   className="input-field"
                   required
+                  autoComplete="name"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Mobile Phone Number <span className="text-red-500">*</span>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                  {t('reg_phone') || 'Phone Number'}
                 </label>
                 <input
                   type="tel"
                   value={form.phone}
                   onChange={(e) => set('phone', e.target.value)}
-                  placeholder="+91 98765 43210"
+                  placeholder="e.g. 9876543210"
                   className="input-field"
-                  required
+                  autoComplete="tel"
                 />
               </div>
             </div>
 
-            {/* Email Address */}
+            {/* Email */}
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Email Address <span className="text-red-500">*</span>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                {t('reg_email') || 'Email Address'} <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
@@ -406,12 +482,23 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* State & District */}
+            {/* State & District with GPS auto-detect button */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  State <span className="text-red-500">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                    {t('reg_state') || 'State'} <span className="text-red-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleDetectGpsLocation}
+                    disabled={detectingLocation}
+                    className="text-[11px] text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 font-semibold flex items-center gap-1 transition-colors"
+                  >
+                    <Navigation size={11} className={detectingLocation ? 'animate-spin' : ''} />
+                    <span>{detectingLocation ? 'Detecting...' : (t('reg_gps_detect') || 'Detect GPS')}</span>
+                  </button>
+                </div>
                 <select
                   value={form.state}
                   onChange={(e) => handleStateChange(e.target.value)}
@@ -425,8 +512,8 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  District / Tehsil <span className="text-red-500">*</span>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                  {t('reg_district') || 'District / Tehsil'} <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={form.district}
@@ -444,8 +531,8 @@ export default function RegisterPage() {
             {/* Role-specific optional fields */}
             {form.role === 'buyer' && (
               <div className="animate-fade-in-down">
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Business / Firm Name
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                  {t('reg_org') || 'Business / Firm Name'}
                 </label>
                 <input
                   type="text"
@@ -459,7 +546,7 @@ export default function RegisterPage() {
 
             {form.role === 'farmer' && (
               <div className="animate-fade-in-down">
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                   Land Holding Area (Acres)
                 </label>
                 <input
@@ -476,8 +563,8 @@ export default function RegisterPage() {
             {/* Password and Confirm */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Password <span className="text-red-500">*</span>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                  {t('reg_password') || 'Password'} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="password"
@@ -490,8 +577,8 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Confirm Password <span className="text-red-500">*</span>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                  {t('reg_confirm_password') || 'Confirm Password'} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="password"
@@ -516,7 +603,7 @@ export default function RegisterPage() {
                 </>
               ) : (
                 <>
-                  <span>Create Account & Get Started</span>
+                  <span>{t('reg_submit') || 'Create Account & Get Started'}</span>
                   <ArrowRight size={16} />
                 </>
               )}
@@ -524,11 +611,11 @@ export default function RegisterPage() {
           </form>
 
           {/* Footer note */}
-          <div className="mt-6 pt-5 border-t border-gray-100 text-center">
-            <p className="text-sm text-gray-600">
-              Already have an account?{' '}
+          <div className="mt-6 pt-5 border-t border-gray-100 dark:border-gray-800 text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {t('reg_already_have') || 'Already have an account?'}{' '}
               <Link to="/login" className="text-brand-600 font-semibold hover:underline">
-                Sign In here
+                {t('reg_sign_in') || 'Sign In here'}
               </Link>
             </p>
           </div>

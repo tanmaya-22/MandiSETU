@@ -5,7 +5,8 @@ import {
   ShieldCheck, AlertTriangle, Activity, Download, Mail, Phone,
   Calendar, CheckCircle, RefreshCw, UserCheck, Lock, Unlock,
   Sliders, Award, MessageSquare, FileText, CheckCircle2, XCircle, ChevronRight,
-  Zap, Sparkles, Check, Crown, Server, Globe, Wifi, WifiOff
+  Zap, Sparkles, Check, Crown, Server, Globe, Wifi, WifiOff,
+  Trash2, Ban, PlayCircle
 } from 'lucide-react'
 import {
   analyticsAPI,
@@ -536,6 +537,84 @@ export default function AdminDashboard() {
     logAuditAction('Buyer Rating Override', pivotalModal.item.id, `Score changed to ${val}★. Reason: ${overrideReason}`)
     toast.success(`Buyer rating updated to ${val}★`)
     setPivotalModal(null)
+  }
+
+  // Admin Account Governance (Freeze / Suspend & Delete)
+  const handleToggleFreezeUser = async (u) => {
+    const isCurrentlyFrozen = u.is_active === false || u.is_frozen === true
+    const newFrozenState = !isCurrentlyFrozen
+    const actionName = newFrozenState ? 'Freeze / Suspend Account' : 'Reactivate / Unfreeze Account'
+
+    toast.loading(`${actionName} in progress...`, { id: 'admin-freeze' })
+    try {
+      await authAPI.toggleFreezeUser(u.id || u.user_id, u.email, newFrozenState)
+      setRegisteredUsers((prev) =>
+        prev.map((item) =>
+          item.email?.toLowerCase() === u.email?.toLowerCase()
+            ? { ...item, is_active: !newFrozenState, is_frozen: newFrozenState }
+            : item
+        )
+      )
+      logAuditAction(
+        newFrozenState ? 'Freeze User Account' : 'Unfreeze User Account',
+        u.email,
+        `Account ${newFrozenState ? 'frozen/suspended' : 'reactivated'} by Admin(TanmayA)`
+      )
+      toast.success(`Account for ${u.full_name || u.email} ${newFrozenState ? 'frozen/suspended' : 'reactivated'}!`, { id: 'admin-freeze' })
+    } catch (err) {
+      toast.error('Failed to update account status', { id: 'admin-freeze' })
+    }
+  }
+
+  const handleDeleteUser = async (u) => {
+    if (!window.confirm(`Are you sure you want to permanently delete account for ${u.full_name || u.email}? This action cannot be undone.`)) {
+      return
+    }
+
+    toast.loading('Deleting account from database...', { id: 'admin-del' })
+    try {
+      await authAPI.deleteUser(u.id || u.user_id, u.email)
+      setRegisteredUsers((prev) =>
+        prev.filter((item) => item.email?.toLowerCase() !== u.email?.toLowerCase())
+      )
+      logAuditAction(
+        'Delete User Account',
+        u.email,
+        `Account permanently deleted by Admin(TanmayA)`
+      )
+      toast.success(`Account for ${u.full_name || u.email} permanently deleted!`, { id: 'admin-del' })
+    } catch (err) {
+      toast.error('Failed to delete account', { id: 'admin-del' })
+    }
+  }
+
+  // Export Users Directory to CSV
+  const handleExportUsersCSV = () => {
+    if (!registeredUsers || registeredUsers.length === 0) {
+      toast.error('No users found to export.')
+      return
+    }
+    const headers = ['User ID', 'Name', 'Role', 'Email', 'Phone', 'Source', 'State', 'District', 'Status']
+    const rows = registeredUsers.map(u => [
+      `"${u.id || ''}"`,
+      `"${u.full_name || u.name || ''}"`,
+      `"${u.role || ''}"`,
+      `"${u.email || ''}"`,
+      `"${u.phone || ''}"`,
+      `"${u.source || ''}"`,
+      `"${u.state || ''}"`,
+      `"${u.district || ''}"`,
+      `"${u.is_active === false || u.is_frozen === true ? 'Frozen' : 'Active'}"`
+    ])
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', `mandisetu_users_${new Date().toISOString().slice(0, 10)}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    toast.success('User directory exported to CSV!', { icon: '📊' })
   }
 
   // Quality Grade Override (with dynamic RBAC check)
@@ -1193,6 +1272,14 @@ export default function AdminDashboard() {
                   <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
                   <span>Sync Database</span>
                 </button>
+                <button
+                  onClick={handleExportUsersCSV}
+                  className="px-2.5 py-1 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-bold flex items-center gap-1.5 transition ml-1"
+                  title="Export all registered users to CSV spreadsheet"
+                >
+                  <Download size={12} />
+                  <span>Export CSV</span>
+                </button>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                 Integrated directly with PostgreSQL server database. Accounts created on any device are synchronized in real-time.
@@ -1335,26 +1422,71 @@ export default function AdminDashboard() {
                         )}
                       </td>
 
-                      {/* Verification Badge */}
+                      {/* Account Status Badge */}
                       <td className="py-3 px-3 text-center">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 inline-flex items-center gap-1">
-                          <CheckCircle size={10} /> Verified
-                        </span>
+                        {u.is_active === false || u.is_frozen === true ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 inline-flex items-center gap-1">
+                            <Ban size={10} /> {t('admin_status_frozen')}
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 inline-flex items-center gap-1">
+                            <CheckCircle size={10} /> {t('admin_status_active')}
+                          </span>
+                        )}
                       </td>
 
-                      {/* Action Button */}
+                      {/* Action Buttons */}
                       <td className="py-3 px-3 text-right">
-                        <button
-                          onClick={() => {
-                            setSelectedUserForPowers(u)
-                            setCustomPowers(u.powers || [])
-                            setActiveTab('powers')
-                          }}
-                          className="px-2.5 py-1 rounded-xl bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 text-amber-900 dark:text-amber-300 font-bold text-[10px] flex items-center gap-1 shadow-xs transition-all ml-auto"
-                        >
-                          <Zap size={11} className="text-amber-600 dark:text-amber-400" />
-                          <span>Powers ({u.powers?.length || 0})</span>
-                        </button>
+                        {isTanmayaUser ? (
+                          <span className="text-[10px] font-black text-amber-600 dark:text-amber-400">
+                            👑 ROOT OWNER
+                          </span>
+                        ) : (
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => {
+                                setSelectedUserForPowers(u)
+                                setCustomPowers(u.powers || [])
+                                setActiveTab('powers')
+                              }}
+                              className="px-2 py-1 rounded-xl bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 text-amber-900 dark:text-amber-300 font-bold text-[10px] flex items-center gap-1 shadow-xs transition-all"
+                              title="Grant or Revoke Operational Powers"
+                            >
+                              <Zap size={11} className="text-amber-600 dark:text-amber-400" />
+                              <span>Powers</span>
+                            </button>
+
+                            <button
+                              onClick={() => handleToggleFreezeUser(u)}
+                              className={`px-2 py-1 rounded-xl font-bold text-[10px] flex items-center gap-1 transition-all ${
+                                u.is_active === false || u.is_frozen === true
+                                  ? 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                                  : 'bg-blue-100 hover:bg-blue-200 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
+                              }`}
+                              title={u.is_active === false || u.is_frozen === true ? 'Unfreeze / Reactivate Account' : 'Freeze / Suspend Account'}
+                            >
+                              {u.is_active === false || u.is_frozen === true ? (
+                                <>
+                                  <PlayCircle size={11} />
+                                  <span>Unfreeze</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Ban size={11} />
+                                  <span>Freeze</span>
+                                </>
+                              )}
+                            </button>
+
+                            <button
+                              onClick={() => handleDeleteUser(u)}
+                              className="p-1 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-950 dark:text-red-300 transition-all"
+                              title="Permanently Delete Account"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   )

@@ -15,7 +15,7 @@ import Footer from './Footer'
 export default function Layout() {
   const { user, logout } = useAuthStore()
   const { isDark } = useThemeStore()
-  const { lang, language, t } = useLangStore()
+  const { lang, language, t, formatNum } = useLangStore()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -70,21 +70,21 @@ export default function Layout() {
 
   // Dynamic translated modules
   const ASCENDING_MODULES = [
-    { to: '/dashboard', icon: Home, label: `01. ${t('nav_dashboard') || 'Dashboard'}` },
-    { to: '/prices', icon: TrendingUp, label: `02. ${t('nav_prices') || 'Market Prices'}` },
-    { to: '/calculator', icon: Calculator, label: `03. ${t('nav_calculator') || 'Net Calculator'}` },
-    { to: '/grading', icon: Award, label: `04. ${t('nav_grading') || 'Produce Grading'}` },
-    { to: '/listings', icon: Tractor, label: `05. ${t('nav_listings') || 'Produce Lots'}` },
-    { to: '/matching', icon: ShieldCheck, label: `06. ${t('nav_matching') || 'Buyer Matching'}` },
-    { to: '/transactions', icon: FileText, label: `07. ${t('nav_transactions') || 'Smart Contracts'}` },
-    { to: '/sale-window', icon: Clock, label: `08. ${t('nav_salewindow') || 'Sale Window'}` },
-    { to: '/disputes', icon: AlertTriangle, label: `09. ${t('nav_disputes') || 'Dispute Arbitration'}` },
-    { to: '/mandi-map', icon: MapPin, label: `10. ${t('pp_tab_map') || 'Mandi Maps'}` },
-    { to: '/weather', icon: CloudRain, label: `11. ${t('nav_weather') || 'Weather Intelligence'}` },
-    { to: '/logistics', icon: Truck, label: `12. ${t('nav_logistics') || 'Logistics Network'}` },
-    { to: '/analytics', icon: BarChart2, label: `13. ${t('nav_analytics') || 'Agri Analytics'}` },
-    { to: '/feedback', icon: MessageSquare, label: `14. ${t('Feedback') || 'Feedback & Support'}` },
-    { to: '/profile', icon: User, label: `15. ${t('Profile') || 'Profile & Settings'}` },
+    { to: '/dashboard', icon: Home, label: `${formatNum('01')}. ${t('nav_dashboard') || 'Dashboard'}` },
+    { to: '/prices', icon: TrendingUp, label: `${formatNum('02')}. ${t('nav_prices') || 'Market Prices'}` },
+    { to: '/calculator', icon: Calculator, label: `${formatNum('03')}. ${t('nav_calculator') || 'Net Calculator'}` },
+    { to: '/grading', icon: Award, label: `${formatNum('04')}. ${t('nav_grading') || 'Produce Grading'}` },
+    { to: '/listings', icon: Tractor, label: `${formatNum('05')}. ${t('nav_listings') || 'Produce Lots'}` },
+    { to: '/matching', icon: ShieldCheck, label: `${formatNum('06')}. ${t('nav_matching') || 'Buyer Matching'}` },
+    { to: '/transactions', icon: FileText, label: `${formatNum('07')}. ${t('nav_transactions') || 'Smart Contracts'}` },
+    { to: '/sale-window', icon: Clock, label: `${formatNum('08')}. ${t('nav_salewindow') || 'Sale Window'}` },
+    { to: '/disputes', icon: AlertTriangle, label: `${formatNum('09')}. ${t('nav_disputes') || 'Dispute Arbitration'}` },
+    { to: '/mandi-map', icon: MapPin, label: `${formatNum('10')}. ${t('pp_tab_map') || 'Mandi Maps'}` },
+    { to: '/weather', icon: CloudRain, label: `${formatNum('11')}. ${t('nav_weather') || 'Weather Intelligence'}` },
+    { to: '/logistics', icon: Truck, label: `${formatNum('12')}. ${t('nav_logistics') || 'Logistics Network'}` },
+    { to: '/analytics', icon: BarChart2, label: `${formatNum('13')}. ${t('nav_analytics') || 'Agri Analytics'}` },
+    { to: '/feedback', icon: MessageSquare, label: `${formatNum('14')}. ${t('nav_feedback') || 'Feedback & Support'}` },
+    { to: '/profile', icon: User, label: `${formatNum('15')}. ${t('nav_profile') || 'Profile & Settings'}` },
   ]
 
   return (
@@ -100,7 +100,7 @@ export default function Layout() {
               title="Open Navigation Menu"
             >
               <Menu size={16} />
-              <span>Menu</span>
+              <span>{t('menu')}</span>
             </button>
           )}
 
@@ -114,7 +114,7 @@ export default function Layout() {
                 MandiSetu
               </span>
               <span className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider -mt-1">
-                Fair Agricultural Markets
+                {t('brand_tagline')}
               </span>
             </div>
           </NavLink>
@@ -129,7 +129,7 @@ export default function Layout() {
             title="Talk to Kisan AI Assistant"
           >
             <Bot size={15} className="text-emerald-600 animate-pulse" />
-            <span className="hidden sm:inline">Talk to Assistant</span>
+            <span className="hidden sm:inline">{t('talk_assistant')}</span>
           </button>
 
           {/* Interactive Demo Tour trigger button */}
@@ -139,7 +139,7 @@ export default function Layout() {
             title="Interactive Walkthrough with Kisan Chacha"
           >
             <Sparkles size={14} className="text-amber-500" />
-            <span>Interactive Demo</span>
+            <span>{t('interactive_demo')}</span>
           </button>
 
           {/* Language & Numeral Switcher & Theme Toggle */}

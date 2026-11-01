@@ -65,6 +65,7 @@ export default function CalculatorPage() {
   const [loading, setLoading] = useState(false)
   const [showMap, setShowMap] = useState(false)
   const [detectingGps, setDetectingGps] = useState(false)
+  const [showManualCoords, setShowManualCoords] = useState(false)
 
   const handleAccessMyLocation = () => {
     if (!navigator.geolocation) {
@@ -300,31 +301,84 @@ export default function CalculatorPage() {
                 </span>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  {t('cp_farm_lat') || 'Farm Origin GPS (Latitude)'}
-                </label>
-                <input
-                  type="number"
-                  step="0.0001"
-                  value={form.my_lat}
-                  onChange={(e) => setF('my_lat', e.target.value)}
-                  className="input-field"
-                />
+            </div>
+
+            {/* Farm Origin Picker Widget (No raw confusing coordinates forced on farmers) */}
+            <div className="mt-4 p-4 rounded-2xl bg-brand-50/50 border border-brand-100 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h4 className="text-xs font-bold text-brand-900 flex items-center gap-1.5">
+                    <MapPin size={15} className="text-brand-600" />
+                    <span>{t('loc_farm_origin')}</span>
+                  </h4>
+                  <p className="text-[11px] text-gray-600">
+                    {t('loc_auto_detected')}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleAccessMyLocation}
+                    disabled={detectingGps}
+                    className="px-3 py-1.5 bg-white hover:bg-brand-50 text-brand-700 text-xs font-bold rounded-xl border border-brand-200 transition flex items-center gap-1.5 shadow-xs"
+                  >
+                    <Crosshair size={13} className={detectingGps ? 'animate-spin text-brand-600' : 'text-brand-600'} />
+                    <span>{detectingGps ? t('loc_locating') : t('loc_access_gps')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowMap(!showMap)}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs ${
+                      showMap ? 'bg-brand-600 text-white' : 'bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300'
+                    }`}
+                  >
+                    <Pin size={13} />
+                    <span>{showMap ? t('loc_close_map') : t('loc_pin_map')}</span>
+                  </button>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  {t('cp_farm_lng') || 'Farm Origin GPS (Longitude)'}
-                </label>
-                <input
-                  type="number"
-                  step="0.0001"
-                  value={form.my_lng}
-                  onChange={(e) => setF('my_lng', e.target.value)}
-                  className="input-field"
-                />
+              {/* Location Badge & Advanced Coordinates Accordion */}
+              <div className="flex items-center justify-between pt-1 border-t border-brand-100/70 text-xs text-brand-800">
+                <span className="font-medium flex items-center gap-1">
+                  <span>📍 {t('location', 'Location')}:</span>
+                  <span className="font-mono font-bold bg-white px-2 py-0.5 rounded-lg border border-brand-200 text-brand-900">
+                    {formatNum(form.my_lat)}, {formatNum(form.my_lng)}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowManualCoords(!showManualCoords)}
+                  className="text-[11px] text-brand-600 hover:underline font-semibold"
+                >
+                  {showManualCoords ? 'Hide Manual Inputs' : 'Edit Coordinates Manually'}
+                </button>
               </div>
+
+              {showManualCoords && (
+                <div className="grid grid-cols-2 gap-3 pt-2 animate-fade-in">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">Latitude</label>
+                    <input
+                      type="number"
+                      step="0.0001"
+                      value={form.my_lat}
+                      onChange={(e) => setF('my_lat', e.target.value)}
+                      className="input-field text-xs py-1.5"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">Longitude</label>
+                    <input
+                      type="number"
+                      step="0.0001"
+                      value={form.my_lng}
+                      onChange={(e) => setF('my_lng', e.target.value)}
+                      className="input-field text-xs py-1.5"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="mt-4 pt-3 border-t border-gray-100">

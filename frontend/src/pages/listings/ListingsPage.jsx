@@ -72,7 +72,7 @@ const MOCK_LOTS = [
 
 export default function ListingsPage() {
   const { role } = useAuthStore()
-  const { t } = useLangStore()
+  const { t, formatNum } = useLangStore()
   const [lots, setLots] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchCommodity, setSearchCommodity] = useState('')
@@ -111,15 +111,22 @@ export default function ListingsPage() {
     return matchComm && matchState
   })
 
+  const getCommodityName = (rawName) => {
+    if (!rawName) return ''
+    const key = `comm_${rawName.toLowerCase()}`
+    const translated = t(key)
+    return translated !== key ? translated : rawName
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title={t('lip_title', 'Produce Listings (Module 4)')}
-        subtitle={t('lip_subtitle', 'Explore active digital lots created by farmers and FPOs with verifiable grades and floor prices.')}
+        title={t('lip_title') || t('mod_m04_title') || 'Produce Listings (Module 4)'}
+        subtitle={t('lip_subtitle') || t('mod_m04_desc') || 'Explore active digital lots created by farmers and FPOs with verifiable grades and floor prices.'}
         actions={
           role !== 'buyer' && (
             <Link to="/listings/new" className="btn-primary inline-flex items-center gap-2">
-              <Plus size={18} /> {t('lip_create_lot', 'Create New Lot')}
+              <Plus size={18} /> {t('list_create_new') || '+ Create Produce Lot'}
             </Link>
           )
         }
@@ -132,7 +139,7 @@ export default function ListingsPage() {
             <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
             <input
               type="text"
-              placeholder="Search commodity (e.g. Wheat, Tomato, Onion)..."
+              placeholder={t('list_search_placeholder') || 'Search commodity (e.g. Wheat, Tomato, Onion)...'}
               value={searchCommodity}
               onChange={(e) => setSearchCommodity(e.target.value)}
               className="input pl-10"
@@ -142,7 +149,7 @@ export default function ListingsPage() {
             <Filter className="absolute left-3 top-2.5 text-gray-400" size={18} />
             <input
               type="text"
-              placeholder="Filter by State..."
+              placeholder={t('list_filter_state') || 'Filter by State...'}
               value={selectedState}
               onChange={(e) => setSelectedState(e.target.value)}
               className="input pl-10"
@@ -150,7 +157,7 @@ export default function ListingsPage() {
           </div>
         </div>
         <button onClick={fetchLots} className="btn-secondary w-full md:w-auto">
-          Refresh List
+          {t('list_refresh') || 'Refresh List'}
         </button>
       </Card>
 
@@ -159,12 +166,12 @@ export default function ListingsPage() {
         <Spinner />
       ) : filteredLots.length === 0 ? (
         <EmptyState
-          title="No produce lots found"
-          description="Try modifying your filters or create a new listing."
+          title={t('list_empty_title') || 'No produce lots found'}
+          description={t('list_empty_sub') || 'Try modifying your filters or create a new listing.'}
           action={
             role !== 'buyer' && (
               <Link to="/listings/new" className="btn-primary">
-                Create First Lot
+                {t('list_create_new') || 'Create First Lot'}
               </Link>
             )
           }
@@ -176,7 +183,9 @@ export default function ListingsPage() {
               <div className="space-y-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">{lot.commodity}</h3>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                      {getCommodityName(lot.commodity)}
+                    </h3>
                     <p className="text-xs text-gray-500">{lot.variety || 'Standard Variety'}</p>
                   </div>
                   <div className="flex gap-1.5 items-center">
@@ -187,31 +196,35 @@ export default function ListingsPage() {
                   </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-3 grid grid-cols-2 gap-2 text-sm">
+                <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-3 grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <span className="text-gray-500 text-xs flex items-center gap-1">
-                      <Scale size={13} /> Quantity
+                      <Scale size={13} /> {t('quantity') || 'Quantity'}
                     </span>
-                    <p className="font-semibold text-gray-800">{lot.quantity_kg.toLocaleString()} kg</p>
+                    <p className="font-semibold text-gray-800 dark:text-gray-200">
+                      {formatNum(lot.quantity_kg.toLocaleString())} kg
+                    </p>
                   </div>
                   <div>
                     <span className="text-gray-500 text-xs flex items-center gap-1">
-                      <Tag size={13} /> Floor Price
+                      <Tag size={13} /> {t('price') || 'Floor Price'}
                     </span>
-                    <p className="font-semibold text-brand-600">₹{lot.min_price_per_kg} / kg</p>
+                    <p className="font-semibold text-brand-600">
+                      ₹{formatNum(lot.min_price_per_kg)} / kg
+                    </p>
                   </div>
                   <div>
-                    <span className="text-gray-500 text-xs">Quality Grade</span>
-                    <p className="font-semibold text-gray-800">
-                      <span className="inline-block px-2 py-0.5 rounded bg-brand-100 text-brand-800 font-bold text-xs">
+                    <span className="text-gray-500 text-xs">{t('grade') || 'Quality Grade'}</span>
+                    <p className="font-semibold text-gray-800 dark:text-gray-200">
+                      <span className="inline-block px-2 py-0.5 rounded bg-brand-100 dark:bg-brand-950/60 text-brand-800 dark:text-brand-300 font-bold text-xs">
                         {lot.grade || 'Ungraded'}
                       </span>
                     </p>
                   </div>
                   <div>
                     <span className="text-gray-500 text-xs">Quality Score</span>
-                    <p className="font-semibold text-gray-700">
-                      {lot.quality_score ? `${(lot.quality_score * 100).toFixed(0)}%` : 'Pending'}
+                    <p className="font-semibold text-gray-700 dark:text-gray-300">
+                      {lot.quality_score ? `${formatNum((lot.quality_score * 100).toFixed(0))}%` : 'Pending'}
                     </p>
                   </div>
                 </div>
@@ -222,7 +235,7 @@ export default function ListingsPage() {
                 </div>
               </div>
 
-              <div className="pt-4 mt-4 border-t border-gray-100 flex items-center justify-between">
+              <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
                 <span className="text-xs text-gray-400">
                   {new Date(lot.created_at).toLocaleDateString()}
                 </span>
@@ -230,7 +243,7 @@ export default function ListingsPage() {
                   to={`/listings/${lot.id}`}
                   className="text-sm font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1"
                 >
-                  View Details <ArrowRight size={15} />
+                  {t('view_details') || 'View Details'} <ArrowRight size={15} />
                 </Link>
               </div>
             </Card>

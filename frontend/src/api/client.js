@@ -77,31 +77,33 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Auto-logout on 401 only for real invalid tokens, never for demo/offline accounts or non-fatal module errors
+// Auto-logout on 401 only for real invalid tokens, never for demo/offline accounts, newly registered accounts, or non-fatal module errors
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    const isDemoUser =
-      useAuthStore.getState().user?.isDemo ||
-      useAuthStore.getState().token?.startsWith('jwt-token-local-') ||
-      useAuthStore.getState().token?.startsWith('jwt-token-tanmaya-') ||
-      useAuthStore.getState().token?.startsWith('demo-jwt-token')
+    const authState = useAuthStore.getState()
+    const token = authState.token || ''
+    const user = authState.user
 
-    // NEVER log out a demo user or throw them to login screen on API 401
-    if (isDemoUser) {
-      console.warn('[MandiSetu] Demo/Local token received 401 from cloud backend, maintaining demo session uninterrupted.')
+    const isNonServerToken =
+      !token ||
+      user?.isDemo ||
+      token.startsWith('jwt-token-') ||
+      token.startsWith('demo-') ||
+      token.includes('local') ||
+      token.includes('new') ||
+      token.includes('tanmaya')
+
+    // NEVER log out an offline, demo, or freshly registered user on cloud API 401
+    if (isNonServerToken) {
+      console.warn('[MandiSetu] Local/demo session received 401 from cloud backend, maintaining active session without interruption.')
       return Promise.reject(err)
     }
 
-    if (
-      err.response?.status === 401 &&
-      typeof window !== 'undefined' &&
-      window.location.pathname !== '/login' &&
-      window.location.pathname !== '/register' &&
-      useAuthStore.getState().isAuthenticated
-    ) {
-      useAuthStore.getState().logout()
-      window.location.href = '/login'
+    // Even for server tokens, only redirect if explicitly unauthorized on an auth verification endpoint
+    const requestUrl = err.config?.url || ''
+    if (err.response?.status === 401 && requestUrl.includes('/auth/me')) {
+      authState.logout()
     }
     return Promise.reject(err)
   }

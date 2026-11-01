@@ -204,7 +204,7 @@ export default function WeatherPage() {
             className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-bold text-sm shadow-lg shadow-blue-500/25 flex items-center gap-2 hover:scale-[1.02] transition-all"
           >
             <Navigation size={16} className={locating ? 'animate-spin' : ''} />
-            <span>{locating ? (t('wp_locating') || 'Detecting Coordinates...') : (t('wp_access_location') || '📍 Access My Location')}</span>
+            <span>{locating ? (t('loc_locating') || 'Detecting Coordinates...') : (t('loc_access_gps') || '📍 Access My Location')}</span>
           </button>
           <button
             onClick={() => fetchLiveWeather(coords.lat, coords.lng, locationName)}

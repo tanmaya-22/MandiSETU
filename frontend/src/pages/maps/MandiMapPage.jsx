@@ -28,7 +28,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 }
 
 export default function MandiMapPage() {
-  const { t } = useLangStore()
+  const { t, formatNum } = useLangStore()
   const mapContainerRef = useRef(null)
   const mapInstanceRef = useRef(null)
   const markersRef = useRef([])
@@ -320,7 +320,7 @@ export default function MandiMapPage() {
             className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-bold text-sm shadow-lg shadow-blue-500/25 flex items-center gap-2 hover:scale-[1.02] transition-all"
           >
             <Navigation size={16} className={locating ? 'animate-spin' : ''} />
-            <span>{locating ? 'Detecting Location...' : '📍 Access My Location'}</span>
+            <span>{locating ? (t('loc_locating') || 'Detecting Location...') : (t('loc_access_gps') || '📍 Access My Location')}</span>
           </button>
           <button
             onClick={handleTogglePinDrop}
@@ -333,7 +333,7 @@ export default function MandiMapPage() {
             }`}
           >
             <Pin size={15} />
-            <span>{pinDropMode ? 'Click Map to Place Pin' : droppedPin ? `Pin: ${droppedPin.lat.toFixed(2)}, ${droppedPin.lng.toFixed(2)}` : '📌 Drop a Pin'}</span>
+            <span>{pinDropMode ? 'Click Map to Place Pin' : droppedPin ? `Pin: ${droppedPin.lat.toFixed(2)}, ${droppedPin.lng.toFixed(2)}` : (t('loc_pin_map') || '📌 Drop a Pin')}</span>
           </button>
           <button
             onClick={setFallbackLocation}

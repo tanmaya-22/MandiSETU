@@ -651,6 +651,58 @@ export const authAPI = {
       return null
     }
   },
+
+  deleteUser: async (userId, email) => {
+    // 1. Remove from local storage first for immediate UI update
+    try {
+      const localUsers = getLocalUsers()
+      const filtered = localUsers.filter(
+        (u) =>
+          u.id !== userId &&
+          u.user_id !== userId &&
+          u.email?.toLowerCase() !== email?.toLowerCase()
+      )
+      localStorage.setItem('mandisetu_registered_users', JSON.stringify(filtered))
+    } catch {}
+
+    // 2. Delete from cloud PostgreSQL database
+    try {
+      const res = await api.delete(`/auth/users/${userId || email}`)
+      return res?.data
+    } catch (err) {
+      console.warn('[MandiSetu] Backend user deletion failed, removed locally.', err?.message)
+      return { message: 'Deleted locally' }
+    }
+  },
+
+  toggleFreezeUser: async (userId, email, isFrozen) => {
+    // 1. Update in local storage
+    try {
+      const localUsers = getLocalUsers()
+      const updated = localUsers.map((u) => {
+        if (
+          u.id === userId ||
+          u.user_id === userId ||
+          u.email?.toLowerCase() === email?.toLowerCase()
+        ) {
+          return { ...u, is_active: !isFrozen, is_frozen: isFrozen }
+        }
+        return u
+      })
+      localStorage.setItem('mandisetu_registered_users', JSON.stringify(updated))
+    } catch {}
+
+    // 2. Update on server
+    try {
+      const res = await api.patch(`/auth/users/${userId || email}/status`, {
+        is_active: !isFrozen,
+      })
+      return res?.data
+    } catch (err) {
+      console.warn('[MandiSetu] Backend user status update failed, saved locally.', err?.message)
+      return { is_active: !isFrozen }
+    }
+  },
 }
 
 // ─── Module 2: Prices (Real Agmarknet Verifiable Data) ─────────────────────────

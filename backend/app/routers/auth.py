@@ -390,3 +390,22 @@ async def update_user_status(
         "is_active": user.is_active,
         "is_verified": user.is_verified,
     }
+
+
+@router.delete("/users/{user_id}")
+async def delete_user(
+    user_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Permanently delete user account from PostgreSQL database. Called by Admin(TanmayA)."""
+    user = await _find_user_by_id_or_email(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    userName = user.full_name
+    userMail = user.email
+    await db.delete(user)
+    await db.commit()
+    return {
+        "message": f"Account for {userName} ({userMail}) permanently deleted",
+        "user_id": user_id
+    }
