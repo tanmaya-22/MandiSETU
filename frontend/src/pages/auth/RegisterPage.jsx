@@ -19,6 +19,7 @@ import { authAPI, getApiBaseUrl } from '../../api/modules'
 import { useAuthStore } from '../../store/authStore'
 import { useLangStore } from '../../store/langStore'
 import { STATE_DISTRICTS } from '../../data/stateDistricts'
+import HeaderControls from '../../components/common/HeaderControls'
 
 const STATES = [
   'Andhra Pradesh', 'Bihar', 'Gujarat', 'Haryana', 'Himachal Pradesh',
@@ -295,14 +296,27 @@ export default function RegisterPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950 flex items-center justify-center p-4 py-8">
-      {/* Background ambient decorative shapes */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-10 right-10 w-96 h-96 bg-emerald-200/40 rounded-full blur-3xl animate-blob" />
-        <div className="absolute bottom-10 left-10 w-96 h-96 bg-teal-200/40 rounded-full blur-3xl animate-blob delay-200" />
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950 flex flex-col justify-between p-4 py-6 transition-colors duration-300">
+      {/* Top Bar with Language Selector and Dark / Light Mode Toggle */}
+      <div className="w-full max-w-5xl mx-auto flex items-center justify-between py-2 px-3">
+        <Link to="/" className="inline-flex items-center gap-2 group">
+          <div className="w-9 h-9 bg-gradient-to-tr from-brand-600 to-emerald-500 rounded-xl flex items-center justify-center shadow-md">
+            <Leaf size={18} className="text-white" />
+          </div>
+          <span className="font-extrabold text-base text-gray-900 dark:text-white tracking-tight">MandiSetu</span>
+        </Link>
+        <div className="flex items-center gap-2">
+          <HeaderControls />
+        </div>
       </div>
 
-      <div className="relative w-full max-w-xl animate-fade-in-up">
+      {/* Background ambient decorative shapes */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-10 right-10 w-96 h-96 bg-emerald-200/40 dark:bg-emerald-600/10 rounded-full blur-3xl animate-blob" />
+        <div className="absolute bottom-10 left-10 w-96 h-96 bg-teal-200/40 dark:bg-teal-600/10 rounded-full blur-3xl animate-blob delay-200" />
+      </div>
+
+      <div className="relative w-full max-w-xl mx-auto my-auto animate-fade-in-up">
         {/* Header */}
         <div className="text-center mb-6">
           <Link to="/" className="inline-flex items-center gap-2.5 mb-2 group">

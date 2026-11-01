@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Bot, X, Send, Sparkles, MessageCircle, Move, RotateCcw } from 'lucide-react'
 import { useLangStore } from '../../store/langStore'
 
@@ -64,8 +65,12 @@ const GREETING_TRIGGERS = [
 ]
 
 export default function AIAssistant() {
+  const location = useLocation()
   const { lang, language } = useLangStore()
   const activeLang = lang || language || 'en'
+
+  // Automatically hide AI assistant on login and register pages
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register'
 
   const [isOpen, setIsOpen] = useState(false)
   const [isDismissed, setIsDismissed] = useState(false)
@@ -255,6 +260,9 @@ export default function AIAssistant() {
       chatTop = Math.min(window.innerHeight - chatHeight - 20, curY + 68)
     }
   }
+
+  // Disappear on login and register pages
+  if (isAuthPage) return null
 
   return (
     <>

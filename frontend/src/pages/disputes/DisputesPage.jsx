@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { disputesAPI } from '../../api/modules'
 import { Card, PageHeader, StatusBadge, Spinner, EmptyState } from '../../components/common/UI'
 import { useAuthStore } from '../../store/authStore'
-import { AlertTriangle, Plus, ShieldCheck, CheckCircle2, MessageSquare, Clock } from 'lucide-react'
+import { AlertTriangle, Plus, ShieldCheck, CheckCircle2, MessageSquare, Clock, Upload, FileCheck, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useLangStore } from '../../store/langStore'
 
@@ -45,6 +45,7 @@ export default function DisputesPage() {
     description: '',
     evidence_urls: '',
   })
+  const [evidenceFile, setEvidenceFile] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
   const fetchDisputes = async () => {
@@ -70,15 +71,22 @@ export default function DisputesPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSubmitting(true)
+    const attachedEvidence = evidenceFile
+      ? [evidenceFile.name]
+      : form.evidence_urls
+      ? [form.evidence_urls]
+      : []
+
     try {
       await disputesAPI.create({
         transaction_id: form.transaction_id,
         category: form.category,
         description: form.description,
-        evidence_urls: form.evidence_urls ? [form.evidence_urls] : [],
+        evidence_urls: attachedEvidence,
       })
       toast.success('Grievance filed. An ombudsman officer will review within 24 hours.')
       setShowCreate(false)
+      setEvidenceFile(null)
       fetchDisputes()
     } catch {
       toast.success('Grievance registered in MandiSetu Resolution Court (Demo Mode)!')
@@ -92,10 +100,12 @@ export default function DisputesPage() {
           admin_notes: 'Assigned to dispute officer',
           resolution: null,
           created_at: new Date().toISOString(),
+          evidence_urls: attachedEvidence,
         },
         ...prev,
       ])
       setShowCreate(false)
+      setEvidenceFile(null)
     } finally {
       setSubmitting(false)
     }
@@ -175,16 +185,43 @@ export default function DisputesPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Supporting Evidence URL (Weighbridge Slip, Photo, Lab Report)
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Supporting Evidence (Optional - Upload Document, Weighbridge Slip, or Photo from Computer)
               </label>
-              <input
-                type="url"
-                placeholder="https://example.com/receipt.pdf"
-                value={form.evidence_urls}
-                onChange={(e) => setForm({ ...form, evidence_urls: e.target.value })}
-                className="input text-sm"
-              />
+              <div className="mt-1 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <label className="cursor-pointer px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 text-xs font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2 transition shadow-sm">
+                  <Upload size={14} className="text-brand-600" />
+                  <span>Choose File from Computer</span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setEvidenceFile(e.target.files[0])
+                        toast.success(`Attached: ${e.target.files[0].name}`)
+                      }
+                    }}
+                  />
+                </label>
+                {evidenceFile ? (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-medium">
+                    <FileCheck size={14} className="text-emerald-600" />
+                    <span className="truncate max-w-[200px]">{evidenceFile.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setEvidenceFile(null)}
+                      className="ml-1 p-0.5 text-gray-400 hover:text-red-500 rounded"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-[11px] text-gray-400">
+                    Optional: PDF, PNG, JPG, or DOC (Max 15MB)
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="flex justify-end gap-2">
