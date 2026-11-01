@@ -33,7 +33,7 @@ async def create_lot(
         **payload.model_dump(exclude_none=True),
     )
     db.add(lot)
-    await db.flush()
+    await db.commit()
     await db.refresh(lot)
     return lot
 
@@ -69,7 +69,7 @@ async def create_lot_public(
         **payload.model_dump(exclude_none=True),
     )
     db.add(lot)
-    await db.flush()
+    await db.commit()
     await db.refresh(lot)
     return lot
 

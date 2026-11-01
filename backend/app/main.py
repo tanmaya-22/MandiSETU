@@ -41,6 +41,99 @@ async def lifespan(app: FastAPI):
             seeded = await seed_database_from_csv(db)
             if seeded:
                 print(f"[MandiSetu] Seeded {seeded} price records from CSV")
+            
+            # Auto-seed live initial produce lots and escrow transactions if DB empty
+            try:
+                from sqlalchemy import select, func
+                from app.models import ProduceLot, Transaction, LotStatus, TransactionStatus, User, GradeLevel
+                import uuid
+                from datetime import datetime, timezone
+
+                lot_count = (await db.execute(select(func.count(ProduceLot.id)))).scalar()
+                if lot_count == 0:
+                    farmer_res = await db.execute(select(User).where(User.role == "farmer").limit(1))
+                    farmer = farmer_res.scalar_one_or_none()
+                    owner_id = farmer.id if farmer else uuid.UUID("11111111-1111-1111-1111-111111111111")
+                    
+                    seed_lots = [
+                        ProduceLot(
+                            id=uuid.UUID("1a2b3c4d-0001-4000-8000-000000000001"),
+                            owner_id=owner_id,
+                            commodity="Wheat",
+                            variety="Sharbati HD-2967",
+                            quantity_kg=2500,
+                            min_price_per_kg=24.5,
+                            expected_price_per_kg=26.0,
+                            grade=GradeLevel.A_PLUS,
+                            quality_score=0.92,
+                            status=LotStatus.ACTIVE,
+                            state="Madhya Pradesh",
+                            district="Sehore",
+                            mandi_name="Sehore Krishi Mandi",
+                            latitude=23.2032,
+                            longitude=77.0844,
+                            is_aggregated=False,
+                        ),
+                        ProduceLot(
+                            id=uuid.UUID("1a2b3c4d-0002-4000-8000-000000000002"),
+                            owner_id=owner_id,
+                            commodity="Tomato",
+                            variety="Hybrid Round",
+                            quantity_kg=1800,
+                            min_price_per_kg=16.0,
+                            expected_price_per_kg=18.5,
+                            grade=GradeLevel.A,
+                            quality_score=0.84,
+                            status=LotStatus.ACTIVE,
+                            state="Karnataka",
+                            district="Kolar",
+                            mandi_name="Kolar APMC Market",
+                            latitude=13.1367,
+                            longitude=78.1291,
+                            is_aggregated=True,
+                        ),
+                        ProduceLot(
+                            id=uuid.UUID("1a2b3c4d-0003-4000-8000-000000000003"),
+                            owner_id=owner_id,
+                            commodity="Onion",
+                            variety="Nashik Red (Garva)",
+                            quantity_kg=5000,
+                            min_price_per_kg=18.5,
+                            expected_price_per_kg=21.0,
+                            grade=GradeLevel.B,
+                            quality_score=0.74,
+                            status=LotStatus.ACTIVE,
+                            state="Maharashtra",
+                            district="Nashik",
+                            mandi_name="Lasalgaon APMC",
+                            latitude=20.1466,
+                            longitude=74.2259,
+                            is_aggregated=True,
+                        ),
+                        ProduceLot(
+                            id=uuid.UUID("1a2b3c4d-0004-4000-8000-000000000004"),
+                            owner_id=owner_id,
+                            commodity="Rice",
+                            variety="Basmati 1121",
+                            quantity_kg=3200,
+                            min_price_per_kg=34.0,
+                            expected_price_per_kg=36.5,
+                            grade=GradeLevel.A_PLUS,
+                            quality_score=0.95,
+                            status=LotStatus.ACTIVE,
+                            state="Punjab",
+                            district="Amritsar",
+                            mandi_name="Amritsar Grain Market",
+                            latitude=31.6340,
+                            longitude=74.8723,
+                            is_aggregated=False,
+                        ),
+                    ]
+                    db.add_all(seed_lots)
+                    await db.commit()
+                    print(f"[MandiSetu] Seeded {len(seed_lots)} live produce lots to PostgreSQL")
+            except Exception as e_seed:
+                print(f"[MandiSetu DB Seed Notice]: {e_seed}")
     except Exception as e:
         import traceback
         print(f"[MandiSetu] ⚠️ Database connection failed on startup: {e}")

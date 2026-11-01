@@ -65,8 +65,14 @@ export default function TransactionsPage() {
     const fetchTxns = async () => {
       setLoading(true)
       try {
-        const res = await transactionsAPI.getAll()
-        if (res.data && res.data.length > 0) {
+        let res = null
+        try {
+          res = await transactionsAPI.getAll()
+        } catch {
+          // If auth rejected or unauthorized, fetch public escrow dataset
+          res = await transactionsAPI.getAllPublic()
+        }
+        if (res?.data && res.data.length > 0) {
           setTransactions(res.data)
         } else {
           setTransactions(MOCK_TRANSACTIONS)
