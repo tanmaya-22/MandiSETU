@@ -171,20 +171,51 @@ class LotCreateRequest(BaseModel):
     available_until: Optional[datetime] = None
 
 
+class LotCondition(BaseModel):
+    code: str
+    title: str
+    description: str
+    mandatory: bool = True
+
+
+class SellerProfileOut(BaseModel):
+    id: Optional[uuid.UUID] = None
+    full_name: str
+    role: str
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    state: Optional[str] = None
+    district: Optional[str] = None
+    village: Optional[str] = None
+    fpo_name: Optional[str] = None
+    is_verified: bool = False
+    land_area_acres: Optional[float] = None
+
+
 class LotOut(BaseModel):
     id: uuid.UUID
     commodity: str
-    variety: Optional[str]
+    variety: Optional[str] = None
     quantity_kg: float
     min_price_per_kg: float
-    grade: Optional[str]
-    quality_score: Optional[float]
+    expected_price_per_kg: Optional[float] = None
+    grade: Optional[str] = None
+    quality_score: Optional[float] = None
+    quality_notes: Optional[str] = None
     status: str
-    state: Optional[str]
-    district: Optional[str]
-    mandi_name: Optional[str]
-    is_aggregated: bool
+    state: Optional[str] = None
+    district: Optional[str] = None
+    mandi_name: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    is_aggregated: bool = False
+    harvest_date: Optional[datetime] = None
+    available_from: Optional[datetime] = None
+    available_until: Optional[datetime] = None
     created_at: datetime
+    owner_id: Optional[uuid.UUID] = None
+    seller: Optional[SellerProfileOut] = None
+    trade_conditions: Optional[List[LotCondition]] = None
 
     class Config:
         from_attributes = True

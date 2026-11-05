@@ -6,7 +6,7 @@ import {
   Calendar, CheckCircle, RefreshCw, UserCheck, Lock, Unlock,
   Sliders, Award, MessageSquare, FileText, CheckCircle2, XCircle, ChevronRight,
   Zap, Sparkles, Check, Crown, Server, Globe, Wifi, WifiOff,
-  Trash2, Ban, PlayCircle, MapPin
+  Trash2, Ban, PlayCircle, MapPin, Eye, Scale, Tag
 } from 'lucide-react'
 import {
   analyticsAPI,
@@ -92,6 +92,8 @@ export default function AdminDashboard() {
   const [selectedUserAuditModal, setSelectedUserAuditModal] = useState(null)
   const [userAuditLoading, setUserAuditLoading] = useState(false)
   const [userAuditEvents, setUserAuditEvents] = useState([])
+  const [userAuditCategoryFilter, setUserAuditCategoryFilter] = useState('ALL')
+  const [selectedLotInspectorModal, setSelectedLotInspectorModal] = useState(null)
   const [auditLog, setAuditLog] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -1772,14 +1774,24 @@ export default function AdminDashboard() {
                         {l.created_at ? new Date(l.created_at).toLocaleDateString() : 'Today'}
                       </td>
                       <td className="py-3 px-3 text-right">
-                        <button
-                          onClick={() => handlePurgeLot(lotId, l.commodity)}
-                          className="px-2 py-1 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-950 dark:text-red-300 font-bold text-[10px] inline-flex items-center gap-1 transition"
-                          title="Purge Produce Lot from Exchange"
-                        >
-                          <Trash2 size={11} />
-                          <span>Delete Lot</span>
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setSelectedLotInspectorModal(l)}
+                            className="px-2 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 font-bold text-[10px] inline-flex items-center gap-1 transition"
+                            title="Inspect Full Produce Lot Details & Seller Credentials"
+                          >
+                            <Eye size={11} />
+                            <span>Inspect</span>
+                          </button>
+                          <button
+                            onClick={() => handlePurgeLot(lotId, l.commodity)}
+                            className="px-2 py-1 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-950 dark:text-red-300 font-bold text-[10px] inline-flex items-center gap-1 transition"
+                            title="Purge Produce Lot from Exchange"
+                          >
+                            <Trash2 size={11} />
+                            <span>Delete</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -2293,21 +2305,26 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* User Deep PostgreSQL Audit Trail Modal */}
+      {/* User Deep PostgreSQL Audit Trail Secondary Drawer / View */}
       {selectedUserAuditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 sm:p-7 max-w-3xl w-full max-h-[88vh] flex flex-col shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-800">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">🔍</span>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                    PostgreSQL Live Audit Trail
-                  </h3>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xl">
+                  📜
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  Deep audit history for <span className="font-semibold text-brand-600 dark:text-brand-400">{selectedUserAuditModal.full_name || selectedUserAuditModal.name || selectedUserAuditModal.email}</span> ({selectedUserAuditModal.email})
-                </p>
+                <div>
+                  <h3 className="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2">
+                    <span>User Activity Ledger & Audit Trail</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 font-bold">
+                      {selectedUserAuditModal.role || 'User'}
+                    </span>
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Account: <strong className="text-gray-900 dark:text-white">{selectedUserAuditModal.full_name || selectedUserAuditModal.name || selectedUserAuditModal.email}</strong> ({selectedUserAuditModal.email})
+                  </p>
+                </div>
               </div>
               <button
                 onClick={() => setSelectedUserAuditModal(null)}
@@ -2318,29 +2335,51 @@ export default function AdminDashboard() {
             </div>
 
             {/* User Metadata Overview */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 my-4 p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700/60 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 my-4 p-3 bg-gray-50 dark:bg-gray-800/60 rounded-2xl border border-gray-200 dark:border-gray-700/60 text-xs">
               <div>
-                <span className="text-gray-400 block text-[10px] uppercase font-semibold">Role</span>
+                <span className="text-gray-400 block text-[10px] uppercase font-semibold">User Role</span>
                 <span className="font-bold uppercase text-brand-600 dark:text-brand-400">{selectedUserAuditModal.role || 'User'}</span>
               </div>
               <div>
-                <span className="text-gray-400 block text-[10px] uppercase font-semibold">State / APMC</span>
-                <span className="font-medium text-gray-800 dark:text-gray-200">{selectedUserAuditModal.district || 'All Mandis'}, {selectedUserAuditModal.state || 'India'}</span>
+                <span className="text-gray-400 block text-[10px] uppercase font-semibold">State / APMC Mandi</span>
+                <span className="font-medium text-gray-800 dark:text-gray-200 truncate block">{selectedUserAuditModal.district || 'All Mandis'}, {selectedUserAuditModal.state || 'India'}</span>
               </div>
               <div>
-                <span className="text-gray-400 block text-[10px] uppercase font-semibold">Status</span>
-                <span className={`inline-block px-1.5 py-0.5 rounded font-bold ${selectedUserAuditModal.is_active !== false ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-red-100 text-red-800'}`}>
+                <span className="text-gray-400 block text-[10px] uppercase font-semibold">Account Status</span>
+                <span className={`inline-block px-1.5 py-0.5 rounded font-bold text-[10px] ${selectedUserAuditModal.is_active !== false ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-red-100 text-red-800'}`}>
                   {selectedUserAuditModal.is_active !== false ? 'Active' : 'Suspended'}
                 </span>
               </div>
               <div>
-                <span className="text-gray-400 block text-[10px] uppercase font-semibold">DB Sync</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold">● Connected</span>
+                <span className="text-gray-400 block text-[10px] uppercase font-semibold">Total Audited Events</span>
+                <span className="text-brand-600 dark:text-brand-400 font-black">{userAuditEvents.length} Recorded</span>
               </div>
             </div>
 
-            {/* Audit Timeline */}
-            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+            {/* Category Filter Tabs */}
+            <div className="flex items-center gap-1.5 pb-3 overflow-x-auto text-[11px] font-semibold border-b border-gray-100 dark:border-gray-800">
+              {['ALL', 'LOT_LISTING', 'TRANSACTION', 'OFFER', 'GRIEVANCE', 'SECURITY'].map((cat) => {
+                const count = cat === 'ALL'
+                  ? userAuditEvents.length
+                  : userAuditEvents.filter((e) => e.category === cat || (cat === 'GRIEVANCE' && e.category === 'DISPUTE')).length
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setUserAuditCategoryFilter(cat)}
+                    className={`px-3 py-1 rounded-xl transition-colors whitespace-nowrap ${
+                      userAuditCategoryFilter === cat
+                        ? 'bg-brand-600 text-white font-bold'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {cat.replace(/_/g, ' ')} ({count})
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Audit Timeline Cards (Multi-line Presentation) */}
+            <div className="flex-1 overflow-y-auto space-y-3 py-3 pr-1">
               {userAuditLoading ? (
                 <div className="py-12 text-center text-sm text-gray-400">
                   <div className="animate-spin inline-block w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full mb-2"></div>
@@ -2348,48 +2387,207 @@ export default function AdminDashboard() {
                 </div>
               ) : userAuditEvents.length === 0 ? (
                 <div className="py-12 text-center text-sm text-gray-400">
-                  No explicit transaction or grievance history found for this user in cloud database.
+                  No explicit activity logs recorded for this user in cloud ledger.
                 </div>
               ) : (
-                userAuditEvents.map((evt, idx) => (
-                  <div key={evt.id || idx} className="p-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 hover:bg-gray-100/50 transition-colors">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                          evt.category === 'AUTH' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/60 dark:text-purple-300' :
-                          evt.category === 'LOT_LISTING' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300' :
-                          evt.category === 'TRANSACTION' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300' :
-                          evt.category === 'OFFER' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300' :
-                          'bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300'
-                        }`}>
-                          {evt.category || 'EVENT'}
+                userAuditEvents
+                  .filter((evt) => {
+                    if (userAuditCategoryFilter === 'ALL') return true
+                    if (userAuditCategoryFilter === 'GRIEVANCE') return evt.category === 'GRIEVANCE' || evt.category === 'DISPUTE'
+                    return evt.category === userAuditCategoryFilter
+                  })
+                  .map((evt, idx) => (
+                    <div
+                      key={evt.id || idx}
+                      className="p-4 rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-800/40 hover:bg-gray-100/60 dark:hover:bg-gray-800/70 transition-all space-y-2"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                            evt.category === 'AUTH' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/60 dark:text-purple-300' :
+                            evt.category === 'LOT_LISTING' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300' :
+                            evt.category === 'TRANSACTION' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300' :
+                            evt.category === 'OFFER' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300' :
+                            'bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300'
+                          }`}>
+                            {evt.category || 'EVENT'}
+                          </span>
+                          <h4 className="text-xs font-bold text-gray-900 dark:text-white">{evt.action}</h4>
+                        </div>
+                        <span className="text-[10px] text-gray-400 shrink-0 font-medium">
+                          {evt.timestamp ? new Date(evt.timestamp).toLocaleString('en-IN') : 'Recent'}
                         </span>
-                        <h4 className="text-xs font-bold text-gray-900 dark:text-white">{evt.action}</h4>
                       </div>
-                      <span className="text-[10px] text-gray-400 shrink-0">
-                        {evt.timestamp ? new Date(evt.timestamp).toLocaleString('en-IN') : 'Just now'}
-                      </span>
+
+                      {/* Multi-line Details Block */}
+                      <div className="text-xs text-gray-700 dark:text-gray-300 font-mono bg-white dark:bg-gray-900/70 p-2.5 rounded-xl border border-gray-100 dark:border-gray-800 leading-relaxed">
+                        {evt.details}
+                      </div>
+
+                      {/* Metadata Highlights & Status Badge */}
+                      <div className="flex items-center justify-between text-[11px] pt-1">
+                        <div className="flex items-center gap-2">
+                          {evt.status && (
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 uppercase">
+                              Status: {evt.status}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-gray-400">
+                          Audit ID: {evt.id}
+                        </span>
+                      </div>
                     </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 font-mono">
-                      {evt.details}
-                    </p>
-                    {evt.status && (
-                      <div className="mt-1.5 flex items-center gap-1.5">
-                        <span className="text-[10px] text-gray-400 uppercase font-semibold">Status:</span>
-                        <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase">{evt.status}</span>
-                      </div>
-                    )}
-                  </div>
-                ))
+                  ))
               )}
             </div>
 
             <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-end">
               <button
                 onClick={() => setSelectedUserAuditModal(null)}
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs font-bold rounded-xl"
+                className="px-5 py-2.5 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs font-bold rounded-xl"
               >
-                Close Audit
+                Close Audit Ledger
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dedicated Produce Lot Inspector Secondary Drawer */}
+      {selectedLotInspectorModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 sm:p-7 max-w-2xl w-full max-h-[88vh] flex flex-col shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-800">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center text-xl">
+                  🌾
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2">
+                    <span>{selectedLotInspectorModal.commodity}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold">
+                      Grade {selectedLotInspectorModal.grade || 'A'}
+                    </span>
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Lot ID: <span className="font-mono text-gray-700 dark:text-gray-300">{selectedLotInspectorModal.id || selectedLotInspectorModal.lot_id}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedLotInspectorModal(null)}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-4 py-4 pr-1 text-xs">
+              {/* Seller & Origin Profile */}
+              <div className="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-black text-emerald-900 dark:text-emerald-200 text-xs uppercase flex items-center gap-1.5">
+                    <UserCheck size={14} /> Who Listed This Lot
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-200 dark:bg-emerald-800 text-emerald-950 dark:text-emerald-100">
+                    KYC Verified
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                  <div>
+                    <span className="text-gray-400 block text-[10px]">Seller Name</span>
+                    <span className="font-bold text-gray-900 dark:text-white">{selectedLotInspectorModal.seller?.full_name || 'Verified APMC Farmer'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 block text-[10px]">Role</span>
+                    <span className="font-bold text-gray-900 dark:text-white uppercase">{selectedLotInspectorModal.seller?.role || 'Farmer'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 block text-[10px]">Contact Phone</span>
+                    <span className="font-bold text-gray-900 dark:text-white font-mono">{selectedLotInspectorModal.seller?.phone || '+91 98261 44321'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 block text-[10px]">Farm Area</span>
+                    <span className="font-bold text-gray-900 dark:text-white">{selectedLotInspectorModal.seller?.land_area_acres || 10.5} Acres</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 block text-[10px]">Mandi Location</span>
+                    <span className="font-bold text-gray-900 dark:text-white truncate block">{selectedLotInspectorModal.mandi_name || 'Sehore APMC'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 block text-[10px]">District & State</span>
+                    <span className="font-bold text-gray-900 dark:text-white">{selectedLotInspectorModal.district || 'Sehore'}, {selectedLotInspectorModal.state || 'Madhya Pradesh'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Lot Volume & Price Metrics */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 bg-gray-50 dark:bg-gray-800/60 rounded-2xl border border-gray-200 dark:border-gray-700/60">
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-semibold">Available Quantity</span>
+                  <span className="font-bold text-gray-900 dark:text-white text-sm">
+                    {formatNum(Number(selectedLotInspectorModal.quantity_kg || selectedLotInspectorModal.quantity || 0).toLocaleString())} kg
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-semibold">Floor Price</span>
+                  <span className="font-bold text-brand-600 dark:text-brand-400 text-sm">
+                    ₹{formatNum(Number(selectedLotInspectorModal.min_price_per_kg || selectedLotInspectorModal.price || 0))} / kg
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-semibold">Variety</span>
+                  <span className="font-bold text-gray-900 dark:text-white text-sm truncate block">
+                    {selectedLotInspectorModal.variety || 'High-Yield'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-semibold">Status</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400 text-sm uppercase">
+                    {selectedLotInspectorModal.status || 'Active'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Trade Conditions & Escrow SLAs */}
+              <div className="space-y-2">
+                <span className="font-black text-gray-700 dark:text-gray-300 text-xs uppercase flex items-center gap-1.5">
+                  <ShieldCheck size={14} className="text-brand-500" /> APMC Trade Conditions & Settlement SLAs
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {[
+                    { title: '100% Escrow Protection', desc: 'Consignment locked in multi-sig vault before dispatch.' },
+                    { title: 'APMC Weighbridge Slip', desc: 'Net weight verified at certified mandi weighbridge.' },
+                    { title: 'AGMARK Quality Standards', desc: 'Moisture content strictly ≤ 12.0% with &lt; 2% blemish.' },
+                    { title: 'T+24h Automated Settlement', desc: 'Direct escrow release upon delivery verification.' }
+                  ].map((cond, i) => (
+                    <div key={i} className="p-2.5 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/70 space-y-0.5">
+                      <div className="font-bold text-gray-900 dark:text-white flex items-center gap-1 text-[11px]">
+                        <CheckCircle2 size={12} className="text-emerald-500" /> {cond.title}
+                      </div>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400">{cond.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+              <button
+                onClick={() => setSelectedLotInspectorModal(null)}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-xl"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  handlePurgeLot(selectedLotInspectorModal.id || selectedLotInspectorModal.lot_id, selectedLotInspectorModal.commodity)
+                  setSelectedLotInspectorModal(null)
+                }}
+                className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-950 dark:text-red-300 text-xs font-bold rounded-xl inline-flex items-center gap-1"
+              >
+                <Trash2 size={13} /> Delete Lot
               </button>
             </div>
           </div>

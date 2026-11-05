@@ -1,484 +1,468 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import {
-  X, Sparkles, ChevronRight, ChevronLeft, Target,
-  Play, CheckCircle2, ArrowRight, Lightbulb, Compass, RotateCcw
+  X, FolderLock, Sparkles, ChevronRight, ChevronLeft, ShieldCheck,
+  TrendingUp, Calculator, Scale, Award, MapPin, CheckCircle2,
+  FileText, Zap, Compass, HelpCircle, Layers, ArrowRight
 } from 'lucide-react'
 import { useLangStore } from '../../store/langStore'
 
-// Comprehensive placement drive compiler-style interactive walkthroughs for every module
+// Comprehensive interactive walkthrough tour steps for every module
 const MODULE_TOURS = {
   '/dashboard': {
-    moduleName: { en: 'Module 01: Dashboard Intelligence', hi: 'मॉड्यूल 01: डैशबोर्ड बुद्धिमत्ता', mr: 'मॉड्यूल 01: डॅशबोर्ड', or: 'ମଡ୍ୟୁଲ୍ 01: ଡ୍ୟାସବୋର୍ଡ' },
+    moduleCode: 'M01',
+    icon: '📊',
+    title: {
+      en: 'Executive Telemetry & Market Intelligence',
+      hi: 'डैशबोर्ड इंटेलिजेंस व बाजार डेटा',
+      mr: 'डॅशबोर्ड बुद्धिमत्ता आणि बाजार डेटा',
+      or: 'ଡ୍ୟାସବୋର୍ଡ ତଥ୍ୟ ଓ ବଜାର ବିଶ୍ଳେଷଣ',
+    },
     steps: [
       {
-        badge: 'Step 1: Metric KPI Indicators',
-        title: { en: 'Live Platform Overview', hi: 'प्लेटफॉर्म का दैनिक अवलोकन', mr: 'दैनिक डॅशबोर्ड आढावा', or: 'ଦୈନିକ ପ୍ଲାଟଫର୍ମ ଅବଲୋକନ' },
+        title: { en: 'Daily Mandi Clearing Scorecard', hi: 'दैनिक मंडी समाशोधन स्कोरकार्ड', mr: 'दैनिक बाजार स्कोरकार्ड', or: 'ଦୈନିକ ମଣ୍ଡି ସ୍କୋରକାର୍ଡ' },
         desc: {
-          en: 'Just like test case scorecards in a coding platform, these 4 metric cards report: Today\'s Highest Clearing APMC Rate, Verified Active Escrows, Pending Payouts, and Certified AGMARK Quality Grade.',
-          hi: 'जैसे कोडिंग टेस्ट में स्कोरकार्ड होता है, ये 4 कार्ड दिखाते हैं: आज का सर्वश्रेष्ठ APMC भाव, सक्रिय एस्क्रो अनुबंध, बकाया भुगतान और प्रमाणित गुणवत्ता ग्रेड।',
-          mr: 'जसे कोडिंग चाचणीत स्कोअरकार्ड असते, तसे हे 4 कार्ड आजचा सर्वोत्तम भाव आणि चालू व्यवहार दर्शवतात.',
-          or: 'କୋଡିଂ ଟେଷ୍ଟ କାର୍ଡ ଭଳି, ଏହି 4ଟି କାର୍ଡ ଆଜିର ସର୍ବୋତ୍ତମ ଦର ଓ ସକ୍ରିୟ ଚୁକ୍ତି ଦର୍ଶାଏ।'
+          en: 'Real-time telemetry reports: Today\'s Highest Clearing APMC Rate, Active Escrow Contracts, Net Pending Payouts, and Certified AGMARK Quality Grade.',
+          hi: 'लाइव टेलीमेट्री आंकड़े: आज का उच्चतम APMC भाव, सक्रिय एस्क्रो अनुबंध, कुल बकाया भुगतान और प्रमाणित AGMARK गुणवत्ता ग्रेड।',
+          mr: 'थेट बाजार माहिती: आजचा कमाल बाजार भाव, सक्रिय एस्क्रो व्यवहार आणि प्रमाणित गुणवत्ता.',
+          or: 'ପ୍ଲାଟଫର୍ମ ତଥ୍ୟ: ଆଜିର ସର୍ବୋଚ୍ଚ ମଣ୍ଡି ଦର, ସକ୍ରିୟ ଏସ୍କ୍ରୋ ଚୁକ୍ତି ଏବଂ ମାନକ ଗ୍ରେଡ୍।'
         },
-        action: {
-          en: '👉 Hover over any card to inspect live telemetry and sub-market variance.',
-          hi: '👉 विस्तृत डेटा देखने के लिए किसी भी कार्ड पर कर्सर ले जाएँ।',
-          mr: '👉 तपशील पाहण्यासाठी कोणत्याही कार्डवर कर्सर न्या.',
-          or: '👉 ସବିଶେଷ ତଥ୍ୟ ପାଇଁ କାର୍ଡ ଉପରେ କର୍ସର ରଖନ୍ତୁ।'
-        }
       },
       {
-        badge: 'Step 2: Real-time Benchmark Comparison',
-        title: { en: 'MSP Verification Test Case', hi: 'MSP सरकारी बेंचमार्क टेस्ट केस', mr: 'MSP सरकारी हमीभाव पडताळणी', or: 'MSP ସରକାରୀ ଦର ପରୀକ୍ଷା' },
+        title: { en: 'MSP Benchmark Verification', hi: 'सरकारी MSP बेंचमार्क सत्यापन', mr: 'सरकारी हमीभाव पडताळणी', or: 'ସରକାରୀ MSP ପରୀକ୍ଷଣ' },
         desc: {
-          en: 'Every commodity price is tested against the Central Govt MSP benchmark. Green badges signify "Test Passed" (Trading above MSP), while red indicates "Warning: Below MSP".',
-          hi: 'प्रत्येक फसल की कीमत सरकारी MSP से जांची जाती है। हरा बैज यानी भाव MSP से अधिक (टेस्ट पास), लाल यानी भाव कम है।',
-          mr: 'प्रत्येक भाव सरकारी हमीभावाशी तपासला जातो. हिरवा रंग म्हणजे भाव हमीभावापेक्षा जास्त आहे.',
-          or: 'ପ୍ରତିଟି ଫସଲ ଦର ସରକାରୀ MSP ସହ ତୁଳନା କରାଯାଏ। ସବୁଜ ମାନେ MSP ଠାରୁ ଅଧିକ।'
+          en: 'Every commodity modal rate is tested against the Central MSP baseline. Green badges indicate profitable trading above MSP, safeguarding farmers from exploitation.',
+          hi: 'प्रत्येक फसल का भाव सरकारी MSP से जांचा जाता है। हरा बैज दर्शाता है कि भाव MSP से अधिक है, जिससे किसानों का शोषण रुकता है।',
+          mr: 'प्रत्येक पिकाचा भाव हमीभावाशी तपासला जातो. हिरवा रंग हमीभावापेक्षा जास्त नफा दर्शवतो.',
+          or: 'ପ୍ରତିଟି ଫସଲ ଦର ସରକାରୀ MSP ସହ ଯାଞ୍ଚ ହୁଏ। ସବୁଜ ରଙ୍ଗ ଲାଭଜନକ ବେପାର ଦର୍ଶାଏ।'
         },
-        action: {
-          en: '👉 Check the Market Snapshot table to compare spot rates across mandis.',
-          hi: '👉 विभिन्न मंडियों के भावों की तुलना के लिए मार्केट स्नैपशॉट तालिका देखें।',
-          mr: '👉 विविध मंडयांमधील भावांची तुलना करण्यासाठी मार्केट स्नॅपशॉट तक्ता पहा.',
-          or: '👉 ମଣ୍ଡି ମଧ୍ୟରେ ଦର ତୁଳନା କରିବାକୁ ମାର୍କେଟ ସ୍ନାପସଟ ଟେବୁଲ ଦେଖନ୍ତୁ।'
-        }
-      }
-    ]
+      },
+      {
+        title: { en: 'Spot Terminal Disparity Index', hi: 'मंडी भाव तुलना व सूचकांक', mr: 'बाजार भाव तुलना आणि निर्देशांक', or: 'ମଣ୍ଡି ଦର ତୁଳନା' },
+        desc: {
+          en: 'Compare modal rates across nearby mandis in real time to capture spatial arbitrage before booking transportation.',
+          hi: 'परिवहन बुक करने से पहले विभिन्न मंडियों के भावों की तुलना करके अधिकतम मुनाफा सुरक्षित करें।',
+          mr: 'वाहतूक ठरवण्यापूर्वी शेजारील मंड्यांमधील भावांची तुलना करा.',
+          or: 'ଗାଡ଼ି ବୁକିଂ ପୂର୍ବରୁ ବିଭିନ୍ନ ମଣ୍ଡିର ଦର ତୁଳନା କରି ସର୍ବାଧିକ ଲାଭ ପାଆନ୍ତୁ।'
+        },
+      },
+    ],
   },
 
   '/prices': {
-    moduleName: { en: 'Module 02: Price Discovery & Sort Engine', hi: 'मॉड्यूल 02: मंडी भाव व सॉर्ट इंजन', mr: 'मॉड्यूल 02: मंडी भाव शोध', or: 'ମଡ୍ୟୁଲ୍ 02: ମଣ୍ଡି ଦର ଖୋଜ' },
+    moduleCode: 'M02',
+    icon: '📈',
+    title: {
+      en: 'AGMARKNET Price Discovery Engine',
+      hi: 'एगमार्कनेट मूल्य खोज इंजन',
+      mr: 'एगमार्कनेट भाव शोध इंजिन',
+      or: 'ଏଗମାର୍କନେଟ ଦର ଅନୁସନ୍ଧାନ ଇଞ୍ଜିନ',
+    },
     steps: [
       {
-        badge: 'Step 1: Input Search & State Filtering',
-        title: { en: 'Filtering Agmarknet Datasets', hi: 'एगमार्कनेट डेटासेट को फ़िल्टर करना', mr: 'डेटा फिल्टर करणे', or: 'ତଥ୍ୟ ଫିଲ୍ଟର କରିବା' },
+        title: { en: 'Live Terminal Filtering & Querying', hi: 'लाइव मंडी सर्च व स्टेट फ़िल्टर', mr: 'थेट बाजार शोध आणि राज्य फिल्टर', or: 'ଲାଇଭ ମଣ୍ଡି ଖୋଜ ଓ ଫିଲ୍ଟର' },
         desc: {
-          en: 'Here you filter through 500+ mandis. Type any commodity (e.g. "Wheat", "Onion") or APMC market name in the search bar to isolate targeted rows.',
-          hi: 'यहाँ आप 500 से अधिक मंडियों को फ़िल्टर कर सकते हैं। सर्च बॉक्स में फसल या मंडी का नाम लिखें।',
-          mr: 'येथे 500+ मंड्या फिल्टर करता येतात. सर्च बॉक्समध्ये पिकाचे नाव टाका.',
-          or: 'ଏଠାରେ 500+ ମଣ୍ଡି ଫିଲ୍ଟର କରିହେବ। ସର୍ଚ୍ଚ ବକ୍ସରେ ଫସଲର ନାମ ଲେଖନ୍ତୁ।'
+          en: 'Search through 500+ APMC mandis across India by commodity name or location. Filter by State to view terminal-specific prices.',
+          hi: 'देश भर की 500+ APMC मंडियों में से फसल या स्थान के अनुसार खोजें। अपने राज्य की विशिष्ट मंडियां देखें।',
+          mr: 'भारतातील 500+ मंड्यांमधून पिकाच्या नावाने किंवा स्थानानुसार शोधा.',
+          or: 'ଦେଶର 500+ ମଣ୍ଡି ମଧ୍ୟରୁ ଫସଲ ବା ସ୍ଥାନ ଅନୁସାରେ ତଥ୍ୟ ଖୋଜନ୍ତୁ।'
         },
-        action: {
-          en: '👉 Click the State dropdown to view only your state\'s active APMC terminals.',
-          hi: '👉 केवल अपने राज्य की मंडियों को देखने के लिए राज्य ड्रॉपडाउन चुनें।',
-          mr: '👉 आपल्या राज्यातील मंड्या पाहण्यासाठी राज्य निवडा.',
-          or: '👉 ନିଜ ରାଜ୍ୟର ମଣ୍ଡି ଦେଖିବାକୁ ଡ୍ରପଡାଉନ ବାଛନ୍ତୁ।'
-        }
       },
       {
-        badge: 'Step 2: Sorting Column Keys',
-        title: { en: 'Sort Columns Like a Test Case Compiler', hi: 'कॉलम हेडर पर क्लिक करके सॉर्ट करें', mr: 'स्तंभ हेडरवर क्लिक करून क्रमवारी लावा', or: 'ହେଡର କ୍ଲିକ କରି ସର୍ଟ କରନ୍ତୁ' },
+        title: { en: 'Dynamic Column Sorting Matrix', hi: 'डायनामिक कॉलम सॉर्टिंग मैट्रिक्स', mr: 'स्तंभ क्रमवारी मॅट्रिक्स', or: 'ଡାଇନାମିକ ସର୍ଟିଂ ମ୍ୟାଟ୍ରିକ୍ସ' },
         desc: {
-          en: 'Click on any column header like "Modal ₹/qtl" or "Max ₹/qtl". The engine re-indexes the array instantly in ascending (↑) or descending (↓) order.',
-          hi: '"Modal ₹/qtl" या "Max ₹/qtl" कॉलम हेडर पर क्लिक करें। तालिका तुरंत उच्चतम से निम्नतम दर के अनुसार सॉर्ट हो जाएगी।',
-          mr: '"Modal ₹/qtl" हेडरवर क्लिक करा. सर्वाधिक दराप्रमाणे तक्ता आपोआप क्रमबद्ध होईल.',
-          or: '"Modal ₹/qtl" ଉପରେ କ୍ଲିକ କରି ସର୍ବୋଚ୍ଚରୁ ସର୍ବନିମ୍ନ ଦର ସର୍ଟ କରନ୍ତୁ।'
+          en: 'Click on Modal Price, Minimum Price, or Maximum Price column headers to instantly sort mandis from highest to lowest clearing rate.',
+          hi: 'उच्चतम से निम्नतम दर पर मंडियों को तुरंत क्रमबद्ध करने के लिए कॉलम हेडर (मोडल, न्यूनतम, अधिकतम मूल्य) पर क्लिक करें।',
+          mr: 'सर्वाधिक बाजार भाव पाहण्यासाठी कॉलम हेडरवर क्लिक करा.',
+          or: 'ସର୍ବୋଚ୍ଚ ଦର ଦେଖିବାକୁ କଲମ ହେଡର ଉପରେ କ୍ଲିକ କରି ସର୍ଟ କରନ୍ତୁ।'
         },
-        action: {
-          en: '👉 Look for the green ✓ badge next to MSP column for maximum profit.',
-          hi: '👉 अधिकतम मुनाफे के लिए MSP कॉलम के बगल में हरा ✓ चिह्न देखें।',
-          mr: '👉 जास्तीत जास्त नफ्यासाठी हमीभावाशेजारील हिरवा ✓ टिक तपासा.',
-          or: '👉 ସର୍ବାଧିକ ଲାଭ ପାଇଁ ସବୁଜ ✓ ଚିହ୍ନ ଲକ୍ଷ୍ୟ କରନ୍ତୁ।'
-        }
-      }
-    ]
+      },
+    ],
   },
 
   '/calculator': {
-    moduleName: { en: 'Module 03: Net Realization Calculator', hi: 'मॉड्यूल 03: शुद्ध आय कैलकुलेटर', mr: 'मॉड्यूल 03: निव्वळ उत्पन्न कॅल्क्युलेटर', or: 'ମଡ୍ୟୁଲ୍ 03: ନିଟ ଆୟ କ୍ୟାଲକୁଲେଟର' },
+    moduleCode: 'M03',
+    icon: '🧮',
+    title: {
+      en: 'Net Realization & Haulage Freight Engine',
+      hi: 'शुद्ध आय व ढुलाई भाड़ा कैलकुलेटर',
+      mr: 'निव्वळ उत्पन्न व वाहतूक खर्च गणक',
+      or: 'ନିଟ ଆୟ ଓ ପରିବହନ ଭଡ଼ା କ୍ୟାଲକୁଲେଟର',
+    },
     steps: [
       {
-        badge: 'Step 1: Set Input Parameters',
-        title: { en: 'Configuring Batch Quantities & Quoted Price', hi: 'मात्रा और बोली मूल्य दर्ज करें', mr: 'प्रमाण आणि भाव टाका', or: 'ପରିମାଣ ଓ ଦର ଦର୍ଜ କରନ୍ତୁ' },
+        title: { en: 'Input Consignment Parameters', hi: 'फसल मात्रा व कोटेड मूल्य दर्ज करें', mr: 'मालाचे प्रमाण व भाव प्रविष्ट करा', or: 'ଫସଲ ପରିମାଣ ଓ ଦର ପ୍ରବେଶ କରନ୍ତୁ' },
         desc: {
-          en: 'Enter your Harvest Quantity (Quintals) and Quoted Mandi Price. This acts as the raw input to our economic realization pipeline.',
-          hi: 'अपनी फसल की मात्रा (क्विंटल) और मंडी में मिला भाव दर्ज करें। यह आपकी कुल बिक्री की गणना करता है।',
-          mr: 'आपल्या मालाचे प्रमाण (क्विंटल) आणि मंडी भाव टाका.',
-          or: 'ନିଜ ଫସଲର ପରିମାଣ (କ୍ୱିଣ୍ଟାଲ) ଓ ମଣ୍ଡି ଦର ପ୍ରବେଶ କରନ୍ତୁ।'
+          en: 'Enter harvest quantity in quintals and the quoted rate. The mathematical model calculates gross value and simulates transport deductions.',
+          hi: 'फसल की मात्रा (क्विंटल) और कोटेड भाव दर्ज करें। मॉडल कुल मूल्य की गणना कर परिवहन खर्च का विश्लेषण करता है।',
+          mr: 'क्विंटलमध्ये प्रमाण आणि भाव टाका. मॉडेल एकूण उत्पन्न व खर्च काढते.',
+          or: 'ପରିମାଣ ଓ କୋଟେଡ ଦର ପ୍ରବେଶ କରନ୍ତୁ। ଏହା ମୋଟ ମୂଲ୍ୟର ହିସାବ କରେ।'
         },
-        action: {
-          en: '👉 Change quantity to 100 quintals and see how gross earnings scale.',
-          hi: '👉 मात्रा को 100 क्विंटल करके देखें कि कुल राजस्व कैसे बढ़ता है।',
-          mr: '👉 प्रमाण 100 क्विंटल करून एकूण उत्पन्न कसे वाढते ते पहा.',
-          or: '👉 ପରିମାଣ 100 କ୍ୱିଣ୍ଟାଲ କରି ମୋଟ ଆୟ ଦେଖନ୍ତୁ।'
-        }
       },
       {
-        badge: 'Step 2: Execution & Freight Deductions',
-        title: { en: 'Compiling All Hidden Mandi Deductions', hi: 'सभी मंडी कटौतियों का संकलन', mr: 'सर्व छुपे खर्च आणि वजावट', or: 'ସମସ୍ତ କାଟତିର ଗଣନା' },
+        title: { en: 'Unmasking Hidden Intermediary Deductions', hi: 'छुपे मंडी व बिचौलिया खर्चों का संकलन', mr: 'सर्व छुपे खर्च आणि वजावट', or: 'ସମସ୍ତ ଲୁକ୍କାୟିତ ଖର୍ଚ୍ଚର ସଂକଳନ' },
         desc: {
-          en: 'The calculator deducts APMC market cess (1-2%), commission (1.5-2.5%), loading charges, transport fuel, and packaging. The large green card displays your exact take-home cash!',
-          hi: 'कैलकुलेटर मंडी सेस, दलाली, तुलाई, भाड़ा और बोरी का खर्च घटाता है। बड़ा हरा कार्ड आपकी असली इन-हैंड कमाई दिखाता है!',
-          mr: 'कॅल्क्युलेटर बाजार फी, कमिशन, हमाली आणि वाहतूक खर्च वजा करून खरी रक्कम दाखवतो.',
-          or: 'କ୍ୟାଲକୁଲେଟର ମଣ୍ଡି ଫି, କମିଶନ, ଶ୍ରମ ଓ ଗାଡ଼ି ଭଡ଼ା କାଟି ହାତକୁ ଆସୁଥିବା ନିଟ ଟଙ୍କା ଦେଖାଏ।'
+          en: 'Deducts APMC market cess (1-2%), commission (1.5-2.5%), weighment, loading, and distance-based diesel haulage to reveal true in-hand cash.',
+          hi: 'मंडी सेस, कमीशन, तुलाई, पल्लेदारी और डीजल भाड़ा घटाकर किसान के हाथ में आने वाली असली शुद्ध रकम दिखाता है।',
+          mr: 'बाजार फी, कमिशन, हमाली आणि वाहतूक खर्च वजा करून प्रत्यक्ष हातात येणारी रक्कम दाखवतो.',
+          or: 'ମଣ୍ଡି ସେସ୍, କମିଶନ, ଶ୍ରମ ଓ ଡିଜେଲ ଭଡ଼ା କାଟି ହାତକୁ ଆସୁଥିବା ନିଟ ଟଙ୍କା ଦର୍ଶାଏ।'
         },
-        action: {
-          en: '👉 Compare local mandi take-home vs distant high-rate mandi net realization.',
-          hi: '👉 पास की मंडी बनाम दूर की मंडी के शुद्ध मुनाफे की तुलना करें।',
-          mr: '👉 जवळची मंडी आणि लांबची मंडी यांच्या नफ्याची तुलना करून पहा.',
-          or: '👉 ନିକଟ ଓ ଦୂର ମଣ୍ଡିର ନିଟ ଲାଭ ତୁଳନା କରନ୍ତୁ।'
-        }
-      }
-    ]
+      },
+    ],
+  },
+
+  '/listings': {
+    moduleCode: 'M04',
+    icon: '🌾',
+    title: {
+      en: 'Digital Produce Listings & Escrow Terms',
+      hi: 'डिजिटल फसल लिस्टिंग व एस्क्रो शर्तें',
+      mr: 'डिजिटल माल यादी आणि एस्क्रो अटी',
+      or: 'ଡିଜିଟାଲ୍ ଫସଲ ତାଲିକା ଓ ଏସ୍କ୍ରୋ ସର୍ତ୍ତ'
+    },
+    steps: [
+      {
+        title: { en: 'Verified Producer Identity & KYC', hi: 'सत्यापित किसान प्रोफाइल व KYC', mr: 'सत्यापित शेतकरी प्रोफाइल', or: 'ପ୍ରମାଣିତ କୃଷକ ପରିଚୟ' },
+        desc: {
+          en: 'Every listing highlights who created it: Farmer/FPO Name, KYC Verification Badge, Farm Acreage, and Mandi Jurisdiction—never squished or hidden.',
+          hi: 'प्रत्येक लिस्टिंग स्पष्ट रूप से दिखाती है कि इसे किसने बनाया: किसान का नाम, KYC सत्यापन बैज, खेत का रकबा और मंडी अधिकार क्षेत्र।',
+          mr: 'प्रत्येक लॉट कोण तयार केला आहे हे स्पष्टपणे दाखवतो: शेतकऱ्याचे नाव, KYC आणि क्षेत्र.',
+          or: 'ପ୍ରତିଟି ଲଟରେ କୃଷକଙ୍କ ନାମ, KYC ପ୍ରମାଣପତ୍ର ଓ ଜମି ପରିମାଣ ସ୍ପଷ୍ଟ ଭାବେ ପ୍ରଦର୍ଶିତ।'
+        },
+      },
+      {
+        title: { en: 'Mandatory Trade Conditions & Escrow SLAs', hi: 'अनिवार्य व्यापार शर्तें व एस्क्रो SLA', mr: 'अनिवार्य व्यापार अटी', or: 'ବାଧ୍ୟତାମୂଳକ ବେପାର ସର୍ତ୍ତ' },
+        desc: {
+          en: 'Listings include 6 strict trade conditions: 100% Escrow deposit before dispatch, APMC weighbridge slips, moisture compliance, 48h dispatch, and T+24h payout.',
+          hi: 'लिस्टिंग में 6 अनिवार्य शर्तें शामिल हैं: ट्रक प्रस्थान से पहले 100% एस्क्रो जमा, मंडी तुलाई पर्ची, 48 घंटे में प्रस्थान और T+24 घंटे में भुगतान।',
+          mr: 'यादीत 6 महत्त्वाच्या अटी आहेत: 100% एस्क्रो संरक्षण, वजन पावती, आणि 24 तासांत रक्कम वाटप.',
+          or: 'ତାଲିକାରେ 6ଟି ବାଧ୍ୟତାମୂଳକ ସର୍ତ୍ତ ରହିଛି: 100% ଏସ୍କ୍ରୋ ଜମା, ଧର୍ମକଣ୍ଟା ରସିଦ ଓ 24 ଘଣ୍ଟା ମଧ୍ୟରେ ଅର୍ଥ ପ୍ରଦାନ।'
+        },
+      },
+      {
+        title: { en: 'Secondary Dedicated Detail Inspector', hi: 'समर्पित द्वितीयक विस्तृत पृष्ठ', mr: 'समर्पित सविस्तर पान', or: 'ସମର୍ପିତ ବିସ୍ତୃତ ପୃଷ୍ଠା' },
+        desc: {
+          en: 'Click "Quick Inspect" or "View Details" to open the rich secondary view with complete seller dossier, GPS coordinates, and bilateral offer ledger.',
+          hi: 'किसान की पूरी जानकारी, GPS लोकेशन और खरीदार बोलियों को देखने के लिए "Quick Inspect" या "View Details" पर क्लिक करें।',
+          mr: 'शेतकऱ्याची संपूर्ण माहिती आणि खरेदीदार बोली पाहण्यासाठी "View Details" वर क्लिक करा.',
+          or: 'ସମ୍ପୂର୍ଣ୍ଣ ତଥ୍ୟ ଓ ଦର ପ୍ରସ୍ତାବ ଦେଖିବାକୁ "View Details" ଉପରେ କ୍ଲିକ କରନ୍ତୁ।'
+        },
+      },
+    ],
+  },
+
+  '/transactions': {
+    moduleCode: 'M06',
+    icon: '🔒',
+    title: {
+      en: 'Milestone Escrow Vault & State Machine',
+      hi: 'एस्क्रो स्मार्ट कॉन्ट्रैक्ट व 7-चरणीय स्टेट मशीन',
+      mr: 'एस्क्रो स्मार्ट करार आणि 7-टप्प्यांची स्टेट मशीन',
+      or: 'ଏସ୍କ୍ରୋ ସ୍ମାର୍ଟ କଣ୍ଟ୍ରାକ୍ଟ ଓ 7-ପର୍ଯ୍ୟାୟ ସ୍ଥିତି'
+    },
+    steps: [
+      {
+        title: { en: 'Multi-Signature Vault Custody', hi: 'मल्टी-सिग्नेचर एस्क्रो तिजोरी', mr: 'मल्टी-सिग्नेचर एस्क्रो सुरक्षा', or: 'ମଲ୍ଟି-ସିଗ୍ନେଚର ଏସ୍କ୍ରୋ ସୁରକ୍ଷା' },
+        desc: {
+          en: 'Buyer deposits 100% of purchase value into the neutral MandiSetu vault before goods leave the farmer\'s yard. Zero payment default risk.',
+          hi: 'फसल रवाना होने से पहले खरीदार 100% रकम मंडीसेतु एस्क्रो तिजोरी में जमा करता है। भुगतान डूबने का शून्य जोखिम।',
+          mr: 'माल निघण्यापूर्वी खरेदीदार 100% रक्कम एस्क्रो खात्यात जमा करतो. शून्य फसवणूक.',
+          or: 'ଫସଲ ବାହାରିବା ପୂର୍ବରୁ କ୍ରେତା 100% ଟଙ୍କା ଏସ୍କ୍ରୋ ଭଲ୍ଟରେ ଜମା କରନ୍ତି। ଟଙ୍କା ବୁଡ଼ିବାର କୌଣସି ଭୟ ନାହିଁ।'
+        },
+      },
+      {
+        title: { en: '7-Stage Milestone Progression', hi: '7-चरणीय अनुबंध प्रगति चक्र', mr: '7-टप्प्यांची व्यवहार प्रगती', or: '7-ପର୍ଯ୍ୟାୟ ଅଗ୍ରଗତି ଚକ୍ର' },
+        desc: {
+          en: 'Track status in real time: Contract Initialized → Payment Received → Consignment Dispatched → In Transit → Delivered → Verified → Settled.',
+          hi: 'अनुबंध से लेकर अंतिम बैंक ट्रांसफर तक 7 चरणों में हर कदम को लाइव ट्रैक करें।',
+          mr: 'अनुबंधापासून अंतिम बँक हस्तांतरणापर्यंत प्रत्येक टप्पा थेट ट्रॅक करा.',
+          or: 'ଚୁକ୍ତିରୁ ଆରମ୍ଭ କରି ବ୍ୟାଙ୍କ ଖାତାକୁ ଟଙ୍କା ଯିବା ଯାଏଁ ସମସ୍ତ ପଦକ୍ଷେପ ଟ୍ରାକ କରନ୍ତୁ।'
+        },
+      },
+    ],
   },
 
   '/grading': {
-    moduleName: { en: 'Module 04: Computer Vision Produce Grading', hi: 'मॉड्यूल 04: एआई फसल गुणवत्ता ग्रेडिंग', mr: 'मॉड्यूल 04: एआय प्रतवारी', or: 'ମଡ୍ୟୁଲ୍ 04: ଏଆଇ ଗୁଣବତ୍ତା ନିର୍ଣ୍ଣୟ' },
+    moduleCode: 'M10',
+    icon: '🔬',
+    title: {
+      en: 'Computer Vision Produce Quality Grading',
+      hi: 'कंप्यूटर विज़न फसल गुणवत्ता ग्रेडिंग',
+      mr: 'कॉम्प्युटर व्हिजन पीक गुणवत्ता प्रतवारी',
+      or: 'କମ୍ପ୍ୟୁଟର ଭିଜନ ଗୁଣବତ୍ତା ନିର୍ଣ୍ଣୟ'
+    },
     steps: [
       {
-        badge: 'Step 1: Upload Photo or Enter Specs',
-        title: { en: 'Feeding Computer Vision Data', hi: 'फसल की फोटो अपलोड करना', mr: 'मालाचा फोटो अपलोड करा', or: 'ଫସଲ ଫଟୋ ଅପଲୋଡ କରନ୍ତୁ' },
+        title: { en: 'Multi-Spectral Colorimetric Analysis', hi: 'मल्टी-स्पेक्ट्रल रंग व सतह विश्लेषण', mr: 'रंग आणि पृष्ठभाग तपासणी', or: 'ରଙ୍ଗ ଓ ଆକାର ବିଶ୍ଳେଷଣ' },
         desc: {
-          en: 'Upload a smartphone photo of your harvest. Our model scans for diameter uniformity, moisture percentage, and surface blemishes following AGMARK benchmarks.',
-          hi: 'फसल की साफ फोटो अपलोड करें। हमारा एआई मॉडल आकार, नमी और रंग की जांच कर गुणवत्ता परखता है।',
-          mr: 'स्मार्टफोनवरून फोटो अपलोड करा. एआय मॉडेल आकार व रंगाची तपासणी करेल.',
-          or: 'ଫସଲର ଫଟୋ ଅପଲୋଡ କରନ୍ତୁ। ଏଆଇ ମଡେଲ ଆକାର ଓ ଆର୍ଦ୍ରତା ପରୀକ୍ଷା କରିବ।'
+          en: 'Upload harvest photos to scan diameter uniformity, surface blemish index, and moisture compliance according to AGMARK specifications.',
+          hi: 'फसल की फोटो अपलोड करें। एआई मॉडल आकार, नमी और दाग-धब्बों की जांच करके सटीक ग्रेड देता है।',
+          mr: 'पिकाचा फोटो अपलोड करा. एआय मॉडेल आकार, ओलावा व डाग तपासून प्रत ठरवते.',
+          or: 'ଫସଲ ଫଟୋ ଅପଲୋଡ କରନ୍ତୁ। ଏଆଇ ମଡେଲ ଆକାର, ଆର୍ଦ୍ରତା ଓ ଦାଗ ଯାଞ୍ଚ କରିବ।'
         },
-        action: {
-          en: '👉 Grade A+ produce secures 15% to 25% premium bids from verified buyers.',
-          hi: '👉 A+ ग्रेड मिलने पर खरीदार 15% से 25% अधिक भाव देते हैं।',
-          mr: '👉 A+ ग्रेडमुळे खरेदीदार 15% ते 25% अधिक दर देतात.',
-          or: '👉 A+ ଗ୍ରେଡରେ ବ୍ୟବସାୟୀମାନେ 15%ରୁ 25% ଅଧିକ ଦର ଦିଅନ୍ତି।'
-        }
-      }
-    ]
+      },
+      {
+        title: { en: 'Verified Grade Premium Bids', hi: 'प्रमाणित ग्रेड पर प्रीमियम मूल्य', mr: 'प्रमाणित गुणवत्तेवर जास्त भाव', or: 'ପ୍ରମାଣିତ ମାନକରେ ଅଧିକ ଦର' },
+        desc: {
+          en: 'Lots achieving Grade A+ or A unlock up to 25% price premiums from institutional corporate buyers on the exchange.',
+          hi: 'A+ या A ग्रेड प्राप्त करने वाले लॉट्स पर संस्थागत खरीदार 25% तक अधिक प्रीमियम भाव प्रदान करते हैं।',
+          mr: 'A+ किंवा A ग्रेड मिळालेल्या मालाला संस्थात्मक खरेदीदार 25% जास्त दर देतात.',
+          or: 'A+ କିମ୍ବା A ଗ୍ରେଡ୍ ପାଇଥିବା ଫସଲରେ ବଡ଼ ବ୍ୟବସାୟୀମାନେ 25% ଅଧିକ ଦର ଦିଅନ୍ତି।'
+        },
+      },
+    ],
   },
 
-  '/mandi-map': {
-    moduleName: { en: 'Module 10: OpenStreetMap Mandi Network', hi: 'मॉड्यूल 10: ओपनस्ट्रीटमैप मंडी नेटवर्क', mr: 'मॉड्यूल 10: मंडी नकाशा', or: 'ମଡ୍ୟୁଲ୍ 10: ମଣ୍ଡି ମାନଚିତ୍ର' },
+  '/arbitration': {
+    moduleCode: 'M09',
+    icon: '⚖️',
+    title: {
+      en: 'APMC Digital Grievance & Arbitration Tribunal',
+      hi: 'मंडी डिजिटल शिकायत व मध्यस्थता ट्रिब्यूनल',
+      mr: 'तक्रार निवारण आणि मध्यस्थी लवाद',
+      or: 'ମଣ୍ଡି ଅଭିଯୋଗ ଓ ମଧ୍ୟସ୍ଥତା ଟ୍ରିବ୍ୟୁନାଲ'
+    },
     steps: [
       {
-        badge: 'Step 1: Automated Location Detection',
-        title: { en: 'One-Click "📍 Use My Location"', hi: '"📍 Use My Location" एक-क्लिक लोकेशन', mr: 'एका क्लिकवर आपले स्थान', or: 'ଗୋଟିଏ କ୍ଲିକରେ ନିଜ ସ୍ଥାନ' },
+        title: { en: 'Statutory 24-Hour Dispute Window', hi: 'कानूनी 24 घंटे की शिकायत विंडो', mr: '24 तासांची कायदेशीर तक्रार खिडकी', or: '24 ଘଣ୍ଟାର ଆଇନଗତ ଅଭିଯୋଗ ସୁବିଧା' },
         desc: {
-          en: 'No need to type difficult latitudes or longitudes! Click "📍 Use My Location" and the system automatically calculates road distance (in km) to all APMCs and highlights the nearest.',
-          hi: 'अक्षांश या देशांतर लिखने की कोई ज़रूरत नहीं! बस "📍 Use My Location" पर क्लिक करें और सिस्टम सबसे नज़दीकी मंडी तुरंत खोज लेगा।',
-          mr: 'अक्षांश किंवा रेखांश टाईप करण्याची गरज नाही! "📍 Use My Location" दाबा आणि जवळची मंडी पहा.',
-          or: 'ଅକ୍ଷାଂଶ ବା ଦ୍ରାଘିମା ଲେଖିବା ଦରକାର ନାହିଁ! "📍 Use My Location" ଦବାଇ ନିକଟତମ ମଣ୍ଡି ଖୋଜନ୍ତୁ।'
+          en: 'Upon delivery, buyers or farmers can log quality deviations, transit spoilage, or weighment mismatches with optional document proofs.',
+          hi: 'डिलीवरी के बाद 24 घंटे के भीतर गुणवत्ता में अंतर, वजन विसंगति या परिवहन क्षति पर शिकायत दर्ज कर सकते हैं।',
+          mr: 'वितरणानंतर 24 तासांच्या आत मालाची गुणवत्ता किंवा वजनातील फरकावर तक्रार दाखल करू शकता.',
+          or: 'ଡେଲିଭରୀ ପରେ 24 ଘଣ୍ଟା ମଧ୍ୟରେ ଗୁଣବତ୍ତା ବା ଓଜନରେ ତ୍ରୁଟି ଥିଲେ ଅଭିଯୋଗ ଦାଖଲ କରିପାରିବେ।'
         },
-        action: {
-          en: '👉 Click any map marker to view operating hours, facilities, and contact phone numbers.',
-          hi: '👉 मंडी के समय, फोन नंबर और सुविधाएं देखने के लिए किसी भी पिन पर क्लिक करें।',
-          mr: '👉 वेळ आणि फोन नंबर पाहण्यासाठी कोणत्याही पिनवर क्लिक करा.',
-          or: '👉 ସମୟ ଓ ଫୋନ ନମ୍ବର ଦେଖିବାକୁ ପିନ ଉପରେ କ୍ଲିକ କରନ୍ତୁ।'
-        }
-      }
-    ]
+      },
+      {
+        title: { en: 'Neutral Escrow Hold & Settlement', hi: 'निष्पक्ष एस्क्रो होल्ड व त्वरित निपटारा', mr: 'निष्पक्ष एस्क्रो होल्ड व तोडगा', or: 'ନିରପେକ୍ଷ ଏସ୍କ୍ରୋ ସମାଧାନ' },
+        desc: {
+          en: 'Disputed escrow funds are instantly frozen in the smart vault until resolved by APMC arbitration officers with documented audit logs.',
+          hi: 'विवादित एस्क्रो राशि तुरंत फ्रीज हो जाती है और APMC अधिकारियों द्वारा जांच के बाद उचित रूप से निपटाई जाती है।',
+          mr: 'विवादित रक्कम त्वरित फ्रीज होते आणि लवाद अधिकाऱ्यांद्वारे योग्य निर्णय दिला जातो.',
+          or: 'ବିବାଦିତ ଟଙ୍କା ତୁରନ୍ତ ଫ୍ରିଜ୍ ହୁଏ ଓ ମଣ୍ଡି ଅଧିକାରୀଙ୍କ ଦ୍ୱାରା ତୁରନ୍ତ ନ୍ୟାୟ ପ୍ରଦାନ କରାଯାଏ।'
+        },
+      },
+    ],
   },
 
-  '/weather': {
-    moduleName: { en: 'Module 11: Weather Intelligence & Satellite Alerts', hi: 'मॉड्यूल 11: मौसम उपग्रह इंटेलिजेंस', mr: 'मॉड्यूल 11: उपग्रह हवामान अंदाज', or: 'ମଡ୍ୟୁଲ୍ 11: ପାଣିପାଗ ଉପଗ୍ରହ ସୂଚନା' },
+  '/admin': {
+    moduleCode: 'ADM',
+    icon: '👑',
+    title: {
+      en: 'TanmayA Root Governance & User Audit Ledger',
+      hi: 'तन्मय रूट एडमिन व उपयोगकर्ता ऑडिट लेजर',
+      mr: 'तन्मय मुख्य ॲडमिन आणि वापरकर्ता ऑडिट लेजर',
+      or: 'ତନ୍ମୟ ମୁଖ୍ୟ ପ୍ରଶାସକ ଓ ଅଡିଟ୍ ଲେଜର'
+    },
     steps: [
       {
-        badge: 'Step 1: 5-Day Precision Outlook',
-        title: { en: 'Rain Probability & Harvest Safety', hi: 'वर्षा संभावना और फसल कटाई सुरक्षा', mr: 'पावसाचा अंदाज आणि पीक संरक्षण', or: 'ବର୍ଷା ସମ୍ଭାବନା ଓ ଫସଲ ସୁରକ୍ଷା' },
+        title: { en: 'Permanent Row #1 Root Anchor', hi: 'सर्वोच्च पंक्ति #1 रूट एंकर', mr: 'पहिली ओळ - मुख्य ॲडमिन', or: 'ପ୍ରଥମ ଧାଡ଼ି ମୁଖ୍ୟ ପ୍ରଶାସକ' },
         desc: {
-          en: 'Live satellite data from OpenWeatherMap updates temperature, humidity, wind, and 5-day rain probabilities. Use this to schedule chemical spraying and transport.',
-          hi: 'ओपनवेदरमैप उपग्रह से लाइव मौसम, आर्द्रता और 5 दिन की बारिश का पूर्वानुमान। कटाई और छिड़काव की योजना इसके आधार पर बनाएं।',
-          mr: 'थेट उपग्रह माहितीद्वारे 5 दिवसांचा पावसाचा अंदाज मिळतो. काढणीचे नियोजन यावर करा.',
-          or: 'ଓପନଓ୍ୱେଦରମ୍ୟାପ ସାଟେଲାଇଟରୁ ଲାଇଭ 5-ଦିନର ବର୍ଷା ପୂର୍ବାନୁମାନ।'
+          en: 'The TanmayA supreme root administrator account is permanently anchored at Row #1 across all user audit tables and authority grids.',
+          hi: 'तन्मय सर्वोच्च रूट एडमिन खाता हमेशा सभी उपयोगकर्ता ऑडिट तालिकाओं और अधिकार सूचियों में शीर्ष पर रहता है।',
+          mr: 'तन्मय मुख्य ॲडमिन खाते नेहमी सर्व वापरकर्ता ऑडिट तक्त्यांमध्ये पहिल्या स्थानावर असते.',
+          or: 'ତନ୍ମୟ ମୁଖ୍ୟ ପ୍ରଶାସକ ଆକାଉଣ୍ଟ ସର୍ବଦା ତାଲିକାର ପ୍ରଥମ ସ୍ଥାନରେ ସ୍ଥିର ରହିବ।'
         },
-        action: {
-          en: '👉 Check Agricultural Advisories at bottom for specific crop protection steps.',
-          hi: '👉 फसल सुरक्षा के लिए नीचे कृषि सलाह कार्ड अवश्य देखें।',
-          mr: '👉 पीक संरक्षणासाठी खालील कृषी सल्ला तपासा.',
-          or: '👉 ଫସଲ ସୁରକ୍ଷା ପାଇଁ କୃଷି ପରାମର୍ଶ କାର୍ଡ ଦେଖନ୍ତୁ।'
-        }
-      }
-    ]
-  }
+      },
+      {
+        title: { en: 'Granular Multi-Line User Audit History', hi: 'विस्तृत मल्टी-लाइन यूजर ऑडिट इतिहास', mr: 'सविस्तर वापरकर्ता ऑडिट इतिहास', or: 'ବିସ୍ତୃତ ବ୍ୟବହାରକାରୀ ଅଡିଟ୍ ଇତିହାସ' },
+        desc: {
+          en: 'Inspect any account\'s deep lifecycle: Produce lots listed, escrow contracts executed, bids placed, disputes filed, and granted powers—in dedicated multi-line cards.',
+          hi: 'किसी भी खाते की पूरी गतिविधि देखें: लिस्ट किए गए लॉट, एस्क्रो सौदे, बोलियां, विवाद और स्वीकृत अधिकार—अलग समर्पित कार्ड में।',
+          mr: 'कोणत्याही खात्याचा संपूर्ण इतिहास तपासा: माल यादी, व्यवहार, बोली आणि अधिकार.',
+          or: 'କୌଣସି ଆକାଉଣ୍ଟର ସମ୍ପୂର୍ଣ୍ଣ କାର୍ଯ୍ୟକଳାପ ଯାଞ୍ଚ କରନ୍ତୁ: ଫସଲ ଲଟ, ଏସ୍କ୍ରୋ ଚୁକ୍ତି, ଦର ପ୍ରସ୍ତାବ ଓ ଅଧିକାର।'
+        },
+      },
+      {
+        title: { en: 'Secondary Authority Delegation Console', hi: 'समर्पित अधिकार प्रत्यायोजन कंसोल', mr: 'अधिकार वाटप कंसोल', or: 'ଅଧିକାର ପ୍ରଦାନ କନସୋଲ' },
+        desc: {
+          en: 'Grant or revoke financial, marketplace, and dispute powers with mandatory audit reasons and security risk classification.',
+          hi: 'सुरक्षा जोखिम मूल्यांकन और अनिवार्य कारण के साथ वित्तीय व बाजार संचालन अधिकार प्रदान या निरस्त करें।',
+          mr: 'सुरक्षिततेच्या निकषांसह आर्थिक आणि बाजार संचालन अधिकार प्रदान किंवा रद्द करा.',
+          or: 'ସୁରକ୍ଷା ଯାଞ୍ଚ ସହ ଆର୍ଥିକ ଓ ବଜାର ପରିଚାଳନା ଅଧିକାର ପ୍ରଦାନ କିମ୍ବା ରଦ୍ଦ କରନ୍ତୁ।'
+        },
+      },
+    ],
+  },
 }
 
-export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose, pageMode: forcePageMode }) {
+export default function InteractiveTour({ isOpen: forceOpen, onClose: forceClose }) {
   const location = useLocation()
   const { language } = useLangStore()
 
-  // State
   const [isOpen, setIsOpen] = useState(false)
-  const [isDismissed, setIsDismissed] = useState(false)
-  const [tourStep, setTourStep] = useState(0)
+  const [currentStep, setCurrentStep] = useState(0)
+  const [hasDismissedCurrentPage, setHasDismissedCurrentPage] = useState(false)
 
-  // Drag and drop state: always resets to original default on page reload
-  const getInitialPos = () => ({
-    x: 24,
-    y: typeof window !== 'undefined' ? Math.max(100, window.innerHeight - 110) : 550,
-  })
-  const [position, setPosition] = useState(getInitialPos)
-  const [isDragging, setIsDragging] = useState(false)
-  const dragStartRef = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 })
-  const hasMovedRef = useRef(false)
-
-  // Clear previous persisted storage so reload always returns to original position
+  // Listen for global trigger events from navbar / buttons
   useEffect(() => {
-    try {
-      localStorage.removeItem('mandisetu_chacha_pos')
-    } catch {}
+    const handleOpenEvent = () => {
+      setIsOpen(true)
+      setCurrentStep(0)
+      setHasDismissedCurrentPage(false)
+    }
+    window.addEventListener('mandisetu_open_guide', handleOpenEvent)
+    return () => window.removeEventListener('mandisetu_open_guide', handleOpenEvent)
   }, [])
 
-  // Get tour for current module — defensive fallback prevents render crash on unknown routes
-  const currentTour = MODULE_TOURS[location.pathname] || MODULE_TOURS['/dashboard'] || { steps: [] }
-  const steps = currentTour?.steps || []
-  const activeStep = steps[tourStep] || steps[0] || null
+  // Identify tour data for current route
+  const path = location.pathname
+  const matchedKey = Object.keys(MODULE_TOURS).find((k) => path === k || (k !== '/' && path.startsWith(k)))
+  const tourData = MODULE_TOURS[matchedKey] || MODULE_TOURS['/dashboard']
+  const steps = tourData.steps || []
+  const totalSteps = steps.length
+  const stepObj = steps[currentStep] || steps[0]
+
+  // Reset step when changing routes, and auto-open if first visit to that module
+  useEffect(() => {
+    setCurrentStep(0)
+    const storageKey = `mandisetu_tour_seen_${matchedKey || path}`
+    const alreadySeen = sessionStorage.getItem(storageKey)
+    if (!alreadySeen && matchedKey) {
+      setIsOpen(true)
+    }
+  }, [location.pathname, matchedKey])
 
   useEffect(() => {
     if (forceOpen) {
       setIsOpen(true)
-      setIsDismissed(false)
-      setTourStep(0)
+      setCurrentStep(0)
     }
-  }, [forceOpen, location.pathname])
+  }, [forceOpen])
 
-  // Reset step on navigation
-  useEffect(() => {
-    setTourStep(0)
-  }, [location.pathname])
-
-  // Mouse drag logic
-  const handleMouseDown = (e) => {
-    setIsDragging(true)
-    hasMovedRef.current = false
-    dragStartRef.current = {
-      mouseX: e.clientX,
-      mouseY: e.clientY,
-      posX: position.x,
-      posY: position.y,
+  const handleNext = () => {
+    if (currentStep < totalSteps - 1) {
+      setCurrentStep((prev) => prev + 1)
+    } else {
+      handleComplete()
     }
   }
 
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (!isDragging) return
-      const dx = e.clientX - dragStartRef.current.mouseX
-      const dy = e.clientY - dragStartRef.current.mouseY
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-        hasMovedRef.current = true
-      }
-      const newX = Math.max(10, Math.min(window.innerWidth - 80, dragStartRef.current.posX + dx))
-      const newY = Math.max(10, Math.min(window.innerHeight - 90, dragStartRef.current.posY + dy))
-      setPosition({ x: newX, y: newY })
-    }
-
-    const handleMouseUp = () => {
-      if (isDragging) {
-        setIsDragging(false)
-      }
-    }
-
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove)
-      window.addEventListener('mouseup', handleMouseUp)
-    }
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
-    }
-  }, [isDragging, position])
-
-  // Localized buttons
-  const labels = {
-    en: { name: 'Kisan Chacha (Interactive Walkthrough)', next: 'Next Step', prev: 'Previous', close: 'Close Tour', finish: 'Complete Walkthrough' },
-    hi: { name: 'किसान चाचा (इंटरएक्टिव गाइड)', next: 'अगला चरण', prev: 'पिछला चरण', close: 'टूर बंद करें', finish: 'टूर संपन्न' },
-    mr: { name: 'किसान काका (मार्गदर्शक)', next: 'पुढील पायरी', prev: 'मागील', close: 'बंद करा', finish: 'मार्गदर्शन पूर्ण' },
-    or: { name: 'କିସାନ କକା (ମାର୍ଗଦର୍ଶକ)', next: 'ପରବର୍ତ୍ତୀ', prev: 'ପୂର୍ବବର୍ତ୍ତୀ', close: 'ବନ୍ଦ କରନ୍ତୁ', finish: 'ଟୁର ସମାପ୍ତ' },
-  }
-  const l = labels[language] || labels.en
-
-  // Calculate dynamic walkthrough box position anchored to Chacha avatar wherever dragged
-  const boxWidth = typeof window !== 'undefined' ? Math.min(420, window.innerWidth - 24) : 420
-  const boxHeight = 440
-
-  const curX = position?.x ?? 24
-  const curY = position?.y ?? 550
-
-  let boxLeft = curX
-  if (typeof window !== 'undefined') {
-    if (boxLeft + boxWidth > window.innerWidth - 16) {
-      boxLeft = Math.max(12, window.innerWidth - boxWidth - 16)
-    }
-    if (boxLeft < 12) boxLeft = 12
-  }
-
-  let boxTop = curY - boxHeight - 12
-  if (typeof window !== 'undefined') {
-    if (boxTop < 20) {
-      boxTop = Math.min(window.innerHeight - boxHeight - 20, curY + 72)
+  const handlePrev = () => {
+    if (currentStep > 0) {
+      setCurrentStep((prev) => prev - 1)
     }
   }
 
-  if (isDismissed) {
-    return (
-      <button
-        onClick={() => setIsDismissed(false)}
-        className="fixed bottom-4 left-4 z-40 px-3.5 py-1.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-lg flex items-center gap-1.5 transition-all hover:scale-105"
-        title="Reopen Kisan Chacha Tour Guide"
-      >
-        <span>👨‍🌾</span>
-        <span>Kisan Chacha Tour</span>
-      </button>
-    )
+  const handleComplete = () => {
+    setIsOpen(false)
+    setHasDismissedCurrentPage(true)
+    if (matchedKey) {
+      sessionStorage.setItem(`mandisetu_tour_seen_${matchedKey}`, 'true')
+    }
+    if (forceClose) forceClose()
+  }
+
+  const handleSkip = () => {
+    handleComplete()
+  }
+
+  const progressPercent = totalSteps > 0 ? ((currentStep + 1) / totalSteps) * 100 : 100
+
+  const getLangText = (obj, fallback = '') => {
+    if (!obj) return fallback
+    if (typeof obj === 'string') return obj
+    return obj[language] || obj['en'] || fallback
   }
 
   return (
     <>
-      {/* ── Draggable Floating Chacha Avatar (Resets on reload, moveable anywhere) ── */}
-      <div
-        style={{ left: `${position?.x ?? 24}px`, top: `${position?.y ?? 550}px` }}
-        className="fixed z-50 select-none touch-none"
-      >
-        <div className="relative group">
-          {/* Avatar Button */}
-          <div
-            onMouseDown={handleMouseDown}
-            onClick={() => {
-              if (!hasMovedRef.current) setIsOpen(!isOpen)
-            }}
-            className={`w-16 h-16 rounded-full flex items-center justify-center cursor-pointer shadow-2xl transition-all border-4 ${
-              isOpen
-                ? 'border-amber-400 bg-amber-600 scale-105 ring-4 ring-amber-400/30'
-                : 'border-white dark:border-gray-800 bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-600 shadow-amber-500/30 hover:scale-110 active:scale-95'
-            }`}
-            title="Kisan Chacha Interactive Tour Guide (Drag & Drop anywhere!)"
-          >
-            <span className="text-3xl select-none filter drop-shadow">👨‍🌾</span>
-          </div>
-
-          {/* Dismiss Cross Button on Top-Right */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setIsDismissed(true)
-              setIsOpen(false)
-              if (forceClose) forceClose()
-            }}
-            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center text-xs shadow-md transition-colors"
-            title="Dismiss Kisan Chacha"
-          >
-            ✕
-          </button>
-
-          {/* Reset position button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setPosition(getInitialPos())
-            }}
-            className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-gray-800 text-gray-200 hover:text-white flex items-center justify-center text-[10px] shadow"
-            title="Reset to original corner position"
-          >
-            <RotateCcw size={10} />
-          </button>
-
-          {/* Drag me hint */}
-          <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold text-gray-500 dark:text-gray-400 whitespace-nowrap pointer-events-none">
-            ⠿ Drag & Drop me
-          </div>
-        </div>
-      </div>
-
-      {/* ── Interactive Compiler-Style Walkthrough Box (Directly follows dragged avatar) ── */}
-      {isOpen && activeStep && (
-        <div
-          style={{ left: `${boxLeft}px`, top: `${boxTop}px` }}
-          className="fixed z-50 w-[420px] max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border-2 border-amber-400 dark:border-amber-500 rounded-3xl shadow-2xl overflow-hidden animate-fade-in-up"
+      {/* ── Persistent Floating Tour Guide Trigger Pill (Bottom-Right / Always accessible) ── */}
+      {!isOpen && (
+        <button
+          onClick={() => {
+            setIsOpen(true)
+            setCurrentStep(0)
+          }}
+          className="fixed bottom-6 right-6 z-40 group flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-slate-900/90 hover:bg-slate-900 text-white border border-slate-700/80 shadow-2xl backdrop-blur-md transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer text-xs font-bold"
+          title="Open Interactive Guided Tour for this Module"
         >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 p-4 text-white flex items-center justify-between shadow">
-            <div className="flex items-center gap-2.5">
-              <span className="text-2xl">👨‍🌾</span>
+          <div className="w-6 h-6 rounded-lg bg-blue-600/30 text-blue-400 flex items-center justify-center text-sm">
+            {tourData.icon || '🧭'}
+          </div>
+          <span className="hidden sm:inline text-slate-200 group-hover:text-white">
+            {getLangText(tourData.title, 'Interactive Tour')}
+          </span>
+          <span className="px-1.5 py-0.5 rounded-md bg-blue-600 text-white text-[10px] uppercase font-black tracking-wider">
+            Tour
+          </span>
+        </button>
+      )}
+
+      {/* ── Exact Match Walkthrough Popover Card (Styled after User Provided Picture) ── */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md rounded-2xl bg-[#111928] border border-slate-700/80 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] p-6 sm:p-7 text-white font-sans overflow-hidden">
+            {/* Top Close Button */}
+            <button
+              onClick={handleSkip}
+              className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/80 transition-colors cursor-pointer"
+              title="Close Tour"
+            >
+              <X size={16} />
+            </button>
+
+            {/* Header: Rounded Orange Folder Icon + Crisp Title */}
+            <div className="flex items-start gap-3.5 pr-6">
+              <div className="w-11 h-11 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center text-xl shrink-0 shadow-inner">
+                <FolderLock size={22} className="text-amber-400" />
+              </div>
               <div>
-                <h3 className="font-extrabold text-sm leading-tight flex items-center gap-1.5">
-                  <span>{l.name}</span>
-                </h3>
-                <span className="text-[10px] text-amber-100 font-medium">
-                  {currentTour?.moduleName?.[language] || currentTour?.moduleName?.en || 'MandiSetu Tour'} · {tourStep + 1} / {steps.length}
+                <span className="text-[10px] font-black uppercase tracking-wider text-blue-400 block mb-0.5">
+                  {tourData.moduleCode || 'MANDISETU'} · Guided Walkthrough
                 </span>
+                <h3 className="text-xl font-bold text-white tracking-tight leading-snug">
+                  {getLangText(stepObj?.title, getLangText(tourData.title))}
+                </h3>
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                setIsOpen(false)
-                if (forceClose) forceClose()
-              }}
-              className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10"
-            >
-              <X size={17} />
-            </button>
-          </div>
+            {/* Description Text (Light Slate / Clean & Readable) */}
+            <p className="text-sm text-slate-300 leading-relaxed mt-4 font-normal">
+              {getLangText(stepObj?.desc, 'Navigate this module using the interactive controls below.')}
+            </p>
 
-          {/* Step Walkthrough Details (Compiler placement style) */}
-          <div className="p-5 space-y-3.5 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100">
-            {/* Step Badge */}
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
-              <Target size={12} className="text-amber-600" />
-              <span>{activeStep?.badge || 'Step'}</span>
+            {/* Progress Bar (Crisp Electric Blue on Dark Track) */}
+            <div className="mt-6 w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-blue-600 rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${progressPercent}%` }}
+              />
             </div>
 
-            <div>
-              <h4 className="text-sm font-extrabold text-gray-900 dark:text-white mb-1">
-                {activeStep?.title?.[language] || activeStep?.title?.en || ''}
-              </h4>
-              <p className="text-xs sm:text-sm leading-relaxed text-gray-700 dark:text-gray-200">
-                {activeStep?.desc?.[language] || activeStep?.desc?.en || ''}
-              </p>
+            {/* Controls Row: Previous | 3 of 9 | Next */}
+            <div className="mt-6 flex items-center justify-between gap-3">
+              <button
+                onClick={handlePrev}
+                disabled={currentStep === 0}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition cursor-pointer ${
+                  currentStep === 0
+                    ? 'bg-slate-800/40 text-slate-600 cursor-not-allowed'
+                    : 'bg-slate-800 hover:bg-slate-700 text-slate-200 active:scale-95'
+                }`}
+              >
+                Previous
+              </button>
+
+              <span className="text-xs font-semibold text-slate-400 select-none">
+                {currentStep + 1} of {totalSteps}
+              </span>
+
+              <button
+                onClick={handleNext}
+                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold shadow-lg shadow-blue-600/30 active:scale-95 transition cursor-pointer"
+              >
+                {currentStep === totalSteps - 1 ? 'Finish Tour' : 'Next'}
+              </button>
             </div>
 
-            {/* Placement Drive Style Action Hint */}
-            {activeStep?.action && (
-              <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-950 dark:text-amber-200 space-y-1">
-                <div className="font-bold flex items-center gap-1.5 text-amber-700 dark:text-amber-300">
-                  <Lightbulb size={14} />
-                  <span>How to Test & Execute:</span>
-                </div>
-                <p className="leading-snug pl-5 font-medium">
-                  {activeStep?.action?.[language] || activeStep?.action?.en || ''}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Footer Controls */}
-          <div className="px-5 py-3.5 bg-gray-50 dark:bg-gray-800/60 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
-            <button
-              onClick={() => {
-                setIsOpen(false)
-                if (forceClose) forceClose()
-              }}
-              className="text-xs font-semibold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-            >
-              {l?.close || 'Close'}
-            </button>
-
-            <div className="flex items-center gap-2">
-              {tourStep > 0 && (
-                <button
-                  onClick={() => setTourStep(tourStep - 1)}
-                  className="px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-700 text-xs font-semibold hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  {l?.prev || 'Previous'}
-                </button>
-              )}
-
-              {tourStep < steps.length - 1 ? (
-                <button
-                  onClick={() => setTourStep(tourStep + 1)}
-                  className="px-4 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow flex items-center gap-1 hover:scale-105 transition-transform"
-                >
-                  <span>{l?.next || 'Next'}</span>
-                  <ChevronRight size={14} />
-                </button>
-              ) : (
-                <button
-                  onClick={() => {
-                    setIsOpen(false)
-                    if (forceClose) forceClose()
-                  }}
-                  className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow flex items-center gap-1 hover:scale-105 transition-transform"
-                >
-                  <CheckCircle2 size={14} />
-                  <span>{l?.finish || 'Done'}</span>
-                </button>
-              )}
+            {/* Bottom Row: Skip Tour */}
+            <div className="mt-4 pt-3 border-t border-slate-800/80 text-center">
+              <button
+                onClick={handleSkip}
+                className="text-xs font-semibold uppercase tracking-wider text-slate-400 hover:text-white transition-colors cursor-pointer py-1"
+              >
+                Skip Tour
+              </button>
             </div>
           </div>
         </div>

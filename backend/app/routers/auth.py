@@ -417,7 +417,7 @@ async def get_user_audit_trail(
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve complete live PostgreSQL audit history for a specific user.
-    Aggregates produce lots created, transactions, offers, grievances, and profile actions.
+    Aggregates produce lots created, escrow transactions, offers, grievances, disputes, and authority events.
     """
     from app.models import ProduceLot, Transaction, Offer, FeedbackGrievance, Dispute
     from sqlalchemy import or_
@@ -431,69 +431,107 @@ async def get_user_audit_trail(
 
     audit_events = []
 
-    # 1. Registration Event
+    # 1. Registration & Identity Event
     if user.created_at:
         audit_events.append({
             "id": f"reg_{u_id}",
-            "action": "Account Created & Verified",
+            "action": "Account Created & Identity Initialized",
             "category": "AUTH",
             "timestamp": user.created_at.isoformat(),
-            "details": f"Role: {user.role.value if hasattr(user.role, 'value') else user.role} · State: {user.state or 'N/A'}, {user.district or ''}",
+            "details": f"Role: {user.role.value if hasattr(user.role, 'value') else user.role} · State: {user.state or 'Not specified'}, District: {user.district or 'APMC Cluster'}",
+            "metadata": {
+                "verified": user.is_verified,
+                "phone": user.phone or "N/A",
+                "email": user.email,
+            },
             "status": "active" if user.is_active else "frozen",
         })
 
-    # 2. Produce Lots Listed
+    # 2. Produce Lots Listed in Marketplace
     try:
         lots_res = await db.execute(select(ProduceLot).where(ProduceLot.owner_id == u_id))
         user_lots = lots_res.scalars().all()
         for lot in user_lots:
             audit_events.append({
                 "id": f"lot_{lot.id}",
-                "action": f"Produce Lot Listed: {lot.commodity}",
+                "action": f"Produce Lot Created: {lot.commodity}",
                 "category": "LOT_LISTING",
                 "timestamp": lot.created_at.isoformat() if lot.created_at else now_utc().isoformat(),
-                "details": f"{lot.quantity_kg} kg @ ₹{lot.min_price_per_kg}/kg · Grade: {lot.grade or 'Ungraded'} · Status: {lot.status.value if hasattr(lot.status, 'value') else lot.status}",
+                "details": f"{lot.quantity_kg:,.0f} kg @ ₹{lot.min_price_per_kg:.2f}/kg · Variety: {lot.variety or 'Standard'} · Mandi: {lot.mandi_name or 'Regional APMC'} · Quality Grade: {lot.grade or 'Ungraded'}",
+                "metadata": {
+                    "lot_id": str(lot.id),
+                    "commodity": lot.commodity,
+                    "quantity_kg": lot.quantity_kg,
+                    "floor_price": lot.min_price_per_kg,
+                    "mandi": lot.mandi_name,
+                    "location": f"{lot.district or ''}, {lot.state or ''}",
+                },
                 "status": lot.status.value if hasattr(lot.status, 'value') else str(lot.status),
             })
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[Audit trail lot error]: {e}")
 
-    # 3. Escrow Transactions (as Seller or Buyer)
+    # 3. Escrow Smart Contracts (as Seller or Buyer)
     try:
         txns_res = await db.execute(
-            select(Transaction).where(or_(Transaction.seller_id == u_id, Transaction.buyer_id == u_id))
+            select(Transaction, ProduceLot.commodity)
+            .outerjoin(ProduceLot, Transaction.lot_id == ProduceLot.id)
+            .where(or_(Transaction.seller_id == u_id, Transaction.buyer_id == u_id))
         )
-        user_txns = txns_res.scalars().all()
-        for txn in user_txns:
+        rows = txns_res.all()
+        for row in rows:
+            txn = row[0]
+            comm = row[1] or "Agricultural Produce Lot"
             is_seller = str(txn.seller_id) == str(u_id)
+            price = getattr(txn, 'final_price_per_kg', 0.0) or 0.0
+            tot = getattr(txn, 'total_amount', None) or round((txn.quantity_kg or 0) * price, 2)
+            net_r = getattr(txn, 'net_realization', None) or tot
+            st_val = txn.status.value if hasattr(txn.status, 'value') else str(txn.status)
+
             audit_events.append({
                 "id": f"txn_{txn.id}",
-                "action": f"Escrow Contract ({'Seller' if is_seller else 'Buyer'})",
+                "action": f"Escrow Trade Contract ({'Seller / Dispatcher' if is_seller else 'Buyer / Depositor'})",
                 "category": "TRANSACTION",
                 "timestamp": txn.created_at.isoformat() if txn.created_at else now_utc().isoformat(),
-                "details": f"Amount: ₹{txn.agreed_price * txn.quantity_kg:,.2f} · Status: {txn.status.value if hasattr(txn.status, 'value') else txn.status} · Logistics: {txn.logistics_provider or 'Pending'}",
-                "status": txn.status.value if hasattr(txn.status, 'value') else str(txn.status),
+                "details": f"{comm} · Value: ₹{tot:,.2f} · Net Realization: ₹{net_r:,.2f} · Logistics: {txn.logistics_provider or 'Direct Mandi Transit'} · Tracking: {txn.tracking_id or 'Pending'}",
+                "metadata": {
+                    "transaction_id": str(txn.id),
+                    "contract_value": tot,
+                    "net_takehome": net_r,
+                    "quantity_kg": txn.quantity_kg,
+                    "logistics": txn.logistics_provider,
+                    "waybill": txn.tracking_id,
+                    "escrow_ref": f"ESCROW-MANDI-{str(txn.id)[:8].upper()}",
+                },
+                "status": st_val,
             })
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[Audit trail txn error]: {e}")
 
-    # 4. Offers
+    # 4. Procurement Bids & Offers Made
     try:
         offers_res = await db.execute(select(Offer).where(Offer.buyer_id == u_id))
         user_offers = offers_res.scalars().all()
         for off in user_offers:
+            st_val = off.status.value if hasattr(off.status, 'value') else str(off.status)
             audit_events.append({
                 "id": f"off_{off.id}",
-                "action": f"Procurement Bid Placed",
+                "action": "Procurement Bid Placed",
                 "category": "OFFER",
                 "timestamp": off.created_at.isoformat() if off.created_at else now_utc().isoformat(),
-                "details": f"Offered Price: ₹{off.offered_price_per_kg}/kg · Status: {off.status.value if hasattr(off.status, 'value') else off.status}",
-                "status": off.status.value if hasattr(off.status, 'value') else str(off.status),
+                "details": f"Bid: ₹{off.offered_price_per_kg:.2f}/kg for {off.quantity_kg:,.0f} kg · Logistics: {off.logistics_responsibility or 'buyer'} · Note: {off.message or 'Standard procurement offer'}",
+                "metadata": {
+                    "offer_id": str(off.id),
+                    "lot_id": str(off.lot_id),
+                    "offered_price": off.offered_price_per_kg,
+                    "quantity_kg": off.quantity_kg,
+                },
+                "status": st_val,
             })
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[Audit trail offer error]: {e}")
 
-    # 5. Feedback & Grievances
+    # 5. Feedback & Support Inquiries
     try:
         fbs_res = await db.execute(select(FeedbackGrievance).where(
             or_(FeedbackGrievance.user_id == u_id, FeedbackGrievance.user_email == u_email)
@@ -502,14 +540,64 @@ async def get_user_audit_trail(
         for fb in user_fbs:
             audit_events.append({
                 "id": f"fb_{fb.id}",
-                "action": f"Feedback / Grievance Submitted",
+                "action": f"Feedback Logged: {fb.category.upper()}",
                 "category": "GRIEVANCE",
                 "timestamp": fb.created_at.isoformat() if fb.created_at else now_utc().isoformat(),
-                "details": f"[{fb.category}] {fb.subject} — Status: {fb.status}",
-                "status": fb.status,
+                "details": f"Subject: {fb.subject} · Message: {fb.message[:80]}...",
+                "metadata": {
+                    "feedback_id": str(fb.id),
+                    "category": fb.category,
+                    "rating": getattr(fb, 'rating', None),
+                },
+                "status": fb.status or "received",
             })
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[Audit trail feedback error]: {e}")
+
+    # 6. Disputes & Arbitration Cases
+    try:
+        disputes_res = await db.execute(select(Dispute).where(
+            or_(
+                Dispute.filer_id == u_id,
+                Dispute.respondent_id == u_id,
+                Dispute.filer_name.ilike(f"%{user.full_name}%"),
+                Dispute.respondent_name.ilike(f"%{user.full_name}%"),
+            )
+        ))
+        user_disputes = disputes_res.scalars().all()
+        for disp in user_disputes:
+            st_val = disp.status.value if hasattr(disp.status, 'value') else str(disp.status)
+            audit_events.append({
+                "id": f"disp_{disp.id}",
+                "action": f"Arbitration Dispute Case: {disp.category.value if hasattr(disp.category, 'value') else disp.category}",
+                "category": "DISPUTE",
+                "timestamp": disp.created_at.isoformat() if disp.created_at else now_utc().isoformat(),
+                "details": f"Claim: ₹{disp.claim_amount:,.2f} · Reason: {disp.reason[:90]}... · Resolution Notes: {disp.resolution_notes or 'Pending review by APMC Board'}",
+                "metadata": {
+                    "dispute_id": str(disp.id),
+                    "txn_id": str(disp.transaction_id) if disp.transaction_id else None,
+                    "claim_amount": disp.claim_amount,
+                },
+                "status": st_val,
+            })
+    except Exception as e:
+        print(f"[Audit trail dispute error]: {e}")
+
+    # 7. Operational Powers / Authority Grant Audit
+    powers = user.powers or []
+    if powers:
+        audit_events.append({
+            "id": f"powers_{u_id}",
+            "action": f"Platform Authority Grants ({len(powers)} Active)",
+            "category": "SECURITY",
+            "timestamp": user.updated_at.isoformat() if user.updated_at else now_utc().isoformat(),
+            "details": f"Accredited Operational Powers: {', '.join(powers)}",
+            "metadata": {
+                "powers": powers,
+                "accreditation_by": "Admin(TanmayA)",
+            },
+            "status": "authorized",
+        })
 
     # Sort reverse chronological
     audit_events.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
@@ -518,9 +606,13 @@ async def get_user_audit_trail(
         "user_id": str(u_id),
         "full_name": user.full_name,
         "email": user.email,
+        "phone": user.phone or "N/A",
         "role": user.role.value if hasattr(user.role, "value") else str(user.role),
         "is_active": user.is_active,
+        "is_verified": user.is_verified,
         "powers": user.powers or [],
+        "state": user.state or "N/A",
+        "district": user.district or "N/A",
         "total_events": len(audit_events),
         "events": audit_events
     }
