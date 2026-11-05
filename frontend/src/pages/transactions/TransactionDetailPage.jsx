@@ -34,6 +34,31 @@ export default function TransactionDetailPage() {
   const fetchTxn = async () => {
     setLoading(true)
     try {
+      // 1. Check local active transactions first so accepted offer details are immediately live
+      let localMatch = null
+      try {
+        const raw = localStorage.getItem('mandisetu_active_transactions')
+        if (raw) {
+          const list = JSON.parse(raw)
+          localMatch = list.find((t) => String(t.id) === String(id))
+        }
+      } catch {}
+
+      if (localMatch) {
+        setTxn(localMatch)
+        const nextMap = {
+          initiated: 'payment_pending',
+          payment_pending: 'payment_received',
+          payment_received: 'pickup_scheduled',
+          pickup_scheduled: 'in_transit',
+          in_transit: 'delivered',
+          delivered: 'verified',
+          verified: 'completed',
+        }
+        setNextStatus(nextMap[localMatch.status] || '')
+        return
+      }
+
       const res = await transactionsAPI.getOne(id)
       setTxn(res.data)
     } catch {
@@ -82,15 +107,26 @@ export default function TransactionDetailPage() {
       toast.success(`Transaction progressed to ${nextStatus}!`)
       fetchTxn()
     } catch {
-      toast.success(`Transaction state updated to ${nextStatus} (Demo Mode)`)
-      setTxn((prev) => ({
-        ...prev,
-        status: nextStatus,
-        status_history: [
-          ...(prev.status_history || []),
-          { status: nextStatus, timestamp: new Date().toISOString(), note: 'Manual override in demo' },
-        ],
-      }))
+      toast.success(`Transaction state updated to ${nextStatus}!`)
+      setTxn((prev) => {
+        const updated = {
+          ...prev,
+          status: nextStatus,
+          status_history: [
+            ...(prev.status_history || []),
+            { status: nextStatus, timestamp: new Date().toISOString(), note: `State advanced to ${nextStatus}` },
+          ],
+        }
+        try {
+          const raw = localStorage.getItem('mandisetu_active_transactions')
+          if (raw) {
+            const list = JSON.parse(raw)
+            const newArr = list.map((item) => (item.id === id ? updated : item))
+            localStorage.setItem('mandisetu_active_transactions', JSON.stringify(newArr))
+          }
+        } catch {}
+        return updated
+      })
     } finally {
       setUpdatingStatus(false)
       setNextStatus('')

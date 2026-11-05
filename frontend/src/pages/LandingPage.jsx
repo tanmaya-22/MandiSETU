@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { useLangStore } from '../store/langStore'
 import HeaderControls from '../components/common/HeaderControls'
+import KisanChachaMascot from '../components/common/KisanChachaMascot'
 
 const TICKER_ITEMS = [
   { mandi: 'Lasalgaon APMC', commodity: 'Onion', price: '₹3,250/Qtl', change: '+₹150', up: true },
@@ -339,6 +340,15 @@ export default function LandingPage() {
                   >
                     {t('lp_calc_open_full')}
                   </Link>
+                  {/* Kisan Chacha Mascot guiding the user */}
+                  <div className="mt-4 flex justify-center">
+                    <KisanChachaMascot
+                      size="lg"
+                      isPointing={true}
+                      pointingDirection="left"
+                      speechBubble={t('lp_mascot_hint')}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

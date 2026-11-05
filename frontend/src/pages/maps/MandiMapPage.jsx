@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import {
   MapPin, Navigation, Compass, Search, Phone, ExternalLink,
   ShieldCheck, Warehouse, Truck, Store, AlertCircle, Sparkles, Filter,
-  Crosshair, Pin
+  Crosshair, Pin, Maximize2, Minimize2, CheckCircle2
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { REAL_AGMARKNET_DATA } from '../../api/modules'
@@ -34,6 +34,8 @@ export default function MandiMapPage() {
   const markersRef = useRef([])
 
   const [selectedMandi, setSelectedMandi] = useState(MANDIS_LIST[0])
+  const [hoveredMandi, setHoveredMandi] = useState(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const [userLocation, setUserLocation] = useState(null)
   const [nearestMandi, setNearestMandi] = useState(null)
   const [locating, setLocating] = useState(false)
@@ -156,8 +158,23 @@ export default function MandiMapPage() {
         setSelectedMandi(m)
       })
 
+      marker.on('mouseover', () => {
+        setHoveredMandi(m)
+      })
+
+      marker.on('mouseout', () => {
+        setHoveredMandi(null)
+      })
+
       markersRef.current.push(marker)
     })
+  }
+
+  const toggleFullscreen = () => {
+    setIsFullscreen((prev) => !prev)
+    setTimeout(() => {
+      mapInstanceRef.current?.invalidateSize()
+    }, 200)
   }
 
   // "Use My Location" handler
@@ -402,10 +419,53 @@ export default function MandiMapPage() {
       {/* Main Map View & Details Panel */}
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Leaflet Map Area */}
-        <div className="lg:col-span-2 bg-white dark:bg-gray-900 rounded-3xl shadow-md border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col">
+        <div
+          className={`bg-white dark:bg-gray-900 shadow-md border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col relative transition-all duration-300 ${
+            isFullscreen
+              ? 'fixed inset-0 z-[9999] w-screen h-screen rounded-none'
+              : 'lg:col-span-2 rounded-3xl'
+          }`}
+        >
+          {/* Top-Right Maximize / Fullscreen Map Button */}
+          <div className="absolute top-4 right-4 z-20">
+            <button
+              onClick={toggleFullscreen}
+              className="px-3.5 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold shadow-xl border border-slate-700 flex items-center gap-1.5 backdrop-blur-md transition-all active:scale-95"
+              title={isFullscreen ? 'Exit Full Screen' : 'Maximize Map to Full Screen'}
+            >
+              {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+              <span>{isFullscreen ? 'Exit Fullscreen' : 'Maximize Map'}</span>
+            </button>
+          </div>
+
+          {/* Floating Hover Preview Card */}
+          {hoveredMandi && !selectedMandi && (
+            <div className="absolute top-16 left-4 z-20 max-w-xs bg-slate-900/95 text-white backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-slate-700 animate-in fade-in zoom-in-95 duration-150 pointer-events-none">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="font-bold text-emerald-400 uppercase tracking-wider text-[10px] flex items-center gap-1">
+                  <CheckCircle2 size={11} /> Verified APMC
+                </span>
+                <span className="text-[10px] text-slate-400">{hoveredMandi.state}</span>
+              </div>
+              <h4 className="font-bold text-sm text-white">{hoveredMandi.name}</h4>
+              <p className="text-xs text-slate-300 font-medium mt-0.5">{hoveredMandi.district}, {hoveredMandi.state}</p>
+
+              <div className="mt-3 bg-slate-800/80 p-2.5 rounded-xl border border-slate-700/60 text-xs flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-semibold">Benchmark Modal Rate</span>
+                  <span className="text-emerald-400 font-black text-sm">{hoveredMandi.avgModalPrice}</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-slate-400 block font-semibold">Category</span>
+                  <span className="text-amber-300 font-bold text-xs">{hoveredMandi.category?.split(' ')[0] || 'Major APMC'}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div
             ref={mapContainerRef}
-            className="w-full h-[520px] z-10"
+            className={`w-full z-10 ${isFullscreen ? 'h-full' : 'h-[520px]'}`}
             style={{ background: '#e5e7eb' }}
           />
           <div className="p-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 text-xs text-gray-500 dark:text-gray-400 flex items-center justify-between">

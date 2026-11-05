@@ -132,14 +132,17 @@ export default function Layout() {
             <span className="hidden sm:inline">{t('talk_assistant')}</span>
           </button>
 
-          {/* Interactive Demo Tour trigger button */}
+          {/* Interactive Demo Tour trigger button (Kisan Chacha) */}
           <button
             onClick={handleStartTour}
-            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-300 text-xs font-bold hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-all hover:scale-105 shadow-sm"
-            title="Interactive Walkthrough with Kisan Chacha"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-300 text-xs font-bold hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-all hover:scale-105 shadow-sm cursor-pointer"
+            title="Start Interactive Guided Walkthrough with Kisan Chacha"
           >
-            <Sparkles size={14} className="text-amber-500" />
-            <span>{t('interactive_demo')}</span>
+            <span className="text-base leading-none">👳🏽‍♂️</span>
+            <span className="hidden sm:inline">Kisan Chacha Tour</span>
+            <span className="px-1.5 py-0.2 rounded bg-amber-200 dark:bg-amber-800 text-[9px] uppercase font-black text-amber-950 dark:text-amber-100">
+              Guide
+            </span>
           </button>
 
           {/* Language & Numeral Switcher & Theme Toggle */}

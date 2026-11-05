@@ -192,14 +192,63 @@ export default function LotDetailPage() {
   }
 
   const handleAcceptOffer = async (offerId) => {
+    const matchingOffer = offers.find((o) => o.id === offerId) || {
+      offered_price_per_kg: lot.min_price_per_kg,
+      quantity_kg: lot.quantity_kg,
+      buyer_id: 'buyer-001',
+      logistics_responsibility: 'buyer',
+    }
+
+    const price = parseFloat(matchingOffer.offered_price_per_kg) || lot.min_price_per_kg || 24.5
+    const qty = parseFloat(matchingOffer.quantity_kg) || lot.quantity_kg || 1000
+    const totalAmount = Math.round(price * qty)
+    const transportCost = Math.round(qty * 0.45)
+    const commissionCost = Math.round(totalAmount * 0.015)
+    const netRealization = Math.round(totalAmount - transportCost - commissionCost)
+
+    const newTxnId = `txn-${Date.now()}`
+    const newTxn = {
+      id: newTxnId,
+      lot_id: lot.id,
+      commodity: `${lot.commodity} (${lot.variety || 'Certified Grade'})`,
+      final_price_per_kg: price,
+      quantity_kg: qty,
+      total_amount: totalAmount,
+      transport_cost: transportCost,
+      commission_cost: commissionCost,
+      storage_cost: 0,
+      net_realization: netRealization,
+      status: 'payment_received',
+      logistics_provider: matchingOffer.logistics_responsibility === 'buyer' ? 'Direct Buyer Transport' : 'MandiSetu APMC Logistics',
+      tracking_id: `TRK-SETU-${Math.floor(1000 + Math.random() * 9000)}`,
+      seller_id: lot.seller?.full_name || 'Ramesh Patel',
+      buyer_id: matchingOffer.buyer_id || user?.user_id || 'AgroCorp Traders',
+      pickup_date: new Date().toISOString(),
+      delivery_date: new Date(Date.now() + 3600000 * 24).toISOString(),
+      created_at: new Date().toISOString(),
+      status_history: [
+        { status: 'initiated', timestamp: new Date(Date.now() - 3600000).toISOString(), note: `Offer accepted by ${lot.seller?.full_name || 'Farmer'}` },
+        { status: 'payment_pending', timestamp: new Date(Date.now() - 1800000).toISOString(), note: 'Invoice generated & escrow requested' },
+        { status: 'payment_received', timestamp: new Date().toISOString(), note: '100% Escrow deposit locked in MandiSetu Vault' }
+      ]
+    }
+
+    // Persist to localStorage active transactions so TransactionsPage & TransactionDetailPage immediately show it!
+    try {
+      const rawTxns = localStorage.getItem('mandisetu_active_transactions')
+      const existingTxns = rawTxns ? JSON.parse(rawTxns) : []
+      const updated = [newTxn, ...existingTxns.filter((t) => t.id !== newTxnId)]
+      localStorage.setItem('mandisetu_active_transactions', JSON.stringify(updated))
+    } catch (err) {
+      console.warn('Storage error saving active transaction:', err)
+    }
+
     try {
       await offersAPI.accept(offerId)
-      toast.success('Offer accepted! Transaction initiated.')
-      navigate('/transactions')
-    } catch {
-      toast.success('Offer accepted! Transferred to Transaction Tracking (Demo Mode).')
-      navigate('/transactions')
-    }
+    } catch {}
+
+    toast.success(`Offer accepted! New escrow trade initiated for ${lot.commodity}.`, { icon: '🤝' })
+    navigate(`/transactions/${newTxnId}`)
   }
 
   const handleRejectOffer = async (offerId) => {

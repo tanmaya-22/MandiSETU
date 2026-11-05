@@ -214,7 +214,33 @@ MandiSetu enforces an immutable **Root Administrative Protocol** ensuring comple
 
 ---
 
-## VIII. Conclusion & Future Directions
+## VIII. Interactive Guided Tour & Gamified Mascot System
+
+### A. Trigonometric Cursor-Tracking Mascot (Kisan Chacha)
+
+MandiSetu introduces a game-quality animated SVG mascot—**Kisan Chacha (बलराम जी)**—rendered entirely in scalable vector graphics. The mascot features real-time cursor tracking computed via:
+
+$$\theta = \text{atan2}(\Delta y, \Delta x), \quad d = \min\left(1, \frac{\sqrt{\Delta x^2 + \Delta y^2}}{300}\right)$$
+
+Eye pupils are offset by $(\cos\theta \cdot r_{\max} \cdot d, \sin\theta \cdot r_{\max} \cdot d)$ where $r_{\max} = 4.5\text{px}$. Head tilt is computed as $\text{tilt} = \text{clamp}\left(\frac{\Delta x}{W} \cdot 24, -12°, +12°\right)$ where $W$ is the viewport width. This delivers smooth, natural gaze-following behavior inspired by GitHub's Mona octocat.
+
+### B. DOM Spotlight Arrow Tour Engine
+
+The guided tour system implements an LPULive-inspired walkthrough featuring:
+
+1. **CSS Selector-Based Target Acquisition**: Each tour step specifies one or more CSS selectors; the engine queries the DOM, computes `getBoundingClientRect()`, and auto-scrolls offscreen targets into view.
+2. **Spotlight Ring & Backdrop Dimming**: A glowing ring with `ring-4 ring-blue-500/80 shadow-[0_0_40px_...]` isolates the active element against a `bg-black/65 backdrop-blur` overlay.
+3. **Directional Tooltip Placement Algorithm**: Available viewport space is evaluated to position the walkthrough card left, right, or below the target, with CSS triangle pointers indicating direction.
+4. **Cross-Module Navigation**: On the final step of each module, users may proceed to the next module or end the tour. The system supports 8 sequential modules covering all platform features.
+5. **First-Visit Detection**: `localStorage` is used to auto-launch the tour for first-time visitors while providing navbar access for returning users.
+
+### C. Multi-Lingual Tour Content
+
+All tour step titles, descriptions, and mascot speech bubbles are fully localized across four languages (English, Hindi, Marathi, Odia), utilizing the Zustand-powered reactive translation store.
+
+---
+
+## IX. Conclusion & Future Directions
 
 This paper introduced **MandiSetu**, an integrated multi-modal digital agricultural exchange addressing systemic information asymmetry, subjective quality discounting, and counterparty payment risk in agrarian supply chains. By synthesizing real-time spatial price discovery, computer vision produce grading, algorithmic bilateral matching, and an automated multi-signature escrow protocol, MandiSetu demonstrates that primary producers can capture between 13.9% and 26.2% higher net economic realization compared to traditional physical mandi channels.
 

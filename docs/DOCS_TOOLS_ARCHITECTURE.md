@@ -84,3 +84,35 @@ The server tier is architected as an asynchronous, non-blocking RESTful microser
    - Buyer funds are quarantined in a neutral settlement vault, eliminating payment default for farmers.
 3. **Statutory 24h Grievance Tribunal**:
    - Post-delivery arbitration window allows farmers and buyers to lodge evidence-backed quality claims with automatic escrow hold.
+
+---
+
+## 6. Interactive Kisan Chacha Mascot & Guided Tour System
+
+### 6.1 Cursor-Tracking Game Mascot (`KisanChachaMascot.jsx`)
+
+A high-fidelity animated SVG Indian farmer mascot featuring:
+
+- **Real-time Trigonometric Cursor Tracking**: Calculates θ = atan2(Δy, Δx) and normalized distance via `Math.hypot(Δx, Δy) / 300` to smoothly offset eye pupils (max 4.5px travel) and tilt the head (clamped ±12°).
+- **Traditional Indian Farmer Design**: Saffron Pagri (turban) with golden brooch, chandhan tilak, expressive eyebrows, magnificent moochein (mustache), white kurta with buttons, green gamcha (towel), and gold kundal earrings.
+- **Dynamic Pointing Arm**: Extends a wooden pointer cane with golden tip and animated laser glow (`animate-ping`) in configurable directions (left, right, down).
+- **Responsive Sizing**: 5 size presets (sm: 100×130, md: 140×180, lg: 190×240, xl: 250×320, full: 320×400).
+
+### 6.2 Spotlight Arrow Tour System (`FarmerGuide.jsx`)
+
+An LPULive-inspired interactive walkthrough system:
+
+- **8-Module Sequential Tour**: Dashboard → Prices → Calculator → Listings → Transactions → Grading → Arbitration → Mandi Map, with cross-page navigation.
+- **DOM Element Spotlighting**: Queries target elements via CSS selectors, calculates bounding rectangles, and renders a glowing ring (`ring-4 ring-blue-500/80 shadow-[0_0_40px_...]`) with semi-transparent backdrop dimming.
+- **Directional Arrow Geometry**: Computes optimal tooltip placement (left/right/top) based on available viewport space, with CSS triangle pointers.
+- **First-Visit Auto-Launch**: Triggers automatically for new users; returning users access via navbar "Kisan Chacha Tour" button.
+- **Multi-Lingual Content**: All tour step titles and descriptions support 4 languages (en, hi, mr, or).
+
+### 6.3 Hero Section Integration
+
+The `KisanChachaMascot` is prominently featured in the landing page hero section alongside the Live Take-Home Profit Calculator, with a localized speech bubble directing users to check live mandi prices.
+
+### 6.4 APMC Map Enhancements
+
+- **Hover Preview Cards**: Hovering over mandi markers displays telemetry cards with modal price, arrivals, commodities, and distance.
+- **Fullscreen Toggle**: All maps across the project include a Maximize/Minimize button that triggers `map.invalidateSize()` after a 200ms delay for proper Leaflet canvas recalculation.

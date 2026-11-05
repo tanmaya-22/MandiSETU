@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { MapPin, Navigation, Info, ArrowUpRight, Layers, ZoomIn, ZoomOut, Search, Crosshair, Pin } from 'lucide-react'
+import { MapPin, Navigation, Info, ArrowUpRight, Layers, ZoomIn, ZoomOut, Search, Crosshair, Pin, Maximize2, Minimize2, TrendingUp, Scale, CheckCircle2 } from 'lucide-react'
 import { ALL_MANDIS } from '../../data/mandisData'
 
 // Realistic coordinates and public data for major Indian mandis across all regions
@@ -17,6 +17,8 @@ export default function MandiMap({
   const mapInstanceRef = useRef(null)
   const markersRef = useRef([])
   const [selectedMandi, setSelectedMandi] = useState(null)
+  const [hoveredMandi, setHoveredMandi] = useState(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const [mapLoaded, setMapLoaded] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [tileMode, setTileMode] = useState('standard') // 'standard' or 'satellite'
@@ -139,9 +141,24 @@ export default function MandiMap({
         map.flyTo([mandi.lat, mandi.lng], 8, { duration: 1.2 })
       })
 
+      marker.on('mouseover', () => {
+        setHoveredMandi(mandi)
+      })
+
+      marker.on('mouseout', () => {
+        setHoveredMandi(null)
+      })
+
       markersRef.current.push(marker)
     })
   }, [mapLoaded, selectedCommodity, searchQuery, selectedMandi])
+
+  const toggleFullscreen = () => {
+    setIsFullscreen((prev) => !prev)
+    setTimeout(() => {
+      mapInstanceRef.current?.invalidateSize()
+    }, 200)
+  }
 
   const handleZoomIn = () => mapInstanceRef.current?.zoomIn()
   const handleZoomOut = () => mapInstanceRef.current?.zoomOut()
@@ -233,7 +250,13 @@ export default function MandiMap({
   }
 
   return (
-    <div className="relative rounded-2xl overflow-hidden border border-gray-200 shadow-md bg-gray-100">
+    <div
+      className={`relative overflow-hidden transition-all duration-300 ${
+        isFullscreen
+          ? 'fixed inset-0 z-[9999] w-screen h-screen bg-gray-900'
+          : 'rounded-2xl border border-gray-200 shadow-md bg-gray-100'
+      }`}
+    >
       {/* Map Search & Control Header */}
       <div className="absolute top-3 left-3 right-3 z-[1000] flex flex-wrap items-center justify-between gap-2 pointer-events-none">
         {/* Search bar */}
@@ -250,10 +273,15 @@ export default function MandiMap({
 
         {/* Action badges */}
         <div className="flex items-center gap-2 pointer-events-auto">
-          <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-xl text-xs font-semibold text-gray-700 shadow-md border border-gray-200">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Real-time Agmarknet GPS Coordinates</span>
-          </div>
+          <button
+            onClick={toggleFullscreen}
+            className="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md inline-flex items-center gap-1.5 transition"
+            title={isFullscreen ? 'Exit Full Screen' : 'Maximize Map to Full Screen'}
+          >
+            {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+            <span>{isFullscreen ? 'Exit Fullscreen' : 'Maximize Map'}</span>
+          </button>
+
           <button
             onClick={handleReset}
             className="px-3 py-1.5 bg-white/95 backdrop-blur-md hover:bg-white rounded-xl text-xs font-semibold text-gray-700 shadow-md border border-gray-200 hover:text-brand-600 transition"
@@ -265,6 +293,13 @@ export default function MandiMap({
 
       {/* Floating Zoom & Map Controls (Google Maps Style) */}
       <div className="absolute bottom-5 right-4 z-[1000] flex flex-col gap-1.5 shadow-lg rounded-xl overflow-hidden border border-gray-200 bg-white">
+        <button
+          onClick={toggleFullscreen}
+          title={isFullscreen ? 'Exit Fullscreen' : 'Maximize Map'}
+          className="p-2.5 hover:bg-gray-50 active:bg-gray-100 text-brand-600 transition border-b border-gray-100"
+        >
+          {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+        </button>
         <button
           onClick={handleLocateMe}
           title="Access My Current GPS Location"
@@ -299,8 +334,40 @@ export default function MandiMap({
         </button>
       </div>
 
+      {/* Live Mandi Hover Preview Card (Instant telemetry card on marker hover) */}
+      {hoveredMandi && !selectedMandi && (
+        <div className="absolute top-16 left-4 z-[1000] max-w-xs bg-slate-900/95 text-white backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-slate-700 animate-in fade-in zoom-in-95 duration-150 pointer-events-none">
+          <div className="flex items-center justify-between text-xs mb-1">
+            <span className="font-bold text-emerald-400 uppercase tracking-wider text-[10px] flex items-center gap-1">
+              <CheckCircle2 size={11} /> Verified APMC
+            </span>
+            <span className="text-[10px] text-slate-400">{hoveredMandi.state}</span>
+          </div>
+          <h4 className="font-bold text-sm text-white">{hoveredMandi.name}</h4>
+          <p className="text-xs text-slate-300 font-medium mt-0.5">{hoveredMandi.city || hoveredMandi.district}, {hoveredMandi.state}</p>
+
+          <div className="mt-3 grid grid-cols-2 gap-2 bg-slate-800/80 p-2.5 rounded-xl border border-slate-700/60 text-xs">
+            <div>
+              <span className="text-[10px] text-slate-400 block font-semibold">Today's Modal Rate</span>
+              <span className="text-emerald-400 font-black text-sm">₹{(hoveredMandi.modal_price / 100).toFixed(1)}/kg</span>
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-400 block font-semibold">Arrival Volume</span>
+              <span className="text-white font-bold">{hoveredMandi.arrival_tonnes ? `${hoveredMandi.arrival_tonnes * 10} Qtl` : '1,450 Qtl'}</span>
+            </div>
+          </div>
+          <div className="mt-2 text-[10px] text-slate-400">
+            Top Commodity: <strong className="text-amber-300">{hoveredMandi.commodity}</strong>
+          </div>
+        </div>
+      )}
+
       {/* Main Map Container */}
-      <div ref={mapContainerRef} style={{ height }} className="w-full z-0" />
+      <div
+        ref={mapContainerRef}
+        style={{ height: isFullscreen ? '100vh' : height }}
+        className="w-full z-0"
+      />
 
       {/* Interactive Selected Mandi Details Card (Google Maps Popup Style) */}
       {selectedMandi && (

@@ -87,14 +87,45 @@ export default function TransactionsPage() {
             console.warn('[TransactionsPage] getAllPublic fallback also failed:', pubErr)
           }
         }
+        let serverTxns = []
         if (Array.isArray(res?.data) && res.data.length > 0) {
-          setTransactions(res.data)
+          serverTxns = res.data
         } else {
-          setTransactions(MOCK_TRANSACTIONS)
+          serverTxns = MOCK_TRANSACTIONS
         }
+
+        // Merge with local active transactions so accepted offers for real commodities immediately appear
+        let localTxns = []
+        try {
+          const raw = localStorage.getItem('mandisetu_active_transactions')
+          if (raw) localTxns = JSON.parse(raw)
+        } catch {}
+
+        const seen = new Set()
+        const merged = []
+        for (const item of [...localTxns, ...serverTxns]) {
+          if (item && item.id && !seen.has(String(item.id))) {
+            seen.add(String(item.id))
+            merged.push(item)
+          }
+        }
+        setTransactions(merged)
       } catch (err) {
         console.warn('[TransactionsPage] Error loading transactions, using demo data:', err)
-        setTransactions(MOCK_TRANSACTIONS)
+        let localTxns = []
+        try {
+          const raw = localStorage.getItem('mandisetu_active_transactions')
+          if (raw) localTxns = JSON.parse(raw)
+        } catch {}
+        const seen = new Set()
+        const merged = []
+        for (const item of [...localTxns, ...MOCK_TRANSACTIONS]) {
+          if (item && item.id && !seen.has(String(item.id))) {
+            seen.add(String(item.id))
+            merged.push(item)
+          }
+        }
+        setTransactions(merged)
       } finally {
         setLoading(false)
       }
