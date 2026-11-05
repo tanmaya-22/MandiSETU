@@ -426,21 +426,29 @@ export default function MandiMapPage() {
               : 'lg:col-span-2 rounded-3xl'
           }`}
         >
-          {/* Top-Right Maximize / Fullscreen Map Button */}
+          {/* Fixed Top-Right Maximize / Minimize Button */}
           <div className="absolute top-4 right-4 z-20">
             <button
               onClick={toggleFullscreen}
-              className="px-3.5 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold shadow-xl border border-slate-700 flex items-center gap-1.5 backdrop-blur-md transition-all active:scale-95"
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-lg flex items-center gap-1.5 transition-all active:scale-95 border ${
+                isFullscreen
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-400 ring-2 ring-amber-400/30'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-500 ring-2 ring-emerald-500/20'
+              }`}
               title={isFullscreen ? 'Exit Full Screen' : 'Maximize Map to Full Screen'}
             >
-              {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+              {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
               <span>{isFullscreen ? 'Exit Fullscreen' : 'Maximize Map'}</span>
             </button>
           </div>
 
-          {/* Floating Hover Preview Card */}
+          {/* Floating Hover Preview Card with Explicit Hover Action Button */}
           {hoveredMandi && !selectedMandi && (
-            <div className="absolute top-16 left-4 z-20 max-w-xs bg-slate-900/95 text-white backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-slate-700 animate-in fade-in zoom-in-95 duration-150 pointer-events-none">
+            <div
+              onMouseEnter={() => setHoveredMandi(hoveredMandi)}
+              onMouseLeave={() => setHoveredMandi(null)}
+              className="absolute top-16 left-4 z-20 max-w-xs bg-slate-900/95 text-white backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-slate-700 animate-in fade-in zoom-in-95 duration-150 pointer-events-auto"
+            >
               <div className="flex items-center justify-between text-xs mb-1">
                 <span className="font-bold text-emerald-400 uppercase tracking-wider text-[10px] flex items-center gap-1">
                   <CheckCircle2 size={11} /> Verified APMC
@@ -460,6 +468,15 @@ export default function MandiMapPage() {
                   <span className="text-amber-300 font-bold text-xs">{hoveredMandi.category?.split(' ')[0] || 'Major APMC'}</span>
                 </div>
               </div>
+
+              {/* Explicit Mandi Map Hover Button */}
+              <button
+                onClick={() => focusMandi(hoveredMandi)}
+                className="mt-3 w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-lg transition-all transform hover:scale-[1.02]"
+              >
+                <span>Select & Center Mandi</span>
+                <ExternalLink size={13} />
+              </button>
             </div>
           )}
 

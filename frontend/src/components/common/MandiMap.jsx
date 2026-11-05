@@ -257,8 +257,8 @@ export default function MandiMap({
           : 'rounded-2xl border border-gray-200 shadow-md bg-gray-100'
       }`}
     >
-      {/* Map Search & Control Header */}
-      <div className="absolute top-3 left-3 right-3 z-[1000] flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+      {/* Map Search & Fixed Maximize / View Header Controls */}
+      <div className="absolute top-3 left-3 right-3 z-[1000] flex items-center justify-between gap-2 pointer-events-none">
         {/* Search bar */}
         <div className="relative pointer-events-auto w-full sm:w-72">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -271,35 +271,33 @@ export default function MandiMap({
           />
         </div>
 
-        {/* Action badges */}
+        {/* Fixed Top-Right Map Controls: Reset + Fixed Maximize/Minimize Button */}
         <div className="flex items-center gap-2 pointer-events-auto">
-          <button
-            onClick={toggleFullscreen}
-            className="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md inline-flex items-center gap-1.5 transition"
-            title={isFullscreen ? 'Exit Full Screen' : 'Maximize Map to Full Screen'}
-          >
-            {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-            <span>{isFullscreen ? 'Exit Fullscreen' : 'Maximize Map'}</span>
-          </button>
-
           <button
             onClick={handleReset}
             className="px-3 py-1.5 bg-white/95 backdrop-blur-md hover:bg-white rounded-xl text-xs font-semibold text-gray-700 shadow-md border border-gray-200 hover:text-brand-600 transition"
           >
             Reset View
           </button>
+
+          {/* Primary Fixed Maximize / Minimize Button at one permanent, accessible place */}
+          <button
+            onClick={toggleFullscreen}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-lg flex items-center gap-1.5 transition-all active:scale-95 border ${
+              isFullscreen
+                ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-400 ring-2 ring-amber-400/30'
+                : 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-500 ring-2 ring-emerald-500/20'
+            }`}
+            title={isFullscreen ? 'Exit Full Screen' : 'Maximize Map to Full Screen'}
+          >
+            {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+            <span>{isFullscreen ? 'Exit Fullscreen' : 'Maximize Map'}</span>
+          </button>
         </div>
       </div>
 
-      {/* Floating Zoom & Map Controls (Google Maps Style) */}
+      {/* Floating Zoom & Location Controls (Bottom-Right, Cleaned of Redundant Maximize Button) */}
       <div className="absolute bottom-5 right-4 z-[1000] flex flex-col gap-1.5 shadow-lg rounded-xl overflow-hidden border border-gray-200 bg-white">
-        <button
-          onClick={toggleFullscreen}
-          title={isFullscreen ? 'Exit Fullscreen' : 'Maximize Map'}
-          className="p-2.5 hover:bg-gray-50 active:bg-gray-100 text-brand-600 transition border-b border-gray-100"
-        >
-          {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-        </button>
         <button
           onClick={handleLocateMe}
           title="Access My Current GPS Location"
@@ -334,9 +332,13 @@ export default function MandiMap({
         </button>
       </div>
 
-      {/* Live Mandi Hover Preview Card (Instant telemetry card on marker hover) */}
+      {/* Live Mandi Hover Preview Card with Quick Action Button */}
       {hoveredMandi && !selectedMandi && (
-        <div className="absolute top-16 left-4 z-[1000] max-w-xs bg-slate-900/95 text-white backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-slate-700 animate-in fade-in zoom-in-95 duration-150 pointer-events-none">
+        <div
+          onMouseEnter={() => setHoveredMandi(hoveredMandi)}
+          onMouseLeave={() => setHoveredMandi(null)}
+          className="absolute top-16 left-4 z-[1000] max-w-xs bg-slate-900/95 text-white backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-slate-700 animate-in fade-in zoom-in-95 duration-150 pointer-events-auto"
+        >
           <div className="flex items-center justify-between text-xs mb-1">
             <span className="font-bold text-emerald-400 uppercase tracking-wider text-[10px] flex items-center gap-1">
               <CheckCircle2 size={11} /> Verified APMC
@@ -359,6 +361,19 @@ export default function MandiMap({
           <div className="mt-2 text-[10px] text-slate-400">
             Top Commodity: <strong className="text-amber-300">{hoveredMandi.commodity}</strong>
           </div>
+
+          {/* Explicit Mandi Map Hover Button */}
+          <button
+            onClick={() => {
+              setSelectedMandi(hoveredMandi)
+              if (onSelectMandi) onSelectMandi(hoveredMandi)
+              mapInstanceRef.current?.flyTo([hoveredMandi.lat, hoveredMandi.lng], 9, { duration: 1.2 })
+            }}
+            className="mt-3 w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-lg transition-all transform hover:scale-[1.02]"
+          >
+            <span>View Modal Rates & Route Guidance</span>
+            <ArrowUpRight size={14} />
+          </button>
         </div>
       )}
 

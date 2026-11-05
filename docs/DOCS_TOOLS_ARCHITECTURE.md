@@ -127,7 +127,17 @@ An LPULive-inspired interactive walkthrough system:
 
 The `KisanChachaMascot` is prominently featured in the landing page hero section alongside the Live Take-Home Profit Calculator, with a localized speech bubble directing users to check live mandi prices.
 
-### 6.4 APMC Map Enhancements
+### 6.4 APMC Map Enhancements & Unified Controls
 
-- **Hover Preview Cards**: Hovering over mandi markers displays telemetry cards with modal price, arrivals, commodities, and distance.
-- **Fullscreen Toggle**: All maps across the project include a Maximize/Minimize button that triggers `map.invalidateSize()` after a 200ms delay for proper Leaflet canvas recalculation.
+- **Fixed Top-Right Maximize / Minimize Button**: Across both `frontend/src/components/common/MandiMap.jsx` and `frontend/src/pages/maps/MandiMapPage.jsx`, the map maximize/minimize toggle is permanently anchored in a single, fixed, high-contrast position in the top-right corner (`absolute top-3 right-3 z-[1000]`). The redundant button was pruned from the bottom-right zoom bar to prevent UI clutter and ensure immediate, predictable access on all devices. Smooth transitions trigger `map.invalidateSize()` after a 200ms delay for zero tile distortion.
+- **Interactive Marker Hover Card with Action Button**: Hovering over any APMC marker displays a telemetry card showing today's modal price, arrival volumes, and commodity type. The card features `pointer-events-auto` with a prominent **"View Modal Rates & Route Guidance →"** action button that centers the camera, zooms in, and opens the full analysis panel.
+
+---
+
+## 7. Formal System Modeling & IEEE Research Paper
+
+The system design, mathematical formulas, and algorithmic proofs are formally documented in [`docs/RESEARCH_PAPER_IEEE_MANDISETU.md`](./RESEARCH_PAPER_IEEE_MANDISETU.md):
+- **DFD Level 0 (System Context Diagram)**: External interaction boundaries connecting Farmers/FPOs, Institutional Buyers, APMC Market Authorities, the Escrow Banking Vault, and Logistics Fleets.
+- **DFD Level 1 (Subsystem Functional Decomposition)**: Seven asynchronous microservice processes (Agmarknet Ingestion, Net Realization, CV Colorimetry, Bilateral Matcher, Escrow State Machine, Perishable Decay, Grievance Tribunal) and their 6 relational data stores.
+- **DFD Level 2 (Process 5.0 Escrow State Machine)**: Formal 7-stage multi-signature state transitions from `ORDER_CREATED` to `SETTLEMENT_DISBURSED` with dual-key cryptographic validation and APMC arbitration tribunal routes.
+- **Computer Vision Pipeline Flowchart**: Otsu adaptive segmentation, HSV/CIELAB color dispersion analysis, surface blemish ratio ($\Omega_{blemish}$) calculation, and AGMARK Grade A+, A, B, C mapping.
