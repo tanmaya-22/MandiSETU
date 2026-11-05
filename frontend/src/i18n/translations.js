@@ -169,6 +169,7 @@ export const TRANSLATIONS = {
 
     // Top Bar & Controls
     talk_assistant: 'Talk to Assistant',
+    kisan_chacha_tour: 'Kisan Chacha Tour',
     interactive_demo: 'Interactive Demo',
     menu: 'Menu',
     nav_feedback: 'Feedback & Grievances',
@@ -487,6 +488,7 @@ export const TRANSLATIONS = {
 
     // Top Bar & Controls
     talk_assistant: 'सहायक से बात करें',
+    kisan_chacha_tour: 'किसान चाचा टूर',
     interactive_demo: 'लाइव डेमो टूर',
     menu: 'मेन्यू',
     nav_feedback: 'फीडबैक एवं शिकायतें',
@@ -805,6 +807,7 @@ export const TRANSLATIONS = {
 
     // Top Bar & Controls
     talk_assistant: 'सहाय्यकाशी बोला',
+    kisan_chacha_tour: 'किसान काका मार्गदर्शक',
     interactive_demo: 'थेट डेमो वॉकथ्रू',
     menu: 'मेन्यू',
     nav_feedback: 'अभिप्राय व तक्रार',
@@ -1123,6 +1126,7 @@ export const TRANSLATIONS = {
 
     // Top Bar & Controls
     talk_assistant: 'ସହାୟକଙ୍କ ସହ କଥା ହୁଅନ୍ତୁ',
+    kisan_chacha_tour: 'କିଷାନ ଚାଚା ଟୁର',
     interactive_demo: 'ଲାଇଭ୍ ଡେମୋ ଟୁର୍',
     menu: 'ମେନୁ',
     nav_feedback: 'ମତାମତ ଓ ଅଭିଯୋଗ',

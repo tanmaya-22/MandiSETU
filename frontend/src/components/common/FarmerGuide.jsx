@@ -1,79 +1,118 @@
 import { useState, useEffect, useRef } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, Link } from 'react-router-dom'
 import {
   X, FolderLock, Sparkles, ChevronRight, ChevronLeft, ArrowRight,
-  CheckCircle2, Compass, MapPin, Eye, ShieldCheck, Scale, Award, HelpCircle
+  CheckCircle2, Compass, MapPin, Eye, ShieldCheck, Scale, Award,
+  HelpCircle, Languages, UserCheck, TrendingUp, Calculator, CloudRain,
+  LogIn, UserPlus, Layers, ExternalLink
 } from 'lucide-react'
 import { useLangStore } from '../../store/langStore'
+import { useAuthStore } from '../../store/authStore'
 import KisanChachaMascot from './KisanChachaMascot'
 
-// Module-by-module guided tour sequence across MandiSetu
+// ── Complete Master Tour Sequence Across Free Public Tools & Member Modules ──
 const TOUR_SEQUENCE = [
-  { path: '/dashboard', label: 'Dashboard Intelligence', nextPath: '/prices', nextLabel: 'Market Prices' },
+  { path: '/', label: 'Platform Home & Overview', nextPath: '/prices', nextLabel: 'Live Mandi Prices' },
   { path: '/prices', label: 'Price Discovery Engine', nextPath: '/calculator', nextLabel: 'Net Calculator' },
-  { path: '/calculator', label: 'Realization Calculator', nextPath: '/listings', nextLabel: 'Produce Listings' },
+  { path: '/calculator', label: 'Realization Calculator', nextPath: '/mandi-map', nextLabel: 'Mandi Map Network' },
+  { path: '/mandi-map', label: 'Geospatial Mandi Network', nextPath: '/weather', nextLabel: 'Weather Advisory' },
+  { path: '/weather', label: 'Transit Weather Risk', nextPath: '/dashboard', nextLabel: 'Member Dashboard' },
+  { path: '/dashboard', label: 'Dashboard Intelligence', nextPath: '/listings', nextLabel: 'Produce Listings' },
   { path: '/listings', label: 'Produce Listings & Escrow', nextPath: '/transactions', nextLabel: 'Escrow Transactions' },
   { path: '/transactions', label: 'Escrow State Machine', nextPath: '/grading', nextLabel: 'AI Quality Grading' },
-  { path: '/grading', label: 'Computer Vision Grading', nextPath: '/arbitration', nextLabel: 'Grievance Tribunal' },
-  { path: '/arbitration', label: 'Dispute & Grievance Desk', nextPath: '/mandi-map', nextLabel: 'Mandi Map Network' },
-  { path: '/mandi-map', label: 'OpenStreetMap Mandi Network', nextPath: '/dashboard', nextLabel: 'Complete Tour' },
+  { path: '/grading', label: 'Computer Vision Grading', nextPath: '/disputes', nextLabel: 'Dispute & Grievance Desk' },
+  { path: '/disputes', label: 'Dispute & Grievance Desk', nextPath: '/', nextLabel: 'Tour Complete' },
 ]
 
 const MODULE_TOURS = {
-  '/dashboard': {
-    moduleCode: 'M01',
+  // ── 0. Landing Page Overview ──
+  '/': {
+    moduleCode: 'M00',
     steps: [
       {
-        targetSelector: '[data-tour="metric-kpis"], .grid-cols-2, .grid-cols-4',
+        targetSelector: '[data-tour="lang-controls"], nav .flex.items-center.gap-3',
         title: {
-          en: 'Real-Time Clearing Scorecards',
-          hi: 'लाइव मंडी समाशोधन स्कोरकार्ड',
-          mr: 'दैनिक बाजार स्कोरकार्ड',
-          or: 'ଦୈନିକ ମଣ୍ଡି ସ୍କୋରକାର୍ଡ',
+          en: 'Multilingual Access & Dark Mode',
+          hi: 'बहुभाषी पहुंच व रात्रि थीम (4 भाषाएं)',
+          mr: 'बहुभाषिक प्रवेश व डार्क मोड',
+          or: 'ବହୁଭାଷୀ ସୁବିଧା ଓ ଡାର୍କ ମୋଡ୍',
         },
         desc: {
-          en: 'These 4 key metrics monitor today\'s highest clearing rates, active multi-signature escrow volume, pending farm payouts, and AGMARK quality grading score.',
-          hi: 'ये 4 मुख्य कार्ड आज के उच्चतम भाव, सक्रिय एस्क्रो अनुबंध, बकाया किसान भुगतान और AGMARK गुणवत्ता स्कोर की रीयल-टाइम जानकारी देते हैं।',
-          mr: 'हे 4 कार्ड आजचा सर्वाधिक भाव, चालू एस्क्रो व्यवहार आणि प्रमाणित गुणवत्ता दाखवतात.',
-          or: 'ଏହି 4ଟି କାର୍ଡ ଆଜିର ସର୍ବୋଚ୍ଚ ଦର, ସକ୍ରିୟ ଏସ୍କ୍ରୋ ଓ କୃଷକଙ୍କ ବକେୟା ଟଙ୍କା ଦର୍ଶାଏ।'
+          en: 'MandiSetu is natively built for Indian farmers. Toggle between English, हिंदी, मराठी, and ଓଡ଼ିଆ with automatic Devanagari and Odia numeral localization.',
+          hi: 'मंडीसेतु भारतीय किसानों के लिए समर्पित है। एक क्लिक में अंग्रेजी, हिंदी, मराठी और ओडिया में बदलें। सभी आंकड़े आपकी चुनी हुई भाषा में दिखेंगे।',
+          mr: 'मंडीसेतू भारतीय शेतकऱ्यांसाठी समर्पित आहे. एका क्लिकवर इंग्रजी, हिंदी, मराठी आणि ओडियामध्ये बदला.',
+          or: 'ମଣ୍ଡିସେତୁ ଭାରତୀୟ କୃଷକଙ୍କ ପାଇଁ ନିର୍ମିତ। ଇଂରାଜୀ, ହିନ୍ଦୀ, ମରାଠୀ ଓ ଓଡ଼ିଆ ମଧ୍ୟରେ ସହଜରେ ବଦଳାନ୍ତୁ।'
         },
-        chachaBubble: 'राम राम! Welcome to MandiSetu!'
+        chachaBubble: 'अपनी भाषा में मंडी भाव देखें!'
       },
       {
-        targetSelector: '[data-tour="msp-benchmark"], table',
+        targetSelector: '[data-tour="auth-cta"], a[href="/login"], a[href="/register"]',
         title: {
-          en: 'MSP Baseline Enforcement',
-          hi: 'सरकारी MSP बेंचमार्क तुलना',
-          mr: 'सरकारी हमीभाव पडताळणी',
-          or: 'ସରକାରୀ MSP ପରୀକ୍ଷଣ',
+          en: 'Free Preview & Member Access',
+          hi: 'निशुल्क पंजीकरण व सदस्य सुविधाएं',
+          mr: 'विनामूल्य नोंदणी व सदस्य प्रवेश',
+          or: 'ମାଗଣା ପଞ୍ଜୀକରଣ ଓ ସଦସ୍ୟ ସୁବିଧା',
         },
         desc: {
-          en: 'Every commodity is cross-referenced with Central MSP standards. Green checkmarks denote profitable trade above MSP, preventing intermediary exploitation.',
-          hi: 'प्रत्येक फसल की जांच सरकारी MSP से होती है। हरा टिक मार्क यानी भाव MSP से अधिक है, जिससे बिचौलियों द्वारा शोषण नहीं हो सकता।',
-          mr: 'प्रत्येक भाव हमीभावाशी तपासला जातो. हिरवा रंग हमीभावापेक्षा जास्त नफा दर्शवतो.',
-          or: 'ପ୍ରତିଟି ଫସଲ ଦର ସରକାରୀ MSP ସହ ଯାଞ୍ଚ ହୁଏ। ସବୁଜ ମାନେ MSP ଠାରୁ ଅଧିକ ଲାଭ।'
+          en: 'Public market prices, haulage calculators, and mandi maps are 100% free with no login required! Sign in or register as a Farmer, FPO, or Buyer to unlock verified trade listings, escrow vault payments, and AI grading.',
+          hi: 'मंडी भाव, भाड़ा कैलकुलेटर और मंडी मैप पूरी तरह से फ्री हैं! सत्यापित फसल लिस्टिंग, सुरक्षित एस्क्रो बैंक भुगतान और एआई ग्रेडिंग के लिए किसान या खरीदार के रूप में रजिस्टर करें।',
+          mr: 'बाजार भाव आणि कॅल्क्युलेटर सर्वांसाठी मोफत आहेत! एस्क्रो सुरक्षा व एआई ग्रेडिंगसाठी नोंदणी करा.',
+          or: 'ମଣ୍ଡି ଦର ଓ କାଲକୁଲେଟର ସମ୍ପୂର୍ଣ୍ଣ ମାଗଣା! ଏସ୍କ୍ରୋ ପେମେଣ୍ଟ ଓ ଏଆଇ ଗ୍ରେଡିଂ ପାଇଁ ମାଗଣାରେ ଆକାଉଣ୍ଟ ଖୋଲନ୍ତୁ।'
         },
-        chachaBubble: 'Never sell below MSP!'
+        chachaBubble: 'Free access for every farmer!'
       },
       {
-        targetSelector: '[data-tour="market-snapshot"]',
+        targetSelector: '[data-tour="live-ticker"], .bg-brand-950',
         title: {
-          en: 'Spatial Arbitrage Comparison',
-          hi: 'मंडी भाव तुलना व स्थानिक आर्बिट्राज',
-          mr: 'बाजार भाव तुलना',
-          or: 'ମଣ୍ଡି ଦର ତୁଳନା',
+          en: 'Real-Time Agmarknet APMC Ticker',
+          hi: 'लाइव सरकारी एगमार्कनेट मंडी टिकर',
+          mr: 'थेट एगमार्कनेट बाजार समिती टिकर',
+          or: 'ଲାଇଭ୍ ଏଗମାର୍କନେଟ୍ ମଣ୍ଡି ଟିକର',
         },
         desc: {
-          en: 'Compare modal rates across nearby and distant mandis in real time to capture maximum price spreads before hiring transport.',
-          hi: 'वाहन किराए पर लेने से पहले आसपास और दूर की मंडियों के भावों की तुलना करके अधिकतम मुनाफा सुरक्षित करें।',
-          mr: 'वाहतूक ठरवण्यापूर्वी शेजारील मंड्यांमधील भावांची तुलना करा.',
-          or: 'ଗାଡ଼ି ବୁକିଂ ପୂର୍ବରୁ ବିଭିନ୍ନ ମଣ୍ଡିର ଦର ତୁଳନା କରି ସର୍ବାଧିକ ଲାଭ ପାଆନ୍ତୁ।'
+          en: 'Live streaming modal rates across 500+ APMC yards in India. Highlights positive and negative price swings for wheat, onion, tomato, potato, and cotton.',
+          hi: 'देश भर की 500+ मंडियों के ताजा थोक भावों का लाइव टिकर। गेहूं, प्याज, टमाटर, आलू और कपास में दैनिक उतार-चढ़ाव की सटीक जानकारी।',
+          mr: 'भारतातील 500+ बाजार समित्यांमधील ताज्या भावांचा थेट टिकर.',
+          or: 'ଦେଶର 500+ ମଣ୍ଡିର ଲାଇଭ୍ ହୋଲସେଲ ଦର। ଟମାଟୋ, ପିଆଜ, ଗହମର ଦୈନିକ ପରିବର୍ତ୍ତନ ଦେଖନ୍ତୁ।'
         },
-        chachaBubble: 'Find the highest rate!'
+        chachaBubble: '500+ मंडियों के लाइव भाव!'
+      },
+      {
+        targetSelector: '[data-tour="hero-calculator"], .lg\\:col-span-5',
+        title: {
+          en: 'Live Haversine Profit Calculator',
+          hi: 'शुद्ध बचत व दूरी आधारित मुनाफा कैलकुलेटर',
+          mr: 'दूरी व नफा कॅल्क्युलेटर',
+          or: 'ନିଟ୍ ଲାଭ ଓ ଗାଡ଼ି ଭଡ଼ା କାଲକୁଲେଟର',
+        },
+        desc: {
+          en: 'Move the slider to see your true take-home cash after deducting diesel transport and APMC market cess. Instantly compare local village brokers vs terminal city mandis.',
+          hi: 'मात्रा का स्लाइडर हिलाकर देखें कि डीजल भाड़ा और मंडी सेस कटने के बाद आपके हाथ में कितने रुपये आएंगे। गांव के दलाल बनाम बड़ी मंडी के मुनाफे की सीधी तुलना।',
+          mr: 'डीझेल वाहतूक खर्च व बाजार फी वजा करून शेतकर्‍यांच्या हातात येणारा खरा नफा मोजा.',
+          or: 'ଗାଡ଼ି ଭଡ଼ା ଓ ମଣ୍ଡି ସେସ୍ କଟିବା ପରେ ଆପଣଙ୍କ ହାତକୁ ଆସୁଥିବା ନିଟ୍ ଟଙ୍କା ତୁରନ୍ତ ହିସାବ କରନ୍ତୁ।'
+        },
+        chachaBubble: 'Calculate real take-home cash!'
+      },
+      {
+        targetSelector: '[data-tour="modules-grid"], .card-interactive',
+        title: {
+          en: '12 Comprehensive Trading Modules',
+          hi: '12 समग्र डिजिटल कृषि व्यापार मॉड्यूल',
+          mr: '12 एकात्मिक शेती व्यापार मॉड्युल्स',
+          or: '12ଟି ସମ୍ପୂର୍ଣ୍ଣ କୃଷି ବାଣିଜ୍ୟ ମଡ୍ୟୁଲ',
+        },
+        desc: {
+          en: 'MandiSetu unifies Prophet ML price forecasts, computer vision AGMARK grading, buyer-farmer bilateral matching, and multi-signature escrow into a single unified architecture.',
+          hi: 'मंडीसेतु 12 शक्तिशाली मॉड्यूल्स को एक साथ लाता है: एआई फसल ग्रेडिंग, खरीदार मैचिंग, 7-चरणीय एस्क्रो भुगतान और मध्यस्थता ट्रिब्यूनल।',
+          mr: 'एआय ग्रेडिंग, खरेदीदार जुळणी आणि सुरक्षित एस्क्रो व्यवहार एकाच ठिकाणी.',
+          or: 'ଏଆଇ ଗ୍ରେଡିଂ, କ୍ରେତା-ଚାଷୀ ଯୋଡ଼ି ଓ ସୁରକ୍ଷିତ ଏସ୍କ୍ରୋ ବ୍ୟବସ୍ଥା ଗୋଟିଏ ପ୍ଲାଟଫର୍ମରେ।'
+        },
+        chachaBubble: 'Explore all 12 modules!'
       }
     ]
   },
 
+  // ── 1. Live Prices (Free Public Tool) ──
   '/prices': {
     moduleCode: 'M02',
     steps: [
@@ -112,6 +151,7 @@ const MODULE_TOURS = {
     ]
   },
 
+  // ── 2. Realization Calculator (Free Public Tool) ──
   '/calculator': {
     moduleCode: 'M03',
     steps: [
@@ -150,6 +190,92 @@ const MODULE_TOURS = {
     ]
   },
 
+  // ── 3. Mandi Map Network (Free Public Tool) ──
+  '/mandi-map': {
+    moduleCode: 'M11',
+    steps: [
+      {
+        targetSelector: '.leaflet-container, #map, .relative.h-\\[500px\\], .relative.h-\\[600px\\]',
+        title: {
+          en: 'Interactive OpenStreetMap APMC Clusters',
+          hi: 'देशव्यापी एपीएमसी मंडी जीआईएस नेटवर्क',
+          mr: 'अखिल भारतीय बाजार समिती नकाशा',
+          or: 'ସାରା ଭାରତର ଏପିଏମସି ମଣ୍ଡି ମାନଚିତ୍ର',
+        },
+        desc: {
+          en: 'Explore pan-India regulated APMC yards with live hover telemetry preview cards showing modal price, arrivals, and distance. Click the Maximize button for full-screen view!',
+          hi: 'पूरे भारत की मंडियों का नक्शा। किसी भी मंडी पर माउस ले जाकर ताजा भाव, आवक और दूरी का प्रीव्यू कार्ड देखें। फुल-स्क्रीन बटन से बड़ा नक्शा खोलें।',
+          mr: 'नकाशावर माऊस नेऊन बाजार भाव, आवक आणि अंतर तपासा. फुल-स्क्रीन मोड उपलब्ध.',
+          or: 'ମାନଚିତ୍ରରେ କୌଣସି ମଣ୍ଡି ଉପରେ ହୋଭର କରି ଦର ଓ ଆଗମନ ଦେଖନ୍ତୁ। ଫୁଲ-ସ୍କ୍ରିନ ମୋଡ୍ ବ୍ୟବହାର କରନ୍ତୁ।'
+        },
+        chachaBubble: 'Hover to see mandi telemetry!'
+      }
+    ]
+  },
+
+  // ── 4. Weather Advisory (Free Public Tool) ──
+  '/weather': {
+    moduleCode: 'M12',
+    steps: [
+      {
+        targetSelector: '.grid, .bg-sky-50, .border-sky-200, form',
+        title: {
+          en: 'Transit Spoilage Weather Advisory',
+          hi: 'परिवहन व मौसम जोखिम सलाहकार',
+          mr: 'हवामान अंदाज व वाहतूक सल्ला',
+          or: 'ପାଣିପାଗ ଓ ପରିବହନ ସତର୍କତା',
+        },
+        desc: {
+          en: 'Hyperlocal weather risk matrix warning against unseasonal rain during transit or harvest to protect perishable produce before dispatch.',
+          hi: 'फसल की तुड़ाई या वाहन रवानगी से पहले बिन मौसम बारिश और नमी की चेतावनी ताकि आपकी फसल खराब होने से बच सके।',
+          mr: 'अवेळी पाऊस व आर्द्रतेपासून पिकाचे संरक्षण करण्यासाठी पूर्वसूचना.',
+          or: 'ଅଦିନିଆ ବର୍ଷା ଓ ପରିବହନ ବିପଦରୁ ଫସଲକୁ ସୁରକ୍ଷିତ ରଖିବାକୁ ପାଣିପାଗ ସତର୍କତା।'
+        },
+        chachaBubble: 'Check weather before dispatch!'
+      }
+    ]
+  },
+
+  // ── 5. Member Dashboard (Protected) ──
+  '/dashboard': {
+    moduleCode: 'M01',
+    steps: [
+      {
+        targetSelector: '[data-tour="metric-kpis"], .grid-cols-2, .grid-cols-4',
+        title: {
+          en: 'Real-Time Clearing Scorecards',
+          hi: 'लाइव मंडी समाशोधन स्कोरकार्ड',
+          mr: 'दैनिक बाजार स्कोरकार्ड',
+          or: 'ଦୈନିକ ମଣ୍ଡି ସ୍କୋରକାର୍ଡ',
+        },
+        desc: {
+          en: 'These 4 key metrics monitor today\'s highest clearing rates, active multi-signature escrow volume, pending farm payouts, and AGMARK quality grading score.',
+          hi: 'ये 4 मुख्य कार्ड आज के उच्चतम भाव, सक्रिय एस्क्रो अनुबंध, बकाया किसान भुगतान और AGMARK गुणवत्ता स्कोर की रीयल-टाइम जानकारी देते हैं।',
+          mr: 'हे 4 कार्ड आजचा सर्वाधिक भाव, चालू एस्क्रो व्यवहार आणि प्रमाणित गुणवत्ता दाखवतात.',
+          or: 'ଏହି 4ଟି କାର୍ଡ ଆଜିର ସର୍ବୋଚ୍ଚ ଦର, ସକ୍ରିୟ ଏସ୍କ୍ରୋ ଓ କୃଷକଙ୍କ ବକେୟା ଟଙ୍କା ଦର୍ଶାଏ।'
+        },
+        chachaBubble: 'Welcome to your Dashboard!'
+      },
+      {
+        targetSelector: '[data-tour="msp-benchmark"], table',
+        title: {
+          en: 'MSP Baseline Enforcement',
+          hi: 'सरकारी MSP बेंचमार्क तुलना',
+          mr: 'सरकारी हमीभाव पडताळणी',
+          or: 'ସରକାରୀ MSP ପରୀକ୍ଷଣ',
+        },
+        desc: {
+          en: 'Every commodity is cross-referenced with Central MSP standards. Green checkmarks denote profitable trade above MSP, preventing intermediary exploitation.',
+          hi: 'प्रत्येक फसल की जांच सरकारी MSP से होती है। हरा टिक मार्क यानी भाव MSP से अधिक है, जिससे बिचौलियों द्वारा शोषण नहीं हो सकता।',
+          mr: 'प्रत्येक भाव हमीभावाशी तपासला जातो. हिरवा रंग हमीभावापेक्षा जास्त नफा दर्शवतो.',
+          or: 'ପ୍ରତିଟି ଫସଲ ଦର ସରକାରୀ MSP ସହ ଯାଞ୍ଚ ହୁଏ। ସବୁଜ ମାନେ MSP ଠାରୁ ଅଧିକ ଲାଭ।'
+        },
+        chachaBubble: 'Never sell below MSP!'
+      }
+    ]
+  },
+
+  // ── 6. Produce Listings (Protected) ──
   '/listings': {
     moduleCode: 'M04',
     steps: [
@@ -188,6 +314,7 @@ const MODULE_TOURS = {
     ]
   },
 
+  // ── 7. Transactions & Escrow (Protected) ──
   '/transactions': {
     moduleCode: 'M06',
     steps: [
@@ -210,6 +337,7 @@ const MODULE_TOURS = {
     ]
   },
 
+  // ── 8. AI Produce Grading (Protected) ──
   '/grading': {
     moduleCode: 'M10',
     steps: [
@@ -232,7 +360,8 @@ const MODULE_TOURS = {
     ]
   },
 
-  '/arbitration': {
+  // ── 9. Disputes & Grievance (Protected) ──
+  '/disputes': {
     moduleCode: 'M09',
     steps: [
       {
@@ -259,11 +388,18 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose }) 
   const location = useLocation()
   const navigate = useNavigate()
   const { language } = useLangStore()
+  const { isAuthenticated } = useAuthStore()
 
   const [isOpen, setIsOpen] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
   const [targetRect, setTargetRect] = useState(null)
-  const [pointerSide, setPointerSide] = useState('left')
+  const [placement, setPlacement] = useState({
+    side: 'left', // 'left', 'right', 'top', 'bottom', 'center'
+    top: 100,
+    left: 100,
+    arrowTop: 40,
+    arrowLeft: 40,
+  })
 
   // Auto-launch on first visit to any module if never taken
   useEffect(() => {
@@ -292,7 +428,7 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose }) 
 
   // Get current module tour definition
   const path = location.pathname
-  const tourData = MODULE_TOURS[path] || MODULE_TOURS['/dashboard']
+  const tourData = MODULE_TOURS[path] || (path.startsWith('/listings') ? MODULE_TOURS['/listings'] : MODULE_TOURS['/'])
   const steps = tourData.steps || []
   const totalSteps = steps.length
   const stepObj = steps[currentStep] || steps[0]
@@ -300,7 +436,7 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose }) 
   // Track next route in tour sequence
   const currentTourSeq = TOUR_SEQUENCE.find(s => s.path === path) || TOUR_SEQUENCE[0]
 
-  // Calculate target element bounding rect & highlight position
+  // ── Bulletproof Viewport Clamping & Element Target Position Calculation ──
   useEffect(() => {
     if (!isOpen || !stepObj) return
 
@@ -311,7 +447,7 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose }) 
         for (const sel of selectors) {
           try {
             const found = document.querySelector(sel)
-            if (found) {
+            if (found && found.offsetParent !== null) {
               el = found
               break
             }
@@ -321,33 +457,90 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose }) 
 
       if (el) {
         const rect = el.getBoundingClientRect()
-        // Scroll smoothly into view if offscreen
-        if (rect.top < 60 || rect.bottom > window.innerHeight) {
+
+        // Smoothly scroll target into optimal view zone (center-top)
+        if (rect.top < 70 || rect.bottom > window.innerHeight - 80) {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' })
         }
+
+        const freshRect = el.getBoundingClientRect()
         setTargetRect({
-          top: rect.top,
-          left: rect.left,
-          width: rect.width,
-          height: rect.height,
-          right: rect.right,
-          bottom: rect.bottom,
+          top: freshRect.top,
+          left: freshRect.left,
+          width: freshRect.width,
+          height: freshRect.height,
+          right: freshRect.right,
+          bottom: freshRect.bottom,
         })
 
-        // Determine which side to place tooltip: prefer right if space, else left or bottom
-        if (rect.right + 420 < window.innerWidth) {
-          setPointerSide('left') // Arrow points left towards element on its left
-        } else if (rect.left - 420 > 0) {
-          setPointerSide('right') // Arrow points right towards element on its right
+        // Viewport bounds
+        const vpW = window.innerWidth
+        const vpH = window.innerHeight
+        const cardW = Math.min(420, vpW - 32)
+        const cardH = 340 // estimated popover height
+        const pad = 16
+
+        const targetMidY = (freshRect.top + freshRect.bottom) / 2
+        const targetMidX = (freshRect.left + freshRect.right) / 2
+
+        // Space evaluation
+        const canFitRight = freshRect.right + cardW + pad < vpW
+        const canFitLeft = freshRect.left - cardW - pad > 0
+        const canFitBelow = freshRect.bottom + cardH + pad < vpH
+        const canFitAbove = freshRect.top - cardH - pad > 60
+
+        let side = 'left'
+        let top = 100
+        let left = 100
+        let arrowTop = 40
+        let arrowLeft = 40
+
+        if (canFitRight) {
+          // Place card to the right of element, arrow on left edge of card
+          side = 'left'
+          left = freshRect.right + 18
+          // Clamped strictly so card never clips bottom
+          top = Math.max(pad + 60, Math.min(vpH - cardH - pad, targetMidY - 80))
+          arrowTop = Math.max(24, Math.min(cardH - 50, targetMidY - top))
+        } else if (canFitLeft) {
+          // Place card to the left of element, arrow on right edge of card
+          side = 'right'
+          left = Math.max(pad, freshRect.left - cardW - 18)
+          top = Math.max(pad + 60, Math.min(vpH - cardH - pad, targetMidY - 80))
+          arrowTop = Math.max(24, Math.min(cardH - 50, targetMidY - top))
+        } else if (canFitBelow) {
+          // Place card below element, arrow on top edge of card
+          side = 'top'
+          top = freshRect.bottom + 16
+          left = Math.max(pad, Math.min(vpW - cardW - pad, targetMidX - cardW / 2))
+          arrowLeft = Math.max(24, Math.min(cardW - 40, targetMidX - left))
+        } else if (canFitAbove) {
+          // Place card above element, arrow on bottom edge of card
+          side = 'bottom'
+          top = Math.max(pad + 60, freshRect.top - cardH - 16)
+          left = Math.max(pad, Math.min(vpW - cardW - pad, targetMidX - cardW / 2))
+          arrowLeft = Math.max(24, Math.min(cardW - 40, targetMidX - left))
         } else {
-          setPointerSide('top') // Arrow points up towards element above
+          // Dock at bottom center of screen safely
+          side = 'center'
+          top = Math.max(pad + 60, vpH - cardH - pad)
+          left = Math.max(pad, (vpW - cardW) / 2)
         }
+
+        setPlacement({ side, top, left, arrowTop, arrowLeft })
       } else {
         setTargetRect(null)
+        setPlacement({
+          side: 'center',
+          top: Math.max(80, (window.innerHeight - 360) / 2),
+          left: Math.max(16, (window.innerWidth - 420) / 2),
+          arrowTop: 40,
+          arrowLeft: 40,
+        })
       }
     }
 
-    const timer = setTimeout(updateTargetPosition, 250)
+    const timer = setTimeout(updateTargetPosition, 200)
     window.addEventListener('resize', updateTargetPosition)
     window.addEventListener('scroll', updateTargetPosition)
     return () => {
@@ -373,12 +566,23 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose }) 
   }
 
   const handleGoToNextPage = () => {
-    if (currentTourSeq.nextPath && currentTourSeq.nextPath !== path) {
-      setCurrentStep(0)
-      navigate(currentTourSeq.nextPath)
-    } else {
+    const nextRoute = currentTourSeq.nextPath
+    if (!nextRoute || nextRoute === path) {
       handleCompleteTour()
+      return
     }
+
+    // If navigating from free public tools to protected member dashboard and user is NOT logged in:
+    const isProtectedTarget = ['/dashboard', '/listings', '/transactions', '/grading', '/disputes'].includes(nextRoute)
+    if (isProtectedTarget && !isAuthenticated) {
+      // Redirect to registration/login with friendly guide message
+      setCurrentStep(0)
+      navigate('/register')
+      return
+    }
+
+    setCurrentStep(0)
+    navigate(nextRoute)
   }
 
   const handleCompleteTour = () => {
@@ -397,30 +601,6 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose }) 
 
   const isLastStepOfModule = currentStep === totalSteps - 1
   const progressPercent = totalSteps > 0 ? ((currentStep + 1) / totalSteps) * 100 : 100
-
-  // Calculate Popover coordinates anchored to target rect if available
-  let popoverStyle = {}
-  if (targetRect) {
-    if (pointerSide === 'left') {
-      popoverStyle = {
-        position: 'fixed',
-        top: Math.max(80, Math.min(window.innerHeight - 380, targetRect.top - 20)),
-        left: Math.min(window.innerWidth - 440, targetRect.right + 24),
-      }
-    } else if (pointerSide === 'right') {
-      popoverStyle = {
-        position: 'fixed',
-        top: Math.max(80, Math.min(window.innerHeight - 380, targetRect.top - 20)),
-        right: Math.min(window.innerWidth - 440, window.innerWidth - targetRect.left + 24),
-      }
-    } else {
-      popoverStyle = {
-        position: 'fixed',
-        top: Math.min(window.innerHeight - 380, targetRect.bottom + 24),
-        left: Math.max(20, Math.min(window.innerWidth - 440, targetRect.left)),
-      }
-    }
-  }
 
   return (
     <div className="fixed inset-0 z-50 pointer-events-auto overflow-hidden animate-in fade-in duration-200">
@@ -443,79 +623,99 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose }) 
         />
       )}
 
-      {/* ── Main Interactive Walkthrough Card & Kisan Chacha Mascot ── */}
+      {/* ── Main Walkthrough Wrapper: Mascot + Popover Card ── */}
       <div
-        className={`fixed z-50 flex items-end gap-3 transition-all duration-300 ${
-          targetRect ? '' : 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
-        }`}
-        style={targetRect ? popoverStyle : {}}
+        className="fixed z-50 flex items-end gap-3 transition-all duration-300 pointer-events-auto"
+        style={{
+          top: placement.top,
+          left: placement.left,
+          maxWidth: 'calc(100vw - 32px)',
+        }}
       >
-        {/* Animated Kisan Chacha Game Mascot standing beside the card */}
-        <div className="hidden sm:block shrink-0 -mb-2">
+        {/* Animated Wholesome Kisan Chacha Mascot standing beside card */}
+        <div className="hidden md:block shrink-0 -mb-2">
           <KisanChachaMascot
             size="md"
             isPointing={true}
-            pointingDirection={pointerSide === 'right' ? 'right' : 'left'}
-            speechBubble={stepObj?.chachaBubble || 'Let me show you!'}
+            pointingDirection={placement.side === 'right' ? 'right' : 'left'}
+            speechBubble={stepObj?.chachaBubble || 'Let me guide you!'}
           />
         </div>
 
-        {/* ── Exact Match Walkthrough Popover Card (LPULive / Modern Game Guide Style) ── */}
-        <div className="relative w-[360px] sm:w-[420px] rounded-2xl bg-[#111928] border border-slate-700/80 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] p-6 sm:p-7 text-white font-sans overflow-visible">
-          {/* ── Directional Pointer Arrow (Triangle pointing to highlighted element) ── */}
-          {targetRect && pointerSide === 'left' && (
-            <div className="absolute top-10 -left-3 w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-r-[12px] border-r-[#111928] drop-shadow-md" />
+        {/* ── Walkthrough Popover Card (LPULive Aesthetic, Pinned Action Footer) ── */}
+        <div className="relative w-[340px] sm:w-[410px] max-h-[min(88vh,480px)] rounded-3xl bg-[#111928] border border-slate-700/85 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] p-5 sm:p-6 text-white font-sans flex flex-col overflow-visible">
+          
+          {/* ── Directional Pointer Arrow (Triangle pointing directly at target element) ── */}
+          {targetRect && placement.side === 'left' && (
+            <div
+              className="absolute -left-3 w-0 h-0 border-t-[9px] border-t-transparent border-b-[9px] border-b-transparent border-r-[12px] border-r-[#111928] drop-shadow-md"
+              style={{ top: placement.arrowTop }}
+            />
           )}
-          {targetRect && pointerSide === 'right' && (
-            <div className="absolute top-10 -right-3 w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[12px] border-l-[#111928] drop-shadow-md" />
+          {targetRect && placement.side === 'right' && (
+            <div
+              className="absolute -right-3 w-0 h-0 border-t-[9px] border-t-transparent border-b-[9px] border-b-transparent border-l-[12px] border-l-[#111928] drop-shadow-md"
+              style={{ top: placement.arrowTop }}
+            />
           )}
-          {targetRect && pointerSide === 'top' && (
-            <div className="absolute -top-3 left-10 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[12px] border-b-[#111928] drop-shadow-md" />
+          {targetRect && placement.side === 'top' && (
+            <div
+              className="absolute -top-3 w-0 h-0 border-l-[9px] border-l-transparent border-r-[9px] border-r-transparent border-b-[12px] border-b-[#111928] drop-shadow-md"
+              style={{ left: placement.arrowLeft }}
+            />
+          )}
+          {targetRect && placement.side === 'bottom' && (
+            <div
+              className="absolute -bottom-3 w-0 h-0 border-l-[9px] border-l-transparent border-r-[9px] border-r-transparent border-t-[12px] border-t-[#111928] drop-shadow-md"
+              style={{ left: placement.arrowLeft }}
+            />
           )}
 
-          {/* Close / Dismiss 'X' Button */}
+          {/* Close 'X' Button */}
           <button
             onClick={handleCompleteTour}
-            className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+            className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
             title="Dismiss Tour"
           >
             <X size={16} />
           </button>
 
-          {/* Header: Rounded Orange Folder/Icon + Bold Crisp Title */}
-          <div className="flex items-start gap-3.5 pr-6">
-            <div className="w-11 h-11 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center text-xl shrink-0 shadow-inner">
-              <FolderLock size={22} className="text-amber-400" />
+          {/* ── Card Header (Fixed / Shrink-0) ── */}
+          <div className="shrink-0 flex items-start gap-3 pr-6">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/35 text-amber-400 flex items-center justify-center shrink-0 shadow-inner">
+              <FolderLock size={20} className="text-amber-400" />
             </div>
             <div>
               <span className="text-[10px] font-black uppercase tracking-wider text-blue-400 block mb-0.5">
                 Kisan Chacha (बलराम जी) · {currentTourSeq.label}
               </span>
-              <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight leading-snug">
+              <h3 className="text-base sm:text-lg font-bold text-white tracking-tight leading-snug">
                 {getLangText(stepObj?.title)}
               </h3>
             </div>
           </div>
 
-          {/* Description Text */}
-          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mt-3.5 font-normal">
-            {getLangText(stepObj?.desc)}
-          </p>
+          {/* ── Scrollable Description Body (Flex-1, Scrollable if text is long) ── */}
+          <div className="flex-1 min-h-0 overflow-y-auto mt-3 pr-1">
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
+              {getLangText(stepObj?.desc)}
+            </p>
+          </div>
 
-          {/* Electric Blue Progress Bar */}
-          <div className="mt-5 w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          {/* ── Electric Blue Progress Bar (Fixed / Shrink-0) ── */}
+          <div className="shrink-0 mt-4 w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
             <div
               className="h-full bg-blue-600 rounded-full transition-all duration-300 ease-out"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
 
-          {/* Controls Bar: Previous | X of Y | Next / Next Module */}
-          <div className="mt-5 flex items-center justify-between gap-3">
+          {/* ── Pinned Action Controls Bar (Guaranteed Always Visible & On-Screen) ── */}
+          <div className="shrink-0 mt-4 pt-3 border-t border-slate-800/90 flex items-center justify-between gap-2.5">
             <button
               onClick={handlePrev}
               disabled={currentStep === 0}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer ${
+              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer ${
                 currentStep === 0
                   ? 'bg-slate-800/40 text-slate-600 cursor-not-allowed'
                   : 'bg-slate-800 hover:bg-slate-700 text-slate-200 active:scale-95'
@@ -533,7 +733,7 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose }) 
                 onClick={handleGoToNextPage}
                 className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-emerald-600/30 active:scale-95 transition cursor-pointer inline-flex items-center gap-1.5"
               >
-                <span>Next Page: {currentTourSeq.nextLabel}</span>
+                <span>Next: {currentTourSeq.nextLabel}</span>
                 <ArrowRight size={14} />
               </button>
             ) : (
@@ -546,8 +746,8 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose }) 
             )}
           </div>
 
-          {/* Bottom Actions Row: End Tour option on last step or Skip Tour */}
-          <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs font-semibold text-slate-400">
+          {/* ── Bottom Links: Skip Tour & End Tour Here ── */}
+          <div className="shrink-0 mt-2.5 flex items-center justify-between text-xs font-semibold text-slate-400">
             <button
               onClick={handleCompleteTour}
               className="hover:text-white transition-colors cursor-pointer"

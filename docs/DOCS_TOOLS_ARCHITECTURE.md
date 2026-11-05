@@ -93,20 +93,35 @@ The server tier is architected as an asynchronous, non-blocking RESTful microser
 
 A high-fidelity animated SVG Indian farmer mascot featuring:
 
-- **Real-time Trigonometric Cursor Tracking**: Calculates θ = atan2(Δy, Δx) and normalized distance via `Math.hypot(Δx, Δy) / 300` to smoothly offset eye pupils (max 4.5px travel) and tilt the head (clamped ±12°).
-- **Traditional Indian Farmer Design**: Saffron Pagri (turban) with golden brooch, chandhan tilak, expressive eyebrows, magnificent moochein (mustache), white kurta with buttons, green gamcha (towel), and gold kundal earrings.
-- **Dynamic Pointing Arm**: Extends a wooden pointer cane with golden tip and animated laser glow (`animate-ping`) in configurable directions (left, right, down).
-- **Responsive Sizing**: 5 size presets (sm: 100×130, md: 140×180, lg: 190×240, xl: 250×320, full: 320×400).
+- **2.5D Multi-Axis Parallax Tracking**:
+  - Head offset translation $(\cos\theta \cdot 5d, \sin\theta \cdot 3d)$ combined with dynamic head tilt $(\text{clamp}(\frac{\Delta x}{W} \cdot 20, -10^\circ, +10^\circ))$.
+  - Internal facial feature parallax $(\cos\theta \cdot 3.5d, \sin\theta \cdot 2d)$ shifting eyes, nose, and mustache inside the head contour for realistic depth.
+  - Trigonometric pupil positioning $(\cos\theta \cdot 4.2d, \sin\theta \cdot 4.2d)$ with specular highlights and secondary bounce shine.
+- **Organic Blinking Engine**:
+  - Automatically triggers every 3.2s – 5.6s with a 140ms closed-lid transition curve, completely eliminating unnatural staring and producing a warm, friendly character expression.
+- **Dynamic Eyebrow & Smile Reactivity**:
+  - Eyebrows dynamically raise when looking upward and settle warmly when looking forward.
+- **Idle Breathing & Fabric Flutter**:
+  - Subtle 4.2s sinusoidal torso breathing animation (`chachaBreathing`) and green gamcha towel flutter (`gamchaFlutter`).
+- **Traditional Indian Farmer Design**:
+  - Saffron Pagri (turban) with turra fan and ruby brooch, chandhan-kumkum tilak, rosy blushing cheeks, proud curled mustache, white kurta with golden buttons, emerald gamcha, and brass-tipped bamboo pointer cane with twinkling golden sparkle star.
+- **Responsive Sizing**: 5 size presets (sm: 95×125, md: 140×180, lg: 195×245, xl: 250×320, full: 310×390).
 
 ### 6.2 Spotlight Arrow Tour System (`FarmerGuide.jsx`)
 
 An LPULive-inspired interactive walkthrough system:
 
-- **8-Module Sequential Tour**: Dashboard → Prices → Calculator → Listings → Transactions → Grading → Arbitration → Mandi Map, with cross-page navigation.
-- **DOM Element Spotlighting**: Queries target elements via CSS selectors, calculates bounding rectangles, and renders a glowing ring (`ring-4 ring-blue-500/80 shadow-[0_0_40px_...]`) with semi-transparent backdrop dimming.
-- **Directional Arrow Geometry**: Computes optimal tooltip placement (left/right/top) based on available viewport space, with CSS triangle pointers.
-- **First-Visit Auto-Launch**: Triggers automatically for new users; returning users access via navbar "Kisan Chacha Tour" button.
-- **Multi-Lingual Content**: All tour step titles and descriptions support 4 languages (en, hi, mr, or).
+- **Master Tour Sequence Across Public & Protected Tools**:
+  - Seamlessly sequences free public tools (`/` Landing Page → `/prices` Live Prices → `/calculator` Net Realization → `/mandi-map` GIS Network → `/weather` Transit Weather) before transitioning into protected member tools (`/dashboard` → `/listings` → `/transactions` → `/grading` → `/disputes`).
+  - Automatically detects unauthenticated users at the transition boundary, guiding them to free registration or sign-in without breaking the walkthrough flow.
+- **Bulletproof Viewport Clamping Algorithm**:
+  - Calculates available vertical and horizontal space relative to the target element:
+    $$\text{top} = \max(76\text{px}, \min(H_{\text{vp}} - H_{\text{card}} - 16\text{px}, Y_{\text{mid}} - 80\text{px}))$$
+  - Enforces flexbox column layout with pinned header and pinned action footer (`shrink-0`), guaranteeing that the **Next**, **Previous**, and **Skip** buttons are 100% visible and clickable on every screen size (mobile, tablet, laptop, and ultra-wide).
+  - Dynamic directional arrow positioning: Computes `arrowTop` or `arrowLeft` dynamically so the pointer triangle directly aligns with the target element even when the popover is clamped to stay on-screen.
+- **Dedicated Homepage Tour (`/`)**:
+  - Highlights Language & Dark Mode preferences (`[data-tour="lang-controls"]`), Member Registration & Login (`[data-tour="auth-cta"]`), Live Agmarknet APMC Ticker (`[data-tour="live-ticker"]`), Interactive Profit Calculator (`[data-tour="hero-calculator"]`), and the 12 Architectural Trading Modules (`[data-tour="modules-grid"]`).
+- **Multi-Lingual Content**: All tour step titles, descriptions, and mascot speech bubbles support 4 languages (en, hi, mr, or).
 
 ### 6.3 Hero Section Integration
 

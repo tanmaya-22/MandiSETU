@@ -139,7 +139,7 @@ export default function Layout() {
             title="Start Interactive Guided Walkthrough with Kisan Chacha"
           >
             <span className="text-base leading-none">👳🏽‍♂️</span>
-            <span className="hidden sm:inline">Kisan Chacha Tour</span>
+            <span className="hidden sm:inline">{t('kisan_chacha_tour') || 'Kisan Chacha Tour'}</span>
             <span className="px-1.5 py-0.2 rounded bg-amber-200 dark:bg-amber-800 text-[9px] uppercase font-black text-amber-950 dark:text-amber-100">
               Guide
             </span>

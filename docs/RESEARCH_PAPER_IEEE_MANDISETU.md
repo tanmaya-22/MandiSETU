@@ -216,23 +216,38 @@ MandiSetu enforces an immutable **Root Administrative Protocol** ensuring comple
 
 ## VIII. Interactive Guided Tour & Gamified Mascot System
 
-### A. Trigonometric Cursor-Tracking Mascot (Kisan Chacha)
+### A. Trigonometric Cursor-Tracking & Kinematic Parallax Mascot (Kisan Chacha)
 
-MandiSetu introduces a game-quality animated SVG mascot—**Kisan Chacha (बलराम जी)**—rendered entirely in scalable vector graphics. The mascot features real-time cursor tracking computed via:
+MandiSetu introduces a game-quality animated SVG mascot—**Kisan Chacha (बलराम जी)**—engineered in pure declarative vector graphics. To eliminate uncanny "static gaze" phenomena, the mascot implements multi-tiered trigonometric kinematics:
 
-$$\theta = \text{atan2}(\Delta y, \Delta x), \quad d = \min\left(1, \frac{\sqrt{\Delta x^2 + \Delta y^2}}{300}\right)$$
+1. **Angular and Distance Resolution**:
+   $$\theta = \operatorname{atan2}(\Delta y, \Delta x), \quad d = \min\left(1, \frac{\sqrt{\Delta x^2 + \Delta y^2}}{360}\right)$$
 
-Eye pupils are offset by $(\cos\theta \cdot r_{\max} \cdot d, \sin\theta \cdot r_{\max} \cdot d)$ where $r_{\max} = 4.5\text{px}$. Head tilt is computed as $\text{tilt} = \text{clamp}\left(\frac{\Delta x}{W} \cdot 24, -12°, +12°\right)$ where $W$ is the viewport width. This delivers smooth, natural gaze-following behavior inspired by GitHub's Mona octocat.
+2. **2.5D Parallax Gaze & Structural Head Dynamics**:
+   - Primary pupil offset: $\vec{P} = (\cos\theta \cdot 4.2d, \sin\theta \cdot 4.2d)$
+   - Rigid head translation: $\vec{H} = (\cos\theta \cdot 5d, \sin\theta \cdot 3d)$
+   - Continuous head tilt: $\phi = \operatorname{clamp}\left(\frac{\Delta x}{W} \cdot 20, -10^\circ, +10^\circ\right)$
+   - Internal facial feature parallax: $\vec{F} = (\cos\theta \cdot 3.5d, \sin\theta \cdot 2d)$
 
-### B. DOM Spotlight Arrow Tour Engine
+3. **Stochastic Organic Blinking Cycle**:
+   A Poisson-distributed timing function triggers eyelid occlusion every $3.2\text{s} \le \tau \le 5.6\text{s}$ for $140\text{ms}$, transitioning from specular catchlight irises to closed dermal curves, yielding a wholesome, warm persona.
 
-The guided tour system implements an LPULive-inspired walkthrough featuring:
+4. **Sinusoidal Torso Breathing**:
+   A continuous $4.2\text{s}$ harmonic breathing cycle ($\Delta y = -2\text{px}$, scale $1.008$) maintains dynamic lifelike presence during periods of cursor stillness.
 
-1. **CSS Selector-Based Target Acquisition**: Each tour step specifies one or more CSS selectors; the engine queries the DOM, computes `getBoundingClientRect()`, and auto-scrolls offscreen targets into view.
-2. **Spotlight Ring & Backdrop Dimming**: A glowing ring with `ring-4 ring-blue-500/80 shadow-[0_0_40px_...]` isolates the active element against a `bg-black/65 backdrop-blur` overlay.
-3. **Directional Tooltip Placement Algorithm**: Available viewport space is evaluated to position the walkthrough card left, right, or below the target, with CSS triangle pointers indicating direction.
-4. **Cross-Module Navigation**: On the final step of each module, users may proceed to the next module or end the tour. The system supports 8 sequential modules covering all platform features.
-5. **First-Visit Detection**: `localStorage` is used to auto-launch the tour for first-time visitors while providing navbar access for returning users.
+### B. DOM Spotlight Arrow Tour Engine & Viewport Bounding
+
+The guided walkthrough system implements an LPULive-inspired popover engine designed to prevent layout overflow across variable client screen resolutions:
+
+1. **Strict Viewport Clamping Geometry**:
+   The vertical popover coordinate is bounded to ensure action buttons are permanently visible on screen:
+   $$\text{top} = \max\left(76\text{px}, \min\left(H_{\text{viewport}} - H_{\text{card}} - 16\text{px}, Y_{\text{target\_mid}} - 80\text{px}\right)\right)$$
+
+2. **Decoupled Scrollable Content & Pinned Action Controls**:
+   The popover card enforces a flexbox column with an internal `overflow-y-auto` descriptive body and a non-shrinking (`shrink-0`) footer. This guarantees that navigation buttons (`Previous`, `Next`, `Skip Tour`) remain 100% accessible regardless of target element elevation or viewport compression.
+
+3. **Multi-Modal Public-to-Protected State Transition**:
+   The walkthrough sequences unrestricted public instruments (`/` Landing Page $\rightarrow$ `/prices` $\rightarrow$ `/calculator` $\rightarrow$ `/mandi-map` $\rightarrow$ `/weather`) before navigating to authenticated member modules (`/dashboard` $\rightarrow$ `/listings` $\rightarrow$ `/transactions` $\rightarrow$ `/grading` $\rightarrow$ `/disputes`). Unauthenticated visitors are guided directly to zero-cost member registration at the boundary.
 
 ### C. Multi-Lingual Tour Content
 

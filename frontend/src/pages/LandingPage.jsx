@@ -143,7 +143,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors selection:bg-brand-200">
       {/* 1. Real-time Live Mandi Ticker Bar */}
-      <div className="bg-brand-950 text-white text-xs py-2 px-4 overflow-hidden border-b border-brand-800">
+      <div data-tour="live-ticker" className="bg-brand-950 text-white text-xs py-2 px-4 overflow-hidden border-b border-brand-800">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold tracking-wider uppercase text-[10px] text-emerald-300">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -183,8 +183,9 @@ export default function LandingPage() {
 
           {/* Multilingual Selector + Dark Mode Toggle + Auth buttons */}
           <div className="flex items-center gap-3">
-            <HeaderControls onOpenFullTour={handleOpenTour} />
+            <div data-tour="lang-controls"><HeaderControls onOpenFullTour={handleOpenTour} /></div>
 
+            <div data-tour="auth-cta" className="flex items-center gap-2">
             <Link
               to="/login"
               className="px-3.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-brand-700 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition"
@@ -198,6 +199,7 @@ export default function LandingPage() {
               <span>{t('nav_get_started')}</span>
               <ArrowRight size={14} />
             </Link>
+          </div>
           </div>
         </div>
       </nav>
@@ -263,7 +265,7 @@ export default function LandingPage() {
 
             {/* Right Column: Interactive Live Take-Home Profit Calculator Preview */}
             <div className="lg:col-span-5 animate-scale-in">
-              <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/80 dark:border-gray-800 text-gray-900 dark:text-gray-100">
+              <div data-tour="hero-calculator" className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/80 dark:border-gray-800 text-gray-900 dark:text-gray-100">
                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
                   <div className="flex items-center gap-2">
                     <div className="p-2 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 rounded-xl">
@@ -381,7 +383,7 @@ export default function LandingPage() {
       </section>
 
       {/* 5. 12 Comprehensive Integrated Modules Grid */}
-      <section className="py-20 bg-white dark:bg-gray-950 transition-colors">
+      <section data-tour="modules-grid" className="py-20 bg-white dark:bg-gray-950 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <span className="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-emerald-400 bg-brand-50 dark:bg-gray-900 px-3 py-1 rounded-full border border-brand-200 dark:border-gray-800">
