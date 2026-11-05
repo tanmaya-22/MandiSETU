@@ -30,7 +30,7 @@ const MODULE_TOURS = {
     moduleCode: 'M00',
     steps: [
       {
-        targetSelector: '[data-tour="lang-controls"], nav .flex.items-center.gap-3',
+        targetSelector: '#tour-lang-controls, [data-tour="lang-controls"]',
         title: {
           en: 'Multilingual Access & Dark Mode',
           hi: 'बहुभाषी पहुंच व रात्रि थीम (4 भाषाएं)',
@@ -46,7 +46,7 @@ const MODULE_TOURS = {
         chachaBubble: 'अपनी भाषा में मंडी भाव देखें!'
       },
       {
-        targetSelector: '[data-tour="auth-cta"], a[href="/login"], a[href="/register"]',
+        targetSelector: '#tour-auth-cta, [data-tour="auth-cta"]',
         title: {
           en: 'Free Preview & Member Access',
           hi: 'निशुल्क पंजीकरण व सदस्य सुविधाएं',
@@ -62,7 +62,7 @@ const MODULE_TOURS = {
         chachaBubble: 'Free access for every farmer!'
       },
       {
-        targetSelector: '[data-tour="live-ticker"], .bg-brand-950',
+        targetSelector: '#tour-live-ticker, [data-tour="live-ticker"]',
         title: {
           en: 'Real-Time Agmarknet APMC Ticker',
           hi: 'लाइव सरकारी एगमार्कनेट मंडी टिकर',
@@ -78,7 +78,7 @@ const MODULE_TOURS = {
         chachaBubble: '500+ मंडियों के लाइव भाव!'
       },
       {
-        targetSelector: '[data-tour="hero-calculator"], .lg\\:col-span-5',
+        targetSelector: '#tour-hero-calculator, [data-tour="hero-calculator"]',
         title: {
           en: 'Live Haversine Profit Calculator',
           hi: 'शुद्ध बचत व दूरी आधारित मुनाफा कैलकुलेटर',
@@ -94,7 +94,7 @@ const MODULE_TOURS = {
         chachaBubble: 'Calculate real take-home cash!'
       },
       {
-        targetSelector: '[data-tour="modules-grid"], .card-interactive',
+        targetSelector: '#tour-modules-grid, [data-tour="modules-grid"]',
         title: {
           en: '12 Comprehensive Trading Modules',
           hi: '12 समग्र डिजिटल कृषि व्यापार मॉड्यूल',
@@ -117,7 +117,7 @@ const MODULE_TOURS = {
     moduleCode: 'M02',
     steps: [
       {
-        targetSelector: 'input[placeholder*="Search"], input[type="text"]',
+        targetSelector: 'input[placeholder*="Search by mandi name"], input[placeholder*="Search"], input[type="text"]',
         title: {
           en: 'Multi-Terminal Query Engine',
           hi: '500+ मंडियों में फसल खोजें',
@@ -125,7 +125,7 @@ const MODULE_TOURS = {
           or: 'ଲାଇଭ ମଣ୍ଡି ଖୋଜ ଓ ଫିଲ୍ଟର',
         },
         desc: {
-          en: 'Filter over 500+ regulated APMC yards across India by commodity name or location to locate active wholesale buyers.',
+          en: 'Filter over 500+ regulated APMC yards across India by commodity name, district, or variety to locate active wholesale buyers.',
           hi: 'सर्च बार में फसल (जैसे गेहूं, प्याज, टमाटर) या मंडी का नाम लिखकर तुरंत थोक खरीदारों और ताजा भावों की सूची देखें।',
           mr: 'भारतातील 500+ मंड्यांमधून पिकाच्या नावाने किंवा स्थानानुसार शोधा.',
           or: 'ଦେଶର 500+ ମଣ୍ଡି ମଧ୍ୟରୁ ଫସଲ ବା ସ୍ଥାନ ଅନୁସାରେ ତଥ୍ୟ ଖୋଜନ୍ତୁ।'
@@ -394,11 +394,12 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose }) 
   const [currentStep, setCurrentStep] = useState(0)
   const [targetRect, setTargetRect] = useState(null)
   const [placement, setPlacement] = useState({
-    side: 'left', // 'left', 'right', 'top', 'bottom', 'center'
+    side: 'top', // 'top' (arrow on top), 'bottom' (arrow on bottom), 'left', 'right', 'center'
     top: 100,
     left: 100,
     arrowTop: 40,
     arrowLeft: 40,
+    showMascotBeside: false,
   })
 
   // Auto-launch on first visit to any module if never taken
@@ -436,7 +437,7 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose }) 
   // Track next route in tour sequence
   const currentTourSeq = TOUR_SEQUENCE.find(s => s.path === path) || TOUR_SEQUENCE[0]
 
-  // ── Bulletproof Viewport Clamping & Element Target Position Calculation ──
+  // ── MATHEMATICALLY BULLETPROOF VIEWPORT CLAMPING & POSITIONING ──
   useEffect(() => {
     if (!isOpen || !stepObj) return
 
@@ -456,86 +457,112 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose }) 
       }
 
       if (el) {
-        const rect = el.getBoundingClientRect()
-
-        // Smoothly scroll target into optimal view zone (center-top)
-        if (rect.top < 70 || rect.bottom > window.innerHeight - 80) {
+        // Smoothly scroll target into view center
+        const initialRect = el.getBoundingClientRect()
+        if (initialRect.top < 80 || initialRect.bottom > window.innerHeight - 80) {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' })
         }
 
-        const freshRect = el.getBoundingClientRect()
+        const rect = el.getBoundingClientRect()
         setTargetRect({
-          top: freshRect.top,
-          left: freshRect.left,
-          width: freshRect.width,
-          height: freshRect.height,
-          right: freshRect.right,
-          bottom: freshRect.bottom,
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height,
+          right: rect.right,
+          bottom: rect.bottom,
         })
 
-        // Viewport bounds
         const vpW = window.innerWidth
         const vpH = window.innerHeight
-        const cardW = Math.min(420, vpW - 32)
-        const cardH = 340 // estimated popover height
+        const cardW = Math.min(380, vpW - 32)
+        const cardH = 320 // estimated max height of popover
         const pad = 16
 
-        const targetMidY = (freshRect.top + freshRect.bottom) / 2
-        const targetMidX = (freshRect.left + freshRect.right) / 2
+        const targetMidX = (rect.left + rect.right) / 2
+        const targetMidY = (rect.top + rect.bottom) / 2
 
-        // Space evaluation
-        const canFitRight = freshRect.right + cardW + pad < vpW
-        const canFitLeft = freshRect.left - cardW - pad > 0
-        const canFitBelow = freshRect.bottom + cardH + pad < vpH
-        const canFitAbove = freshRect.top - cardH - pad > 60
+        // CRITICAL CHECK: Is the target element wide?
+        // (Search bars, tables, tickers, cards span wide. NEVER place to the side of wide elements!)
+        const isWideTarget = rect.width > 320 || rect.width > vpW * 0.4 || rect.right > vpW - 340 || rect.left < 200
 
-        let side = 'left'
+        const spaceBelow = vpH - rect.bottom - pad
+        const spaceAbove = rect.top - 60 - pad
+        const spaceRight = vpW - rect.right - pad
+        const spaceLeft = rect.left - pad
+
+        let side = 'top' // default: card is below target, arrow points up ('top')
         let top = 100
         let left = 100
-        let arrowTop = 40
-        let arrowLeft = 40
+        let showMascotBeside = false
 
-        if (canFitRight) {
-          // Place card to the right of element, arrow on left edge of card
-          side = 'left'
-          left = freshRect.right + 18
-          // Clamped strictly so card never clips bottom
-          top = Math.max(pad + 60, Math.min(vpH - cardH - pad, targetMidY - 80))
-          arrowTop = Math.max(24, Math.min(cardH - 50, targetMidY - top))
-        } else if (canFitLeft) {
-          // Place card to the left of element, arrow on right edge of card
-          side = 'right'
-          left = Math.max(pad, freshRect.left - cardW - 18)
-          top = Math.max(pad + 60, Math.min(vpH - cardH - pad, targetMidY - 80))
-          arrowTop = Math.max(24, Math.min(cardH - 50, targetMidY - top))
-        } else if (canFitBelow) {
-          // Place card below element, arrow on top edge of card
-          side = 'top'
-          top = freshRect.bottom + 16
-          left = Math.max(pad, Math.min(vpW - cardW - pad, targetMidX - cardW / 2))
-          arrowLeft = Math.max(24, Math.min(cardW - 40, targetMidX - left))
-        } else if (canFitAbove) {
-          // Place card above element, arrow on bottom edge of card
-          side = 'bottom'
-          top = Math.max(pad + 60, freshRect.top - cardH - 16)
-          left = Math.max(pad, Math.min(vpW - cardW - pad, targetMidX - cardW / 2))
-          arrowLeft = Math.max(24, Math.min(cardW - 40, targetMidX - left))
+        if (isWideTarget || (spaceRight < cardW + 20 && spaceLeft < cardW + 20)) {
+          // MUST PLACE VERTICALLY (Above or Below)!
+          if (spaceBelow >= cardH || spaceBelow >= spaceAbove) {
+            // Place below target
+            side = 'top' // Arrow is on top of card, pointing up at target
+            top = rect.bottom + 14
+            left = targetMidX - cardW / 2
+          } else {
+            // Place above target
+            side = 'bottom' // Arrow is on bottom of card, pointing down at target
+            top = rect.top - cardH - 14
+            left = targetMidX - cardW / 2
+          }
         } else {
-          // Dock at bottom center of screen safely
-          side = 'center'
-          top = Math.max(pad + 60, vpH - cardH - pad)
-          left = Math.max(pad, (vpW - cardW) / 2)
+          // Target is compact: can consider horizontal placement
+          if (spaceRight >= cardW + 20) {
+            side = 'left' // Arrow on left of card, pointing left at target
+            left = rect.right + 14
+            top = targetMidY - 80
+          } else if (spaceLeft >= cardW + 20) {
+            side = 'right' // Arrow on right of card, pointing right at target
+            left = rect.left - cardW - 14
+            top = targetMidY - 80
+          } else if (spaceBelow >= cardH) {
+            side = 'top'
+            top = rect.bottom + 14
+            left = targetMidX - cardW / 2
+          } else {
+            side = 'bottom'
+            top = rect.top - cardH - 14
+            left = targetMidX - cardW / 2
+          }
         }
 
-        setPlacement({ side, top, left, arrowTop, arrowLeft })
+        // STRICT ABSOLUTE VIEWPORT CLAMPING:
+        // Guarantees left + cardW <= vpW - pad (Never clipped on right!)
+        // Guarantees top + cardH <= vpH - pad (Never clipped on bottom!)
+        left = Math.max(pad, Math.min(vpW - cardW - pad, left))
+        top = Math.max(76, Math.min(vpH - cardH - pad, top))
+
+        // Dynamic Arrow alignment along card edge to point precisely at target
+        let arrowLeft = 40
+        let arrowTop = 40
+        if (side === 'top' || side === 'bottom') {
+          arrowLeft = Math.max(24, Math.min(cardW - 36, targetMidX - left))
+        } else {
+          arrowTop = Math.max(24, Math.min(cardH - 36, targetMidY - top))
+        }
+
+        // Check if there is ample room to show full Chacha beside the card
+        if (vpW >= 1024 && (left >= 150 || vpW - (left + cardW) >= 150)) {
+          showMascotBeside = true
+        }
+
+        setPlacement({ side, top, left, arrowTop, arrowLeft, showMascotBeside })
       } else {
         setTargetRect(null)
+        const vpW = window.innerWidth
+        const vpH = window.innerHeight
+        const cardW = Math.min(380, vpW - 32)
         setPlacement({
           side: 'center',
-          top: Math.max(80, (window.innerHeight - 360) / 2),
-          left: Math.max(16, (window.innerWidth - 420) / 2),
+          top: Math.max(80, (vpH - 340) / 2),
+          left: Math.max(16, (vpW - cardW) / 2),
           arrowTop: 40,
           arrowLeft: 40,
+          showMascotBeside: vpW >= 1024,
         })
       }
     }
@@ -554,7 +581,6 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose }) 
     if (currentStep < totalSteps - 1) {
       setCurrentStep(prev => prev + 1)
     } else {
-      // Last step of this page: advance to next module or finish
       handleGoToNextPage()
     }
   }
@@ -572,10 +598,9 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose }) 
       return
     }
 
-    // If navigating from free public tools to protected member dashboard and user is NOT logged in:
+    // Free Public Tools to Protected Member Modules transition:
     const isProtectedTarget = ['/dashboard', '/listings', '/transactions', '/grading', '/disputes'].includes(nextRoute)
     if (isProtectedTarget && !isAuthenticated) {
-      // Redirect to registration/login with friendly guide message
       setCurrentStep(0)
       navigate('/register')
       return
@@ -623,29 +648,37 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose }) 
         />
       )}
 
-      {/* ── Main Walkthrough Wrapper: Mascot + Popover Card ── */}
+      {/* ── Main Walkthrough Card Container (100% Guaranteed On-Screen) ── */}
       <div
-        className="fixed z-50 flex items-end gap-3 transition-all duration-300 pointer-events-auto"
+        className="fixed z-50 transition-all duration-300 pointer-events-auto"
         style={{
           top: placement.top,
           left: placement.left,
-          maxWidth: 'calc(100vw - 32px)',
+          width: Math.min(380, window.innerWidth - 32),
         }}
       >
-        {/* Animated Wholesome Kisan Chacha Mascot standing beside card */}
-        <div className="hidden md:block shrink-0 -mb-2">
-          <KisanChachaMascot
-            size="md"
-            isPointing={true}
-            pointingDirection={placement.side === 'right' ? 'right' : 'left'}
-            speechBubble={stepObj?.chachaBubble || 'Let me guide you!'}
-          />
-        </div>
+        {/* Floating Mascot Beside Card (Only when ample screen room exists) */}
+        {placement.showMascotBeside && (
+          <div
+            className="absolute -top-12 hidden lg:block pointer-events-none"
+            style={{
+              left: placement.left > 160 ? -110 : 'auto',
+              right: placement.left > 160 ? 'auto' : -110,
+            }}
+          >
+            <KisanChachaMascot
+              size="sm"
+              isPointing={true}
+              pointingDirection={placement.left > 160 ? 'right' : 'left'}
+              speechBubble={stepObj?.chachaBubble || 'Let me guide you!'}
+            />
+          </div>
+        )}
 
         {/* ── Walkthrough Popover Card (LPULive Aesthetic, Pinned Action Footer) ── */}
-        <div className="relative w-[340px] sm:w-[410px] max-h-[min(88vh,480px)] rounded-3xl bg-[#111928] border border-slate-700/85 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] p-5 sm:p-6 text-white font-sans flex flex-col overflow-visible">
+        <div className="relative w-full max-h-[min(88vh,460px)] rounded-3xl bg-[#111928] border border-slate-700/85 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] p-5 text-white font-sans flex flex-col overflow-visible">
           
-          {/* ── Directional Pointer Arrow (Triangle pointing directly at target element) ── */}
+          {/* ── Directional Pointer Arrow (Triangle pointing directly at target) ── */}
           {targetRect && placement.side === 'left' && (
             <div
               className="absolute -left-3 w-0 h-0 border-t-[9px] border-t-transparent border-b-[9px] border-b-transparent border-r-[12px] border-r-[#111928] drop-shadow-md"
@@ -680,38 +713,42 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose }) 
             <X size={16} />
           </button>
 
-          {/* ── Card Header (Fixed / Shrink-0) ── */}
+          {/* ── Card Header (Shrink-0): Featuring Chacha Mascot Avatar ── */}
           <div className="shrink-0 flex items-start gap-3 pr-6">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/35 text-amber-400 flex items-center justify-center shrink-0 shadow-inner">
-              <FolderLock size={20} className="text-amber-400" />
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/35 flex items-center justify-center shrink-0 shadow-inner overflow-hidden">
+              <KisanChachaMascot
+                size="xs"
+                isPointing={false}
+                className="scale-125 translate-y-1"
+              />
             </div>
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-blue-400 block mb-0.5">
+            <div className="min-w-0">
+              <span className="text-[10px] font-black uppercase tracking-wider text-blue-400 block mb-0.5 truncate">
                 Kisan Chacha (बलराम जी) · {currentTourSeq.label}
               </span>
-              <h3 className="text-base sm:text-lg font-bold text-white tracking-tight leading-snug">
+              <h3 className="text-base font-bold text-white tracking-tight leading-snug">
                 {getLangText(stepObj?.title)}
               </h3>
             </div>
           </div>
 
-          {/* ── Scrollable Description Body (Flex-1, Scrollable if text is long) ── */}
-          <div className="flex-1 min-h-0 overflow-y-auto mt-3 pr-1">
+          {/* ── Scrollable Description Body (Flex-1) ── */}
+          <div className="flex-1 min-h-0 overflow-y-auto mt-2.5 pr-1">
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
               {getLangText(stepObj?.desc)}
             </p>
           </div>
 
-          {/* ── Electric Blue Progress Bar (Fixed / Shrink-0) ── */}
-          <div className="shrink-0 mt-4 w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          {/* ── Electric Blue Progress Bar (Shrink-0) ── */}
+          <div className="shrink-0 mt-3.5 w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
             <div
               className="h-full bg-blue-600 rounded-full transition-all duration-300 ease-out"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
 
-          {/* ── Pinned Action Controls Bar (Guaranteed Always Visible & On-Screen) ── */}
-          <div className="shrink-0 mt-4 pt-3 border-t border-slate-800/90 flex items-center justify-between gap-2.5">
+          {/* ── Pinned Action Controls Bar (Shrink-0: 100% Guaranteed On-Screen) ── */}
+          <div className="shrink-0 mt-3.5 pt-2.5 border-t border-slate-800/90 flex items-center justify-between gap-2.5">
             <button
               onClick={handlePrev}
               disabled={currentStep === 0}
@@ -746,8 +783,8 @@ export default function FarmerGuide({ isOpen: forceOpen, onClose: forceClose }) 
             )}
           </div>
 
-          {/* ── Bottom Links: Skip Tour & End Tour Here ── */}
-          <div className="shrink-0 mt-2.5 flex items-center justify-between text-xs font-semibold text-slate-400">
+          {/* ── Bottom Links: Skip Tour & End Tour Here (Shrink-0) ── */}
+          <div className="shrink-0 mt-2 flex items-center justify-between text-xs font-semibold text-slate-400">
             <button
               onClick={handleCompleteTour}
               className="hover:text-white transition-colors cursor-pointer"
